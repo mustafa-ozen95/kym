@@ -1,0 +1,48 @@
+*.log
+.DS_Store
+.env
+.env.backup
+.env.production
+.env.*
+!.env.example
+.phpactor.json
+.phpunit.result.cache
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db
+/storage/gorsel.sqlite
+
+# Veri depoya girmez: yazılım burada, veri yerelde.
+/database/seeders/yerel/*
+!/database/seeders/yerel/OKUBENI.md
+
+# Kurulum yapılandırması — APP_KEY, veritabanı parolası ve SMTP parolası
+# .env'de (yukarıda; örneği .env.example izlenir) ya da kök dizindeki bir
+# *.conf dosyasında durur. Doldurulmuş hâli ASLA izlenmez.
+#
+# KURAL AD DEĞİL DESEN: tek bir dosya adı yazılırsa ve dosyanın gerçek adı
+# başkaysa kural tutmaz, dosya sessizce izlenmeye başlar ve içindeki APP_KEY
+# depoya girer. Adın değişmesi bir sızıntıya yol açmamalı.
+/*.conf
+!/docker/*.conf.example
+docker-compose.override.yml
+# İmajda derlemede yazılır (docker/Dockerfile); depoya girmez.
+/SURUM
+/test-results

@@ -1,0 +1,10 @@
+/*
+ * Uygulama biçemi.
+ *
+ * Bu dosya yalnızca içe aktarım barındırır; kurallar kendi dosyalarında
+ * durur.
+ */
+@import "./hizli-erisim.css";
+@import "./components/pencere.css";
+@import "./components/toast.css";
+@import "./components/giris-formu.css";

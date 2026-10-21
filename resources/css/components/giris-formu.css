@@ -1,0 +1,261 @@
+/*
+ * Giriş / kayıt penceresinin GÖVDESİ — NYS ve EYS giriş ekranıyla aynı dil.
+ *
+ * NEDEN AYRI DOSYA: Hızlı Erişim sayfasının kendi biçemi var (kutucuklar,
+ * `--tile` zemin) ve panel tasarım sistemi ayrı bir giriş noktasında duruyor;
+ * ikisi aynı sayfada yüklenirse `:root` değişkenleri birbirini ezer. Bu yüzden
+ * panelin belirteçleri BURADA, yalnızca pencerenin içine kopyalanıyor —
+ * sayfanın geri kalanı hiç etkilenmiyor.
+ *
+ * Değerler panelden birebir alınmıştır (bkz. panel/tokens.css,
+ * panel/components/form.css, button.css). Kopyalanmasının sebebi tembellik
+ * değil, iki giriş noktasının bilinçli olarak ayrılmış olması; bir gün tek
+ * sisteme geçilirse bu dosya tümden silinir.
+ *
+ * Yüzey ve metin renkleri SAYFANIN belirteçlerine bağlanır: pencere, sayfanın
+ * açık/koyu temasını kendiliğinden izlesin. Yalnızca vurgu rengi (limon) ve
+ * ölçüler panelden gelir — giriş ekranını panellerde aynı yapan şey odur.
+ */
+.pencere__govde {
+    --color-sunken: var(--bg);
+    --color-line: var(--edge);
+    --color-line-strong: var(--rule);
+    --color-hover: var(--tile-hi);
+    --color-text: var(--text);
+    --color-text-secondary: var(--dim);
+    --color-text-muted: var(--faint);
+    --color-red-fg: #e2836b;
+    --color-green-fg: #8fd08a;
+
+    --color-accent: #b8f13c;
+    --color-accent-hover: #cef56f;
+    --color-accent-on: #141618;
+    --color-focus-ring: rgb(184 241 60 / 35%);
+
+    --space-2: 0.375rem;
+    --space-3: 0.5rem;
+    --space-4: 0.75rem;
+    --space-5: 1rem;
+
+    --text-sm: 0.6875rem;
+    --text-base: 0.75rem;
+    --text-md: 0.8125rem;
+
+    --weight-medium: 500;
+    --weight-semibold: 600;
+
+    --radius: 4px;
+    --transition-fast: 90ms ease;
+}
+
+/*
+ * Açık temada limon zemin üzerinde koyu metin okunuyor ama vurgu fazla
+ * parlak kalıyor; panelde de aynı sebeple koyulaştırılmış bir ton kullanılır.
+ */
+:root[data-theme='light'] .pencere__govde {
+    --color-accent: #6f9611;
+    --color-accent-hover: #5d7f0e;
+    --color-accent-on: #ffffff;
+}
+
+/* Pencere başlığının altındaki tanıtım satırı (.gate__lead karşılığı). */
+.pencere__lead {
+    margin: 0 0 var(--space-5);
+    color: var(--color-text-muted);
+    font-size: var(--text-md);
+}
+
+.pencere__govde .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.pencere__govde .field + .field {
+    margin-top: var(--space-4);
+}
+
+/*
+ * Etiketler BÜYÜK HARF ve harf aralıklı: panelin alan etiketi böyle;
+ * giriş ekranı panellerde aynı görünür.
+ */
+.pencere__govde .field__label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+}
+
+.pencere__govde .input {
+    width: 100%;
+    height: 30px;
+    padding: 0 var(--space-3);
+    background: var(--color-sunken);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius);
+    color: var(--color-text);
+    font: inherit;
+    font-size: var(--text-md);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.pencere__govde .input--mono {
+    font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
+}
+
+.pencere__govde .input:focus {
+    outline: 0;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.pencere__govde .input[aria-invalid='true'] {
+    border-color: var(--color-red-fg);
+}
+
+.pencere__govde .checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.pencere__govde .checkbox input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+}
+
+.pencere__govde .form-actions {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-line);
+}
+
+.pencere__govde .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    height: 28px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.pencere__govde .btn:hover:not(:disabled) {
+    background: var(--color-hover);
+}
+
+.pencere__govde .btn--primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-accent-on);
+    font-weight: var(--weight-semibold);
+}
+
+.pencere__govde .btn--primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+}
+
+.pencere__govde .btn--block {
+    width: 100%;
+}
+
+/* Uyarı kutusu: .alert--danger ile aynı ölçüde. */
+.pencere__uyari {
+    margin: 0 0 var(--space-5);
+    padding: var(--space-3) var(--space-4);
+    background: rgb(226 131 107 / 13%);
+    border: 1px solid var(--color-red-fg);
+    border-radius: var(--radius);
+    color: var(--color-text);
+    font-size: var(--text-md);
+}
+
+/* Formun altındaki açıklama (.gate__foot karşılığı). */
+.pencere__foot {
+    margin: var(--space-5) 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-line);
+    font-size: var(--text-md);
+    color: var(--color-text-muted);
+}
+
+.pencere__foot a {
+    color: var(--color-text-secondary);
+}
+
+/*
+ * Parolada eksik kalan ölçüt: TEK SATIR, yalnızca gerektiğinde.
+ *
+ * Karşılananları da gösteren bir liste yer kaplardı. Kural metinleri
+ * etiketin yanındaki "?" iminde.
+ */
+.pencere__govde .parola-eksik {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-red-fg);
+}
+
+.pencere__govde .parola-eksik[hidden] { display: none; }
+
+.pencere__govde .ipucu-imi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px;
+    height: 13px;
+    margin-left: var(--space-3);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 50%;
+    color: var(--color-text-muted);
+    font-size: 9px;
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    cursor: help;
+}
+
+.pencere__govde .ipucu-imi:hover,
+.pencere__govde .ipucu-imi:focus-visible {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+    outline: none;
+}
+
+/*
+ * DOKUNMATİKTE ALAN YAZISI EN AZ 16 PİKSEL.
+ *
+ * iOS, 16 pikselden küçük yazılı bir alana odaklanınca sayfayı kendiliğinden
+ * yakınlaştırıyor ve geri uzaklaştırmıyor; mobilde alana dokununca sayfa
+ * büyümemeli.
+ * Bu pencere panel biçemini (panel/components/form.css) yüklemiyor, oradaki
+ * aynı kural burada da yazılmalı. Çözüm viewport'a "user-scalable=no" yazmak
+ * DEĞİL: o, parmakla büyütmeyi de öldürür; eşiği geçmek yeter.
+ */
+@media (max-width: 720px), (pointer: coarse) {
+    .pencere__govde .input,
+    .pencere__govde input:not([type='checkbox']):not([type='radio']),
+    .pencere__govde select,
+    .pencere__govde textarea {
+        height: 36px;
+        font-size: 1rem;
+    }
+}

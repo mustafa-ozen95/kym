@@ -1,0 +1,13 @@
+/*
+ * Panel biçemi — EYS'nin tasarım sistemi.
+ *
+ * Yönetim ekranları EYS ile AYNI görünür: aynı palet, aynı bileşenler, aynı
+ * ölçüler. İki panel arasında geçen kişi başka bir uygulamaya girmiş
+ * hissetmemeli.
+ *
+ * AYRI BİR GİRİŞ NOKTASI olması bilinçli: Hızlı Erişim sayfasının kendi
+ * biçemi var ve iki sistem aynı sayfada yüklenirse `:root` değişkenleri
+ * birbirini ezer. Panel ekranları yalnızca bunu, Hızlı Erişim yalnızca
+ * kendisininkini yükler.
+ */
+@import "./panel/index.css";

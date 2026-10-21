@@ -1,0 +1,43 @@
+# Derleme bağlamına GİRMEYECEKLER.
+#
+# Buradaki her satır imaj boyutunu değil, YENİDEN DERLEME sıklığını da
+# belirler: bağlamdaki bir dosya değişince katman önbelleği düşer.
+
+.git
+# Çalışan sürüm için yalnız HEAD ve ref'ler (docker/surum-oku.sh); nesneler girmez.
+!.git/HEAD
+!.git/packed-refs
+!.git/refs/heads/
+.github
+node_modules
+vendor
+public/build
+public/hot
+storage/app/*
+!storage/app/.gitignore
+!storage/app/public
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+bootstrap/cache/*
+tests/Browser/results
+tests/Browser/shots
+tests/Browser/snapshots
+
+# Gizli değerler imaja ASLA girmez; çalışma anında env ile verilir.
+#
+# KURULUM YAPILANDIRMASI DA (<panel>.conf) burada olmak zorunda: compose
+# dosyası onu depo kökünde arıyor (`env_file: ../<panel>.conf`) ve Dockerfile
+# "COPY . ." yapıyor. Bu satır unutulursa içindeki API anahtarları imajın
+# içine girer. İmajlar ghcr.io'ya gidiyor: oraya giren bir sır herkese açıktır.
+.env
+.env.*
+!.env.example
+/*.conf
+
+*.log
+*.sqlite
+storage/gorsel.sqlite
+.phpunit.result.cache
+.DS_Store

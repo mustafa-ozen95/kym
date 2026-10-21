@@ -1,0 +1,309 @@
+/*
+ * Oturum bölümü, pencere ve form.
+ *
+ * SAYFANIN KENDİ DİLİNİ konuşur: kutucuklar ve tema düğmesi neyse bunlar da
+ * o — `--tile` zemin, `--edge` çerçeve, 4-6px köşe, sessiz renkler. Düz
+ * altı çizili bağlantı ve dolu siyah düğme bu sayfada yabancı duruyordu.
+ */
+
+/*
+ * Başlıktaki düğmeler AYNI ÖLÇÜDE olmalı.
+ *
+ * Giriş düğmesi ile tema düğmesi yan yana duruyor; birkaç piksellik boy farkı
+ * hemen göze çarpıyor. Ölçü tek yerde tanımlanır ve ikisine birden verilir,
+ * yoksa biri değişince diğeri sessizce geride kalır.
+ *
+ * 31px, tema düğmesinin doğal boyu: 15px simge + 2×7px iç boşluk + çerçeve.
+ */
+.head { --dugme-boy: 31px; }
+
+.head .baglanti,
+.head .toggle {
+    box-sizing: border-box;
+    height: var(--dugme-boy);
+    align-self: center;
+}
+
+.oturum {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.oturum__ad {
+    font-size: 13px;
+    color: var(--faint);
+}
+
+.oturum form { display: inline-flex; }
+
+/* Tema düğmesiyle aynı kalıp: aynı zemin, aynı çerçeve, aynı köşe. */
+.baglanti {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    background: var(--tile);
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+    color: var(--dim);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Salon sayfasındaki dönüş bağlantısı: ok ile yazının arası. */
+.baglanti.geri { gap: 6px; }
+
+.baglanti:hover { color: var(--text); border-color: var(--faint); }
+.baglanti:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* Pencere içindeki ikincil bağlantı düğme gibi durmasın, yazı gibi dursun. */
+.form__eylem .baglanti {
+    padding: 0;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    border-radius: 0;
+    color: var(--faint);
+}
+
+.form__eylem .baglanti:hover { color: var(--text); border-bottom-color: var(--faint); }
+
+/* ── Pencere ── */
+.pencere {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+}
+
+.pencere[hidden] { display: none; }
+
+.pencere__zemin {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 45%);
+    backdrop-filter: blur(1.5px);
+}
+
+/* Kutucuklarla aynı gövde: aynı zemin, aynı çerçeve, aynı 6px köşe. */
+.pencere__kutu {
+    position: relative;
+    width: min(380px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: var(--tile);
+    border: 1px solid var(--edge);
+    border-radius: 6px;
+    box-shadow: 0 18px 48px rgb(0 0 0 / 28%);
+}
+
+.pencere__ust {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+}
+
+.pencere__ust h2 {
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--text);
+}
+
+.pencere__kapat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    color: var(--faint);
+    font-size: 18px;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.pencere__kapat:hover { color: var(--text); background: var(--tile-hi); }
+
+.pencere__govde { padding: 16px; }
+
+/* ── Form ── */
+.form { display: grid; gap: 13px; }
+
+.alan { display: grid; gap: 5px; }
+
+/*
+ * Etiketler NORMAL yazılır.
+ *
+ * Büyük harfli, harf aralıklı mikro etiketler bu sayfanın dilinde yok:
+ * bölüm başlıkları (.rowlabel) da normal yazıyor. Büyük harf, küçük bir
+ * pencerede sert duruyordu.
+ */
+.alan > span {
+    font-size: 12.5px;
+    color: var(--dim);
+}
+
+.alan input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+    color: var(--text);
+    font: inherit;
+    font-size: 13.5px;
+}
+
+/*
+ * Odak halkası YUMUŞAK: pencere açılır açılmaz ilk alana odaklanılıyor ve
+ * beyaz kalın bir halka koyu temada tek başına ekranı ele geçiriyordu.
+ * Görünürlük çerçeve renginin değişmesiyle de sağlanıyor.
+ */
+.alan input:focus-visible {
+    border-color: var(--faint);
+    outline: 2px solid var(--slot);
+    outline-offset: -1px;
+}
+
+.onay {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: var(--faint);
+}
+
+.ipucu {
+    margin: 0;
+    padding: 9px 11px;
+    background: var(--bg);
+    border-radius: 4px;
+    color: var(--faint);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.hata {
+    margin: 0;
+    color: #e2836b;
+    font-size: 12.5px;
+}
+
+.form__eylem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 3px;
+}
+
+/*
+ * Birincil eylem: dolu bir blok değil, biraz daha aydınlık bir kabin yüzeyi.
+ * Sayfada güçlü tek bir vurgu rengi yok; öne çıkma, çerçeve ve metin
+ * kontrastıyla yapılıyor.
+ */
+.dugme {
+    padding: 8px 15px;
+    background: var(--tile-hi);
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+    color: var(--dim);
+    font: inherit;
+    font-size: 13.5px;
+    cursor: pointer;
+}
+
+.dugme:hover { color: var(--text); border-color: var(--faint); }
+.dugme:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+.dugme--birincil {
+    border-color: var(--slot);
+    color: var(--text);
+    font-weight: 500;
+}
+
+.dugme--birincil:hover { border-color: var(--text); }
+
+/* ── Hesap menüsü (Hızlı Erişim) ── */
+.oturum { position: relative; }
+
+.oturum__dugme { gap: 6px; }
+
+.oturum__rozet {
+    display: inline-grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--tile-hi);
+    color: var(--text);
+    font-size: 11px;
+    line-height: 1;
+}
+
+.oturum__liste {
+    position: absolute;
+    top: calc(100% + 6px);
+
+    /*
+     * KUTU DÜĞMENİN SOL KENARINA YASLANIR.
+     *
+     * Üst çubukta kutu sağ kenara yaslanıp SOLA açılır — düğme sağda durur.
+     * Bu sayfada düğme SOLDA; sağa yaslansaydı kutu telefonda ekranın
+     * dışına taşardı.
+     *
+     * Genişlik sınırı da sol kenara göre: iki yandan 1 rem boşluk kalır.
+     */
+    left: 0;
+    right: auto;
+    z-index: 40;
+    display: grid;
+    min-width: 10rem;
+    max-width: min(18rem, calc(100vw - 2rem));
+    padding: 4px;
+    background: var(--tile);
+    border: 1px solid var(--edge);
+    border-radius: 6px;
+    box-shadow: 0 14px 36px rgb(0 0 0 / 26%);
+}
+
+.oturum__liste[hidden] { display: none; }
+
+.oturum__kim {
+    padding: 6px 10px 4px;
+    color: var(--faint);
+    font-size: 11.5px;
+
+    /* Uzun ad kutuyu genişletmesin, sarsın. */
+    overflow-wrap: anywhere;
+}
+
+.oturum__liste a,
+.oturum__liste button {
+    display: block;
+    width: 100%;
+    padding: 7px 10px;
+    background: none;
+    border: 0;
+    border-radius: 4px;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.oturum__liste a:hover,
+.oturum__liste button:hover { background: var(--tile-hi); }
+.oturum__liste button { color: var(--dim); }
