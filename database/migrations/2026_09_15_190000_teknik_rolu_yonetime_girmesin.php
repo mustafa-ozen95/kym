@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  * açacağı için şablonu boştur.
  *
  * Boş şablon kapıyı da kapatır: `yonet` geçidi "en az bir yönetim yetkisi var
- * mı" diye sorar (bkz. YetkiCozumleyici::yonetimeGirebilirMi).
+ * mı" diye sorar (bkz. PermissionResolver::yonetimeGirebilirMi).
  *
  * Şablon config'ten okunur (bkz. config/permissions.php): burada ikinci bir
  * liste tutulsaydı ikisi bir gün sessizce ayrışırdı.

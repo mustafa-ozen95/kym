@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Support\IstemciKokenleri;
+use App\Support\ClientOrigins;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -47,7 +47,7 @@ class SecurityHeaders
      *
      * Değer yapılandırmada durur ama LİSTESİ VERİDEN gelir: yeni bir panel
      * kaydedildiğinde girişinin çalışması için kimsenin burayı açması
-     * gerekmesin diye (bkz. App\Support\IstemciKokenleri).
+     * gerekmesin diye (bkz. App\Support\ClientOrigins).
      */
     private function doldur(string $deger): string
     {
@@ -55,7 +55,7 @@ class SecurityHeaders
             return $deger;
         }
 
-        $deger = str_replace('{istemciler}', IstemciKokenleri::csp(), $deger);
+        $deger = str_replace('{istemciler}', ClientOrigins::csp(), $deger);
 
         /* Hiç istemci yoksa noktalı virgülün önünde boşluk kalmasın. */
         return (string) preg_replace('/ +(;|$)/', '$1', $deger);

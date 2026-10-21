@@ -19,5 +19,5 @@
 
 @import './utilities.css';
 
-@import './components/kullanici-menu.css';
-@import './components/kimlik.css';
+@import './components/user-menu.css';
+@import './components/identity.css';

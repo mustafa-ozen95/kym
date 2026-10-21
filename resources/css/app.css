@@ -4,7 +4,7 @@
  * Bu dosya yalnızca içe aktarım barındırır; kurallar kendi dosyalarında
  * durur.
  */
-@import "./hizli-erisim.css";
-@import "./components/pencere.css";
+@import "./quick-access.css";
+@import "./components/window.css";
 @import "./components/toast.css";
-@import "./components/giris-formu.css";
+@import "./components/login-form.css";

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Merkezden ya da bağlı bir panelden çıkılınca yazılır; bu andan ÖNCE
  * açılmış her oturum (merkezde ve panellerde) bir sonraki istekte kapanır
- * (bkz. App\Services\OrtakCikis). Milisaniye: saniye, çıkıştan hemen sonra
+ * (bkz. App\Services\SharedLogout). Milisaniye: saniye, çıkıştan hemen sonra
  * açılan oturumu eskisinden ayıramıyordu.
  */
 return new class extends Migration

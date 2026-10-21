@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\Durum;
-use App\Models\Concerns\KimlikDegisiminiYayar;
-use App\Models\Concerns\OturumlariKapatir;
-use App\Services\EpostaDogrulama;
+use App\Enums\Status;
+use App\Models\Concerns\BroadcastsIdentityChange;
+use App\Models\Concerns\ClosesSessions;
+use App\Services\EmailVerification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -24,15 +24,15 @@ use Laravel\Passport\HasApiTokens;
  * Sıralı birincil anahtar dışarı çıkmaz; ekranlar ve adresler uuid taşır.
  *
  * `MustVerifyEmail` her zaman uygulanır ama doğrulamanın ŞART olup olmadığını
- * o belirlemez: kararı `EpostaDogrulama` verir. Sözleşme sabit, kural
+ * o belirlemez: kararı `EmailVerification` verir. Sözleşme sabit, kural
  * ayarlanabilir — böylece zorunluluk kapalıyken de imzalı doğrulama
  * bağlantısı üretilebilir.
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
+    use BroadcastsIdentityChange;
+    use ClosesSessions;
     use HasApiTokens, HasFactory, HasUuids, Notifiable;
-    use KimlikDegisiminiYayar;
-    use OturumlariKapatir;
 
     /*
      * DURUM TOPLU ATAMAYA KAPALI.
@@ -62,7 +62,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'totp_secret' => 'encrypted',
             'totp_recovery' => 'encrypted:array',
             'totp_confirmed_at' => 'datetime',
-            'durum' => Durum::class,
+            'durum' => Status::class,
         ];
     }
 
@@ -92,7 +92,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * her birine ayrı ayrı yazmak, dördüncüsü eklendiğinde unutmanın yoluydu.
      *
      * İşareti AYNI KAYITTA bilerek koyan çağrı korunur: yönetici onayı
-     * (bkz. Yonetim\KullaniciController) ve ilk yönetici komutu adresi ve
+     * (bkz. Admin\UserController) ve ilk yönetici komutu adresi ve
      * damgayı birlikte yazar; orada karar veren bir insan vardır.
      */
     protected static function booted(): void
@@ -107,7 +107,7 @@ class User extends Authenticatable implements MustVerifyEmail
          * ONAY, ADRESİ DOĞRULANMIŞ SAYAR — hangi yoldan gelirse gelsin.
          *
          * Doğrulama zorunlu değilken adrese kefil olan kişi, hesabı
-         * etkinleştiren yöneticidir (bkz. EpostaDogrulama::onayDogrularMi).
+         * etkinleştiren yöneticidir (bkz. EmailVerification::onayDogrularMi).
          * Kural modelde durur ki hesabı başka bir yoldan (konsol, toplu işlem)
          * etkinleştiren de adımı atlamasın: atlanırsa SESSİZ bir arıza olur —
          * kişi merkeze girer ama kimliği yalnızca doğrulanmış adreste eşleyen
@@ -116,7 +116,7 @@ class User extends Authenticatable implements MustVerifyEmail
          */
         static::saving(function (self $kullanici): void {
             /* Yalnızca DURUM ETKİNE DÖNERKEN; her kaydetmede değil. */
-            if (! $kullanici->isDirty('durum') || $kullanici->durum !== Durum::Etkin) {
+            if (! $kullanici->isDirty('durum') || $kullanici->durum !== Status::Etkin) {
                 return;
             }
 
@@ -128,7 +128,7 @@ class User extends Authenticatable implements MustVerifyEmail
                 return;
             }
 
-            if (app(EpostaDogrulama::class)->onayDogrularMi()) {
+            if (app(EmailVerification::class)->onayDogrularMi()) {
                 $kullanici->email_verified_at = now();
             }
         });
@@ -146,7 +146,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * YETKİ BURADA SORULMAZ: bu bir yazıcı, bekçi değil. Kararı veren yer
      * (kullanıcı yönetimi ekranı) yetkiyi kendisi doğrular.
      */
-    public function durumuAyarla(Durum $durum): void
+    public function durumuAyarla(Status $durum): void
     {
         $this->forceFill(['durum' => $durum])->save();
     }
@@ -165,12 +165,12 @@ class User extends Authenticatable implements MustVerifyEmail
     /** Rolün şablonunun üstüne yazan kişisel istisnalar. */
     public function yetkiler(): HasMany
     {
-        return $this->hasMany(KullaniciYetkisi::class, 'user_id');
+        return $this->hasMany(UserPermission::class, 'user_id');
     }
 
     public function rol(): BelongsTo
     {
-        return $this->belongsTo(Rol::class, 'rol_id');
+        return $this->belongsTo(Role::class, 'rol_id');
     }
 
     /**

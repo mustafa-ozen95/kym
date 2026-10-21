@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
  * Merkezin yönetim bölümüne yönetici dışında kimse girmez: görüntüleme,
  * ekleme, düzenleme ve silme dahil.
  *
- * Asıl karar KODDA duruyor (YetkiCozumleyici::YONETIM_YALNIZCA_YONETICI);
+ * Asıl karar KODDA duruyor (PermissionResolver::YONETIM_YALNIZCA_YONETICI);
  * yalnızca veriyi temizlemek yetmezdi, bir kutucuk işaretlenince geri
  * açılırdı. Bu göç veriyi kodun söylediğiyle HİZALAR: ekranda "var" görünüp
  * hiçbir işe yaramayan yetki kalmasın.

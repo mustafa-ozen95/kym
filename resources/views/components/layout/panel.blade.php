@@ -1,13 +1,13 @@
 @props(['title' => null, 'crumbs' => []])
 
 <!doctype html>
-<html lang="tr" data-theme="{{ \App\Support\Tema::secilen() }}">
+<html lang="tr" data-theme="{{ \App\Support\Theme::secilen() }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @auth
-        {{-- Ekran kilidi (bkz. oturum-kilidi.js): hareketsiz sekme bu süre sonunda oturumu kapatır. --}}
+        {{-- Ekran kilidi (bkz. session-lock.js): hareketsiz sekme bu süre sonunda oturumu kapatır. --}}
         <meta name="oturum-suresi" content="{{ (int) config('session.lifetime') }}">
         <meta name="oturum-cikis" content="{{ route('cikis') }}">
         <meta name="oturum-giris" content="{{ route('hizli-erisim') }}">
@@ -27,14 +27,14 @@
 
         Seçim ÇEREZDE, localStorage'da değil: localStorage adres başınadır ve
         merkez ile paneller ayrı köklerdir. Çerez üst alan adına yazılınca
-        (bkz. config/tema.php) hepsi aynı seçimi okur.
+        (bkz. config/theme.php) hepsi aynı seçimi okur.
 
         `<head>` içinde satır içi bir betik kullanılmaz: içerik CSP'si satır
         içi betikleri engeller. Çerezi PHP de okuyabildiği için `<html>` doğru
         değerle basılır; modül betikleri ertelense de sayfa bir kare bile
         yanlış temada çizilmez.
     --}}
-    <meta name="tema-alan" content="{{ config('tema.cerez_alani') }}">
+    <meta name="tema-alan" content="{{ config('theme.cerez_alani') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,8 +51,8 @@
 <div class="shell">
     <x-nav.topbar :crumbs="$crumbs" />
 
-    <x-ui.sertifika-uyarisi />
-    <x-ui.guncelleme-uyarisi />
+    <x-ui.certificate-warning />
+    <x-ui.update-warning />
 
     {{ $slot }}
 </div>

@@ -133,7 +133,7 @@ return [
     | İlk yönetici
     |--------------------------------------------------------------------------
     |
-    | YALNIZCA kurulumda kullanılır (IlkYoneticiSeeder, kullanıcı tablosu
+    | YALNIZCA kurulumda kullanılır (FirstAdminSeeder, kullanıcı tablosu
     | boşken). Sabit bir varsayılan parola BİLEREK konmadı: imaj herkese aynı
     | olduğu için varsayılan parola da herkese aynı olurdu. Değer verilmezse
     | konteyner başlatıcısı rastgele üretir ve bir kez günlüğe basar.

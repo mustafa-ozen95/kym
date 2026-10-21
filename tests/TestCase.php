@@ -2,7 +2,7 @@
 
 namespace Tests;
 
-use App\Models\Rol;
+use App\Models\Role;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
@@ -16,8 +16,8 @@ abstract class TestCase extends BaseTestCase
      *
      * Kapalı diye SINANMAZSA sessizce çürür ve yeniden açıldığı gün kimse
      * güvenemez. Bu yüzden düzeneği sınayan testler ayarı burada açıyor;
-     * kapalı hâlin kendisi ayrı testlerde sınanıyor (YetkiTest ve
-     * YonetimTest'teki "yalnızca yönetici" testleri).
+     * kapalı hâlin kendisi ayrı testlerde sınanıyor (PermissionTest ve
+     * AdminTest'teki "yalnızca yönetici" testleri).
      *
      * İkinci iş, örnek rolü hazırlamak: yerleşik rollerin şablonları boş
      * (göç 2026_09_15_210000). Varsayılan şablona dayanan test varsayılan
@@ -27,6 +27,6 @@ abstract class TestCase extends BaseTestCase
     {
         config(['permissions.yonetim_yalnizca_yonetici' => false]);
 
-        Rol::where('slug', $ornekRol)->first()?->update(['template' => $yetkiler]);
+        Role::where('slug', $ornekRol)->first()?->update(['template' => $yetkiler]);
     }
 }

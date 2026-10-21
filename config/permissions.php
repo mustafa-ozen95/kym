@@ -190,7 +190,7 @@ return [
      *
      * Bu liste tek başına o kararı TAŞIYAMAZ — bir kutucuk işaretlenince
      * geri açılırdı. Karar kodda duruyor:
-     * YetkiCozumleyici::YONETIM_YALNIZCA_YONETICI. Buradaki şablonlar onunla
+     * PermissionResolver::YONETIM_YALNIZCA_YONETICI. Buradaki şablonlar onunla
      * aynı şeyi söylesin diye boş; ayrışsalardı ekranda "var" görünen bir
      * yetki hiçbir işe yaramazdı.
      *

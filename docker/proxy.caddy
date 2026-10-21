@@ -1,0 +1,23 @@
+# Kimlik Yönetim Merkezi — ters vekil parçası
+#
+# Bu dosya PANELİN KENDİSİNE aittir. Merkezî bir dosyada alan adı listesi
+# tutulmuyor; her panel kendi yönlendirmesini taşır ve vekil bu dizini
+# `import` eder.
+#
+# Kurulum (sunucuda BİR KEZ, panel başına):
+#
+#     sudo cp docker/proxy.caddy <vekilin içe aktardığı dizin>/kym.caddy
+#     sudo sed -i 's/kimlik.ornek.test/GERCEK.ALAN.ADI/' <aynı dizin>/kym.caddy
+#     docker exec <vekil konteyneri> caddy reload --config /etc/caddy/Caddyfile
+#
+# Vekilin nasıl kurulacağı docker/README.md'de.
+
+kimlik.ornek.test {
+	reverse_proxy kym:80 {
+		# Panel bu başlıklara bakarak isteğin HTTPS olduğunu anlar. Caddy
+		# X-Forwarded-Proto'yu kendiliğinden ekler; Host'u da geçirmek
+		# gerekiyor, çünkü OAuth dönüş adresi konak adına bakıyor.
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+	}
+}

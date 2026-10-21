@@ -46,12 +46,12 @@ return [
             | sayıp ikinci bir işçiye verir; iki kopya aynı anda çalışır.
             |
             | Burada bu, panellere kimlik değişikliğini İKİ KEZ bildirmek
-            | demek (KimlikDegisikliginiBildirJob). İşçinin sınırı 120 saniye
+            | demek (NotifyIdentityChangeJob). İşçinin sınırı 120 saniye
             | ve 90 saniyelik varsayılan onun ALTINDA kalıyordu.
             |
             | Taban 180: işçinin sınırı + pay. Ortam değişkeni bunu AŞAĞI
             | ÇEKEMEZ; ayarı elle kısmak sessiz bir arıza üretirdi.
-            | İkisinin ayrışmadığını KuyrukAyariTest denetler.
+            | İkisinin ayrışmadığını QueueSettingTest denetler.
             */
             'retry_after' => max((int) env('DB_QUEUE_RETRY_AFTER', 90), 180),
             'after_commit' => false,

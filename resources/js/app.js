@@ -1,9 +1,9 @@
-import './components/hizli-erisim.js';
-import * as oturumKilidi from './ortak/oturum-kilidi.js';
-import * as toast from './ortak/toast.js';
+import './components/quick-access.js';
+import * as oturumKilidi from './shared/session-lock.js';
+import * as toast from './shared/toast.js';
 import * as menu from './components/menu.js';
-import * as parola from './components/parola.js';
-import * as pencere from './components/pencere.js';
+import * as parola from './components/password.js';
+import * as pencere from './components/window.js';
 
 /**
  * Uygulama girişi.
@@ -16,5 +16,5 @@ toast.init();
 menu.init();
 parola.init();
 
-/* Ekran kilidi: hareketsiz sekme oturumu kapatır (bkz. oturum-kilidi.js). */
+/* Ekran kilidi: hareketsiz sekme oturumu kapatır (bkz. session-lock.js). */
 oturumKilidi.init();

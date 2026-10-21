@@ -17,7 +17,7 @@ kendisi ya da Caddy/nginx); merkez isteğin HTTPS olduğunu `X-Forwarded-Proto`'
 Vekilsiz deneme: `cp docker-compose.override.example.yml docker-compose.override.yml`
 (düz HTTP, port 8080).
 
-Önde kendi Caddy'niz duruyorsa `docker/vekil.caddy` örnek kuraldır: vekil merkeze
+Önde kendi Caddy'niz duruyorsa `docker/proxy.caddy` örnek kuraldır: vekil merkeze
 konteyner ağından (`kym:80`) ulaşmalı, `Host` başlığını da geçirmeli (OAuth dönüş
 adresi konak adına bakıyor; bkz. aşağıda "Panelleri merkeze bağlamak").
 
@@ -48,8 +48,8 @@ Adlar `ONEK` ile başlar (varsayılan `kym`); aynı sunucuda ikinci kurulum onu 
 
 | Hacim | İçerik |
 |---|---|
-| `kym_storage` | `storage/app`: **OAuth imza anahtarları** (`oauth/`), APP_KEY (verilmediyse), ilk parola dosyası, Ayarlar → Veritabanı'nın bağlantı dosyası (`veritabani/`) |
-| `kym_veritabani` | db servisinin veri dizini |
+| `kym_storage` | `storage/app`: **OAuth imza anahtarları** (`oauth/`), APP_KEY (verilmediyse), ilk parola dosyası, Ayarlar → Veritabanı'nın bağlantı dosyası (`database/`) |
+| `kym_database` | db servisinin veri dizini |
 | `kym_logs` | `storage/logs` |
 
 
@@ -99,14 +99,14 @@ tablonun satır sayısı iki tarafta karşılaştırılır. Bir adım tutmazsa m
 veritabanıyla açılır ve sebep sekmede görünür. Kopya sürerken merkez kapalıdır; bağlı
 paneller o süre boyunca giriş yaptıramaz.
 
-Panelden tanımlanan bağlantı `storage/app/veritabani/baglanti.json` dosyasında APP_KEY ile
-şifreli durur ve ortamdaki `DB_*` değerlerinin yerine geçer. `durum.json` taşımanın
-aşamasını tutar ve sır içermez. Yeniden başlatmayı konteyner içindeki `dc-yeniden-baslat`
+Panelden tanımlanan bağlantı `storage/app/database/connection.json` dosyasında APP_KEY ile
+şifreli durur ve ortamdaki `DB_*` değerlerinin yerine geçer. `state.json` taşımanın
+aşamasını tutar ve sır içermez. Yeniden başlatmayı konteyner içindeki `dc-restart`
 yapar; bunun için yeniden başlatma politikası **`unless-stopped`** olmalı (compose'ta öyle).
 
 Taşıma bittikten sonra eski veritabanına **kendiliğinden dönülmez**; taşıma anındaki
 hâliyle durur. Bilerek dönmek için: uzak veritabanının dökümünü eskisine yükleyin,
-sonra `storage/app/veritabani` altındaki `baglanti.json` ve `durum.json`'u silip
+sonra `storage/app/database` altındaki `connection.json` ve `state.json`'u silip
 konteyneri yeniden başlatın. Dökümü yüklemezseniz taşımadan sonraki her şey kaybolur.
 
 APP_KEY değişirse bağlantı dosyası çözülemez ve merkez açılmaz.
@@ -117,17 +117,17 @@ APP_KEY değişirse bağlantı dosyası çözülemez ve merkez açılmaz.
 Kullanıcı tablosu boşsa başlatıcı bir yönetici açar (`ADMIN_EMAIL`; verilmezse
 `admin@kimlik.local`). Hesap doğrulanmış doğar: kurulumu yapan kişinin beklemesi
 gereken bir posta sunucusu henüz yok. `ADMIN_PASSWORD` boşsa parola **rastgele
-üretilir** ve yalnız `storage/app/ilk-parola.txt` içine yazılır (günlüğe basılmaz).
+üretilir** ve yalnız `storage/app/initial-password.txt` içine yazılır (günlüğe basılmaz).
 Sabit bir varsayılan parola konulmaz: imajı kuran herkeste aynı giriş bulunurdu.
 
-    docker compose exec panel cat /uygulama/storage/app/ilk-parola.txt
+    docker compose exec panel cat /uygulama/storage/app/initial-password.txt
 
 Giriş yapıp parolayı değiştirdikten sonra o dosyayı silin. Sonradan yönetici açmak
 (parola sorulur, komut satırına yazılmaz):
 
     docker compose exec panel php artisan kimlik:yonetici-ekle
 
-`SistemSeeder` bilerek çağrılmaz — örnek kutucuklarını yeni bir kuruluma yazmak yanlış
+`SystemSeeder` bilerek çağrılmaz — örnek kutucuklarını yeni bir kuruluma yazmak yanlış
 olurdu (`ORNEK_VERI` varsayılan kapalı).
 
 
@@ -156,7 +156,7 @@ Bir platformda: yeniden dağıtın (platform depoyu çekip derler). Göçler her
 `--isolated` ile koşar; iki örnek aynı anda kalksa bile bir kez çalışır.
 
 GitHub Actions her main'de imajı derleyip `ghcr.io/mustafa-ozen95/kym` altına da
-yükler (`.github/workflows/imaj.yml`): hazır imaj isteyen kurulum `docker/Dockerfile`'ı
+yükler (`.github/workflows/image.yml`): hazır imaj isteyen kurulum `docker/Dockerfile`'ı
 derlemek yerine onu kullanabilir.
 
 ### Güncelleme kontrolü
@@ -172,7 +172,7 @@ Ekran **yalnızca bakar**; güncelleme sunucudan, yedekle ve onayla yapılır.
   özelse `GUNCELLEME_JETONU` salt okunur bir jeton olmalı (fine-grained, yalnız panel depoları,
   Contents ve Actions: read). Erişilemezse kontrol "hata" der, panelin başka yeri etkilenmez.
 - Çalışan sürüm derlemede imaja yazılır (`ARG SURUM`, iş akışı commit'i verir). Derlemeye commit
-  vermeyen platformlarda (NineDeploy gibi) bağlamdaki `.git`'ten okunur (`docker/surum-oku.sh`;
+  vermeyen platformlarda (NineDeploy gibi) bağlamdaki `.git`'ten okunur (`docker/version-read.sh`;
   `.dockerignore` yalnız `HEAD` ve ref'leri alır).
 - Merkez GitHub'a çıkamıyorsa (kapalı ağ) kontrol "erişilemedi" der.
 

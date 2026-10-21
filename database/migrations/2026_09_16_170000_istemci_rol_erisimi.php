@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Models\Rol;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -44,7 +43,7 @@ return new class extends Migration
              * Silinen istemcinin satırları da gider — kapı zaten yok.
              */
             $table->uuid('oauth_client_id');
-            $table->foreignIdFor(Rol::class)->constrained('roller')->cascadeOnDelete();
+            $table->foreignId('rol_id')->constrained('roller')->cascadeOnDelete();
 
             $table->unique(['oauth_client_id', 'rol_id']);
 

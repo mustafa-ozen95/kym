@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\Sistem;
+use App\Models\System;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -24,7 +24,7 @@ return new class extends Migration
     {
         Schema::table('gruplar', function (Blueprint $table): void {
             $table->boolean('ayri_sayfa')->default(false)->after('not');
-            $table->string('gorunurluk', 20)->default(Sistem::HERKES)->after('ayri_sayfa');
+            $table->string('gorunurluk', 20)->default(System::HERKES)->after('ayri_sayfa');
         });
     }
 

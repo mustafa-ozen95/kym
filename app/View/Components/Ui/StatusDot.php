@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\View\Components\Ui;
 
 use App\Enums\BadgeVariant;
-use App\Enums\Durum;
+use App\Enums\Status;
 use Illuminate\View\Component;
 use Illuminate\View\View;
 
@@ -21,7 +21,7 @@ class StatusDot extends Component
     public string $label;
 
     public function __construct(
-        Durum $status,
+        Status $status,
         public bool $showLabel = true,
     ) {
         $this->variant = $status->badge();

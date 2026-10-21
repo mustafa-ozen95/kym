@@ -30,8 +30,8 @@ Thumbs.db
 /storage/gorsel.sqlite
 
 # Veri depoya girmez: yazılım burada, veri yerelde.
-/database/seeders/yerel/*
-!/database/seeders/yerel/OKUBENI.md
+/database/seeders/local/*
+!/database/seeders/local/README.md
 
 # Kurulum yapılandırması — APP_KEY, veritabanı parolası ve SMTP parolası
 # .env'de (yukarıda; örneği .env.example izlenir) ya da kök dizindeki bir

@@ -4,7 +4,7 @@
  * Hızlı Erişim'in kendi renk kümesi var (--tile, --edge, --text); panelin
  * toast.css'i --color-* belirteçlerine dayanıyor ve burada boyasız kalırdı.
  * Ortak olan SÖZLEŞME: `.toast-host` + `data-flash`, gösterimi
- * js/ortak/toast.js yapar. Boyama her iki dünyada kendi dosyasında.
+ * js/shared/toast.js yapar. Boyama her iki dünyada kendi dosyasında.
  *
  * Kutu ÜSTTE ORTADA: bu sayfada üst şeritte tek bir düğme var, göz kaydı
  * ekranın ortasında. Panelde ise sağ üstte, işi başlatan düğmenin yanında.

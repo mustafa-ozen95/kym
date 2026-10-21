@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\Sistem;
+use App\Models\System;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +31,7 @@ return new class extends Migration
     {
         Schema::table('sistemler', function (Blueprint $table): void {
             $table->string('anahtar', 60)->nullable()->unique()->after('kod');
-            $table->string('gorunurluk', 20)->default(Sistem::HERKES)->after('etkin');
+            $table->string('gorunurluk', 20)->default(System::HERKES)->after('etkin');
             $table->index(['gorunurluk']);
         });
 

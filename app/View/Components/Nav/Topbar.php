@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\View\Components\Nav;
 
-use App\Services\Yetki\YonetimBolumleri;
+use App\Services\Permission\AdminSections;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\View\Component;
@@ -39,12 +39,12 @@ class Topbar extends Component
     {
         $ad = Route::currentRouteName() ?? '';
 
-        /* Liste ve yetkileri YonetimBolumleri'nde; iki yerde tutulmaz. */
+        /* Liste ve yetkileri AdminSections'nde; iki yerde tutulmaz. */
         return array_map(fn (array $bolum): array => [
             'label' => $bolum['label'],
             'url' => $bolum['url'],
             'active' => $ad === $bolum['route'],
-        ], app(YonetimBolumleri::class)->gorunen());
+        ], app(AdminSections::class)->gorunen());
     }
 
     /** Adın baş harfleri; avatar yerine geçer. */

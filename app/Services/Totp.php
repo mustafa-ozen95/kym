@@ -74,7 +74,7 @@ class Totp
      * (30 saniyelik adım artı iki komşu). "Geçerli mi" sorusunun cevabı bu
      * sürede değişmediği için aynı kod birden çok kez kabul edilebilirdi;
      * çağıran taraf kodun TEKRAR kullanılmadığını ancak hangi adıma denk
-     * geldiğini bilirse denetleyebilir (bkz. IkiAdim::dogrula).
+     * geldiğini bilirse denetleyebilir (bkz. TwoStep::dogrula).
      *
      * RFC 6238 §5.2 de bunu istiyor: doğrulanan bir adım bir daha kabul
      * edilmemeli.

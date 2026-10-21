@@ -7,7 +7,7 @@ the **Quick Access** page everyone lands on.
 
 Sibling projects: EYS (password vault) and NYS (network panel).
 
-What is supported, and **to what extent**: [`DESTEK.md`](DESTEK.md) (Turkish).
+What is supported, and **to what extent**: [`SUPPORT.md`](SUPPORT.md) (Turkish).
 
 ## The center does not hand out permissions
 
@@ -140,7 +140,7 @@ ORTAK="APP_ENV=local DB_CONNECTION=sqlite DB_DATABASE=$PWD/$S \
 
 touch $S
 env $ORTAK php artisan migrate --force
-env $ORTAK php artisan db:seed --class=GorselSeeder --force
+env $ORTAK php artisan db:seed --class=VisualSeeder --force
 
 # Local server: the live address speaks https, the browser speaks http locally.
 env $ORTAK APP_URL=http://127.0.0.1:8402 SESSION_SECURE_COOKIE=false \
@@ -151,7 +151,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:8402 \
   npx playwright test      # desktop + phone
 ```
 
-`GorselSeeder` builds a fixed, small world: one administrator, two halls, four
+`VisualSeeder` builds a fixed, small world: one administrator, two halls, four
 tiles. `APP_CONFIG_CACHE` must point somewhere else — if production has a
 cached config it overrides `APP_URL` and assets are requested from the live
 address.

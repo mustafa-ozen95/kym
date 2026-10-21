@@ -104,7 +104,7 @@ function proceed() {
 
         /*
          * Gönderimden ÖNCE haber verilir; formu dinleyen bileşenler (ör.
-         * siralama.js) son hazırlığı burada yapar. submit() "submit" olayını TETİKLEMEZ,
+         * sorting.js) son hazırlığı burada yapar. submit() "submit" olayını TETİKLEMEZ,
          * requestSubmit() ise toplu güncelleme formunu bozuyor: o formun
          * varsayılan düğmesi seçim boşken kapalı durur ve gönderim sessizce
          * düşer. Bu yüzden kendi olayımız.

@@ -16,7 +16,7 @@ declare(strict_types=1);
 return [
     /*
      * Girişte dakikada izin verilen istek sayısı (adres başına). 0 = SINIR YOK
-     * (ara katman hiç eklenmez; bkz. App\Support\IstekSiniri).
+     * (ara katman hiç eklenmez; bkz. App\Support\RequestLimit).
      *
      * Varsayılan KAPALI: sınır gündelik kullanımda insanı dışarıda
      * bırakabilir; gerekiyorsa .env ile açılır. Bağlı panellerde de aynı

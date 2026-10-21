@@ -1,13 +1,13 @@
-import * as oturumKilidi from './ortak/oturum-kilidi.js';
-import * as toast from './ortak/toast.js';
+import * as oturumKilidi from './shared/session-lock.js';
+import * as toast from './shared/toast.js';
 import * as confirmDialog from './panel/components/confirm.js';
 import * as copy from './panel/components/copy.js';
 import * as dialog from './panel/components/dialog.js';
-import * as karekod from './panel/components/karekod.js';
-import * as kullaniciMenu from './panel/components/kullanici-menu.js';
+import * as karekod from './panel/components/qrcode.js';
+import * as kullaniciMenu from './panel/components/user-menu.js';
 import * as navigation from './panel/components/navigation.js';
-import * as renkNoktasi from './panel/components/renk-noktasi.js';
-import * as siralama from './panel/components/siralama.js';
+import * as renkNoktasi from './panel/components/color-dot.js';
+import * as siralama from './panel/components/sorting.js';
 import * as theme from './panel/components/theme.js';
 
 /**
@@ -44,7 +44,7 @@ function herCizimde() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    /* Ekran kilidi: hareketsiz sekme oturumu kapatır (bkz. oturum-kilidi.js). Bir kez. */
+    /* Ekran kilidi: hareketsiz sekme oturumu kapatır (bkz. session-lock.js). Bir kez. */
     oturumKilidi.init();
     dialog.init();
     confirmDialog.init();

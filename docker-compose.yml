@@ -110,7 +110,7 @@ services:
       MARIADB_RANDOM_ROOT_PASSWORD: "1"
       MARIADB_AUTO_UPGRADE: "1"
     volumes:
-      - veritabani:/var/lib/mysql
+      - database:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -142,5 +142,5 @@ volumes:
     name: ${ONEK:-kym}_storage
   logs:
     name: ${ONEK:-kym}_logs
-  veritabani:
-    name: ${ONEK:-kym}_veritabani
+  database:
+    name: ${ONEK:-kym}_database

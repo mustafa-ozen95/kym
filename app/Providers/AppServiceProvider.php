@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use App\Models\OauthIstemci;
+use App\Models\OauthClient;
 use App\Models\User;
-use App\Services\OrtakCikis;
-use App\Services\Posta\PostaAyarlari;
-use App\Services\SaatDilimi;
-use App\Services\Yetki\YetkiCozumleyici;
-use App\Services\Yetki\YetkiSozlugu;
+use App\Services\Mail\MailSettings;
+use App\Services\Permission\PermissionDictionary;
+use App\Services\Permission\PermissionResolver;
+use App\Services\SharedLogout;
+use App\Services\TimeZone;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
@@ -35,16 +35,16 @@ class AppServiceProvider extends ServiceProvider
          * Saat dilimi ayardan gelir. Ayar tablosu henüz yoksa (ilk kurulum,
          * göç sırası) sessizce atlanır ve APP_TIMEZONE geçerli kalır.
          */
-        rescue(fn () => SaatDilimi::uygula(), null, false);
+        rescue(fn () => TimeZone::uygula(), null, false);
 
         /*
          * ORTAK ÇIKIŞ: oturumun açıldığı an. Kişinin son çıkışından önce
-         * açılmış oturum kapanır (bkz. OrtakCikis, OrtakCikisSonrasiKapat).
+         * açılmış oturum kapanır (bkz. SharedLogout, CloseAfterSharedLogout).
          * Olay her giriş yolunda gelir: parola, ikinci adım, beni hatırla.
          */
         Event::listen(Login::class, function (): void {
             if (request()->hasSession()) {
-                request()->session()->put(OrtakCikis::OTURUM_ANAHTARI, OrtakCikis::simdiMs());
+                request()->session()->put(SharedLogout::OTURUM_ANAHTARI, SharedLogout::simdiMs());
             }
         });
 
@@ -55,9 +55,9 @@ class AppServiceProvider extends ServiceProvider
          * yeteneğine dönüşür. Yeni bir yetki eklemek için o dosyaya bir satır
          * yazmak yeterli; controller, Blade ve rol ekranı kendiliğinden uyar.
          */
-        foreach ($this->app->make(YetkiSozlugu::class)->yetenekler() as $yetenek) {
+        foreach ($this->app->make(PermissionDictionary::class)->yetenekler() as $yetenek) {
             Gate::define($yetenek, fn (User $kullanici): bool => $this->app
-                ->make(YetkiCozumleyici::class)
+                ->make(PermissionResolver::class)
                 ->yapabilirMi($kullanici, $yetenek));
         }
 
@@ -67,7 +67,7 @@ class AppServiceProvider extends ServiceProvider
          * Menüdeki bağlantı da bunu sorar.
          */
         Gate::define('yonet', fn (User $kullanici): bool => $this->app
-            ->make(YetkiCozumleyici::class)
+            ->make(PermissionResolver::class)
             ->yonetimeGirebilirMi($kullanici));
 
         /*
@@ -85,10 +85,10 @@ class AppServiceProvider extends ServiceProvider
          * Jeton ömürleri KISA: bize kimlik lazım, uzun ömürlü API erişimi
          * değil. Uzun ömürlü bir jeton, çalındığında uzun süre geçerli olur.
          */
-        Passport::tokensExpireIn(now()->addMinutes((int) config('kimlik.jeton_dakika')));
-        Passport::refreshTokensExpireIn(now()->addDays((int) config('kimlik.yenileme_gun')));
+        Passport::tokensExpireIn(now()->addMinutes((int) config('identity.jeton_dakika')));
+        Passport::refreshTokensExpireIn(now()->addDays((int) config('identity.yenileme_gun')));
 
-        Passport::authorizationView(fn ($parametreler) => view('oauth.onay', $parametreler));
+        Passport::authorizationView(fn ($parametreler) => view('oauth.consent', $parametreler));
 
         /*
          * KENDİ projelerimizde onay ekranı sorulmaz.
@@ -110,7 +110,7 @@ class AppServiceProvider extends ServiceProvider
          */
         Paginator::defaultView('vendor.pagination.default');
 
-        Passport::useClientModel(OauthIstemci::class);
+        Passport::useClientModel(OauthClient::class);
 
         /*
          * SMTP ayarları ekrandan gelir — ama ANCAK POSTA KULLANILDIĞINDA.
@@ -121,7 +121,7 @@ class AppServiceProvider extends ServiceProvider
          * ilk kez çözümlendiğinde çalışır.
          */
         $this->app->resolving('mail.manager', function (): void {
-            $this->app->make(PostaAyarlari::class)->uygula();
+            $this->app->make(MailSettings::class)->uygula();
         });
     }
 }

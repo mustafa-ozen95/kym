@@ -7,7 +7,7 @@ girdiği **Hızlı Erişim** sayfası.
 
 Kardeş projeler: EYS (parola kasası) ve NYS (ağ paneli).
 
-Neyin **ne ölçüde** desteklendiği: [`DESTEK.md`](DESTEK.md).
+Neyin **ne ölçüde** desteklendiği: [`SUPPORT.md`](SUPPORT.md).
 
 ## Merkez yetki dağıtmaz
 
@@ -134,7 +134,7 @@ ORTAK="APP_ENV=local DB_CONNECTION=sqlite DB_DATABASE=$PWD/$S \
 
 touch $S
 env $ORTAK php artisan migrate --force
-env $ORTAK php artisan db:seed --class=GorselSeeder --force
+env $ORTAK php artisan db:seed --class=VisualSeeder --force
 
 # Yerel sunucu: canlı adres https, tarayıcı yerelde http konuşur.
 env $ORTAK APP_URL=http://127.0.0.1:8402 SESSION_SECURE_COOKIE=false \
@@ -145,7 +145,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:8402 \
   npx playwright test      # masaüstü + telefon
 ```
 
-`GorselSeeder` sabit ve küçük bir dünya kurar: bir yönetici, iki salon, dört
+`VisualSeeder` sabit ve küçük bir dünya kurar: bir yönetici, iki salon, dört
 kutucuk. `APP_CONFIG_CACHE`'in başka bir yolu göstermesi şarttır — üretimin
 önbelleğe alınmış config'i yoksa `APP_URL`'i ezer ve varlıklar canlı adresten
 istenir.

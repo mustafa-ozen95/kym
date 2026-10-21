@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\Durum;
-use App\Models\Rol;
+use App\Enums\Status;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -35,25 +35,25 @@ class UserFactory extends Factory
              * Varsayılan yoksa yönetici OLMAYAN ilk rol; hiç rol yoksa rolsüz.
              * Eksik veri yetki üretmemeli.
              */
-            'rol_id' => fn (): ?int => Rol::varsayilan()?->id
-                ?? Rol::where('is_admin', false)->value('id'),
-            'durum' => Durum::Etkin,
+            'rol_id' => fn (): ?int => Role::varsayilan()?->id
+                ?? Role::where('is_admin', false)->value('id'),
+            'durum' => Status::Etkin,
         ];
     }
 
     public function beklemede(): static
     {
-        return $this->state(['durum' => Durum::Beklemede]);
+        return $this->state(['durum' => Status::Beklemede]);
     }
 
     public function askida(): static
     {
-        return $this->state(['durum' => Durum::Askida]);
+        return $this->state(['durum' => Status::Askida]);
     }
 
     public function yonetici(): static
     {
-        return $this->state(['rol_id' => fn (): ?int => Rol::firstWhere('is_admin', true)?->id]);
+        return $this->state(['rol_id' => fn (): ?int => Role::firstWhere('is_admin', true)?->id]);
     }
 
     /**
@@ -64,7 +64,7 @@ class UserFactory extends Factory
      */
     public function rol(string $slug): static
     {
-        return $this->state(['rol_id' => fn (): ?int => Rol::firstWhere('slug', $slug)?->id]);
+        return $this->state(['rol_id' => fn (): ?int => Role::firstWhere('slug', $slug)?->id]);
     }
 
     /**

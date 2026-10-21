@@ -24,7 +24,7 @@ return [
         | önemli kısmı anlamını yitirirdi.
         |
         | Tema için de satır içi betik yok: seçim sunucuda okunup <html>
-        | etiketine basılıyor (bkz. App\Support\Tema).
+        | etiketine basılıyor (bkz. App\Support\Theme).
         |
         | frame-ancestors 'self': burası kimlik sağlayıcısı ve çerçeveye
         | alınmış bir giriş ekranı, kullanıcının parolayı hangi siteye
@@ -34,7 +34,7 @@ return [
         | başlayan zincir istemcinin adresinde biter (giriş → /oauth/authorize
         | → istemci). Tarayıcı bu kısıtı zincirin TAMAMINA uyguluyor; yalnızca
         | 'self' yazılıyken giriş sessizce iptal oluyordu (bkz.
-        | App\Support\IstemciKokenleri). `{istemciler}` yerine kayıtlı
+        | App\Support\ClientOrigins). `{istemciler}` yerine kayıtlı
         | uygulamaların kökenleri yazılır — liste elle tutulmaz.
         |
         | Bağlı panellerde aynı politika var; biri değişirse ötekilere de bakın.

@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Middleware\EtkinHesapZorunlu;
-use App\Http\Middleware\IkiAdimZorunlu;
-use App\Http\Middleware\OrtakCikisSonrasiKapat;
+use App\Http\Middleware\ActiveAccountRequired;
+use App\Http\Middleware\CloseAfterSharedLogout;
 use App\Http\Middleware\SecurityHeaders;
-use App\Support\Tema;
+use App\Http\Middleware\TwoStepRequired;
+use App\Support\Theme;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,12 +23,12 @@ return Application::configure(basePath: dirname(__DIR__))
          *
          * Onu tarayıcıdaki betik yazıyor ve okuyor; şifreli bir değeri
          * çözemezdi. Sunucu da aynı çerezi okuyup `<html>` etiketini doğru
-         * temayla basıyor (bkz. App\Support\Tema) — böylece `<head>` içinde
+         * temayla basıyor (bkz. App\Support\Theme) — böylece `<head>` içinde
          * satır içi bir betiğe gerek kalmıyor ve içerik CSP'si eklenebiliyor.
          *
          * Taşıdığı bilgi bir sırra değil bir tercihe ait.
          */
-        $middleware->encryptCookies(except: [Tema::COOKIE]);
+        $middleware->encryptCookies(except: [Theme::COOKIE]);
 
         /*
          * TERS VEKİLE GÜVEN — konteyner kurulumunda ŞART.
@@ -69,7 +69,7 @@ return Application::configure(basePath: dirname(__DIR__))
          * SIRA ÖNEMLİ: önce hesap etkin mi, sonra ikinci adım. Tersi olsaydı
          * askıya alınmış birinden önce ikinci adım istenirdi.
          */
-        $middleware->web(append: [OrtakCikisSonrasiKapat::class, EtkinHesapZorunlu::class, IkiAdimZorunlu::class]);
+        $middleware->web(append: [CloseAfterSharedLogout::class, ActiveAccountRequired::class, TwoStepRequired::class]);
 
         /*
          * Panelin sayfaları ÇERÇEVEYE ALINAMAZ.

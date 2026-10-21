@@ -59,7 +59,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            // Oturumun saat dilimi; başlatıcı konteynerin saatini verir (bkz. kimlik-entrypoint).
+            // Oturumun saat dilimi; başlatıcı konteynerin saatini verir (bkz. identity-entrypoint).
             'timezone' => env('DB_TIMEZONE'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
@@ -81,7 +81,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            // Oturumun saat dilimi; başlatıcı konteynerin saatini verir (bkz. kimlik-entrypoint).
+            // Oturumun saat dilimi; başlatıcı konteynerin saatini verir (bkz. identity-entrypoint).
             'timezone' => env('DB_TIMEZONE'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),

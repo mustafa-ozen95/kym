@@ -232,10 +232,10 @@ class ActivityRecorder
         return is_array($izler) ? array_map('strval', $izler) : [];
     }
 
-    /** Zincir imza anahtarı: APP_KEY'den ayrı, boşsa APP_KEY (bkz. config/denetim.php). */
+    /** Zincir imza anahtarı: APP_KEY'den ayrı, boşsa APP_KEY (bkz. config/audit.php). */
     private function zincirAnahtari(): string
     {
-        return (string) config('denetim.zincir_anahtari');
+        return (string) config('audit.zincir_anahtari');
     }
 
     /** Çapanın imzası: uç özet ve sayı birlikte, zincir anahtarıyla. */
