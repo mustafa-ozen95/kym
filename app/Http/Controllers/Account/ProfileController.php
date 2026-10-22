@@ -56,13 +56,13 @@ class ProfileController extends Controller implements HasMiddleware
         return back()->with('status', 'Bilgileriniz kaydedildi.');
     }
 
-    public function parola(Request $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function password(Request $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         $veri = $request->validate([
             /* Mevcut parola şart: oturumu ele geçiren biri parolayı değiştirip hesabı devralamasın. */
-            'mevcut' => ['required', 'current_password'],
+            'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', PasswordRule::kural()],
-        ], attributes: ['mevcut' => 'mevcut parola', 'password' => 'yeni parola']);
+        ], attributes: ['current_password' => 'mevcut parola', 'password' => 'yeni parola']);
 
         $kullanici->update(['password' => $veri['password']]);
 

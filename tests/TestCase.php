@@ -25,7 +25,7 @@ abstract class TestCase extends BaseTestCase
      */
     protected function yetkiDagitimiAc(string $ornekRol = 'network', array $yetkiler = ['sistem.gor', 'grup.gor']): void
     {
-        config(['permissions.yonetim_yalnizca_yonetici' => false]);
+        config(['permissions.admin_only_management' => false]);
 
         Role::where('slug', $ornekRol)->first()?->update(['template' => $yetkiler]);
     }

@@ -22,7 +22,7 @@ class SecurityHeadersTest extends TestCase
     #[Test]
     public function giris_sayfasi_cerceveye_alinamaz(): void
     {
-        $yanit = $this->get(route('hizli-erisim', ['pencere' => 'giris']));
+        $yanit = $this->get(route('quick-access', ['window' => 'login']));
 
         $yanit->assertOk();
         $yanit->assertHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -50,7 +50,7 @@ class SecurityHeadersTest extends TestCase
     #[Test]
     public function oturumsuz_istegin_yonlendirmesi_de_baslik_tasir(): void
     {
-        $yanit = $this->get(route('hesap.profil'));
+        $yanit = $this->get(route('account.profile'));
 
         $yanit->assertRedirect();
         $yanit->assertHeader('X-Frame-Options', 'SAMEORIGIN');

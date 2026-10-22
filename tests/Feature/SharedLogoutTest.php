@@ -37,7 +37,7 @@ final class SharedLogoutTest extends TestCase
             'secret' => bcrypt('sir'),
             'bildirim_sirri' => 'bildirim-sirri',
             'provider' => 'users',
-            'redirect_uris' => [$kok.'/giris/merkez/geri'],
+            'redirect_uris' => [$kok.'/login/center/callback'],
             'grant_types' => ['authorization_code'],
             'revoked' => false,
         ])->save();
@@ -51,10 +51,10 @@ final class SharedLogoutTest extends TestCase
         $kullanici = User::factory()->create(['durum' => Status::Etkin, 'password' => bcrypt('Parola-123456')]);
         $once = SharedLogout::simdiMs();
 
-        $this->post(route('giris'), ['email' => $kullanici->email, 'password' => 'Parola-123456']);
+        $this->post(route('login'), ['email' => $kullanici->email, 'password' => 'Parola-123456']);
 
         $this->assertAuthenticatedAs($kullanici);
-        $this->assertGreaterThanOrEqual($once, (int) session(SharedLogout::OTURUM_ANAHTARI));
+        $this->assertGreaterThanOrEqual($once, (int) session(SharedLogout::SESSION_KEY));
     }
 
     #[Test]
@@ -64,15 +64,15 @@ final class SharedLogoutTest extends TestCase
         User::query()->whereKey($kullanici->getKey())->update(['son_cikis_ms' => 2_000]);
 
         $this->actingAs($kullanici->fresh())
-            ->withSession([SharedLogout::OTURUM_ANAHTARI => 1_000])
-            ->get(route('hesap.profil'))
-            ->assertRedirect(route('hizli-erisim', ['pencere' => 'giris']))
+            ->withSession([SharedLogout::SESSION_KEY => 1_000])
+            ->get(route('account.profile'))
+            ->assertRedirect(route('quick-access', ['window' => 'login']))
             ->assertSessionHasErrors('email');
         $this->assertGuest();
 
         $this->actingAs($kullanici->fresh())
-            ->withSession([SharedLogout::OTURUM_ANAHTARI => 3_000])
-            ->get(route('hesap.profil'))
+            ->withSession([SharedLogout::SESSION_KEY => 3_000])
+            ->get(route('account.profile'))
             ->assertOk();
     }
 
@@ -82,7 +82,7 @@ final class SharedLogoutTest extends TestCase
         Queue::fake();
         $kullanici = User::factory()->create(['durum' => Status::Etkin]);
 
-        $this->actingAs($kullanici)->post(route('cikis'))->assertRedirect();
+        $this->actingAs($kullanici)->post(route('logout'))->assertRedirect();
 
         $an = (int) $kullanici->fresh()->son_cikis_ms;
         $this->assertGreaterThan(0, $an);
@@ -98,12 +98,12 @@ final class SharedLogoutTest extends TestCase
         $istemci = OauthClient::where('name', 'EYS')->sole();
         $kullanici = User::factory()->create(['durum' => Status::Etkin]);
 
-        $this->postJson(route('api.oturum-kapandi'), [
+        $this->postJson(route('api.session-closed'), [
             'client_id' => $istemci->getKey(), 'client_secret' => 'yanlis', 'subject' => $kullanici->uuid,
         ])->assertStatus(401);
         $this->assertNull($kullanici->fresh()->son_cikis_ms);
 
-        $this->postJson(route('api.oturum-kapandi'), [
+        $this->postJson(route('api.session-closed'), [
             'client_id' => $istemci->getKey(), 'client_secret' => 'sir', 'subject' => $kullanici->uuid,
         ])->assertOk();
 
@@ -119,7 +119,7 @@ final class SharedLogoutTest extends TestCase
         $istemci->roller()->attach(Role::where('slug', 'network')->value('id'));
         $kullanici = User::factory()->create(['durum' => Status::Etkin, 'rol_id' => Role::where('slug', 'teknik')->value('id')]);
 
-        $this->postJson(route('api.oturum-kapandi'), [
+        $this->postJson(route('api.session-closed'), [
             'client_id' => $istemci->getKey(), 'client_secret' => 'sir', 'subject' => $kullanici->uuid,
         ])->assertOk();
 
@@ -134,9 +134,9 @@ final class SharedLogoutTest extends TestCase
         $kullanici = User::factory()->create(['durum' => Status::Etkin]);
         User::query()->whereKey($kullanici->getKey())->update(['son_cikis_ms' => 1_234]);
 
-        $this->postJson(route('api.kimlik-durumu'), [
-            'client_id' => $istemci->getKey(), 'client_secret' => 'sir', 'kimlikler' => [$kullanici->uuid],
-        ])->assertOk()->assertJsonPath('kimlikler.'.$kullanici->uuid.'.son_cikis', 1_234);
+        $this->postJson(route('api.identity-status'), [
+            'client_id' => $istemci->getKey(), 'client_secret' => 'sir', 'identities' => [$kullanici->uuid],
+        ])->assertOk()->assertJsonPath('identities.'.$kullanici->uuid.'.last_logout', 1_234);
     }
 
     #[Test]
@@ -151,9 +151,9 @@ final class SharedLogoutTest extends TestCase
 
         (new NotifySharedLogoutJob($sub, 5_000))->handle();
 
-        Http::assertSent(fn ($istek): bool => $istek->url() === 'https://eys.ornek.test/api/kimlik/cikis'
-            && $istek['subject'] === $sub && $istek['an'] === 5_000
-            && $istek->header('X-Kimlik-Imza')[0] === hash_hmac('sha256', 'cikis|'.$sub.'|5000', 'bildirim-sirri'));
+        Http::assertSent(fn ($istek): bool => $istek->url() === 'https://eys.ornek.test/api/identity/logout'
+            && $istek['subject'] === $sub && $istek['time'] === 5_000
+            && $istek->header('X-Identity-Signature')[0] === hash_hmac('sha256', 'logout|'.$sub.'|5000', 'bildirim-sirri'));
         Http::assertNotSent(fn ($istek): bool => str_starts_with($istek->url(), 'https://kisitli.ornek.test'));
     }
 
@@ -164,7 +164,7 @@ final class SharedLogoutTest extends TestCase
         Queue::fake();
         $kullanici = User::factory()->create(['durum' => Status::Etkin]);
 
-        $this->actingAs($kullanici)->withHeaders(['X-Oturum-Zaman-Asimi' => '1'])->post(route('cikis'))->assertRedirect();
+        $this->actingAs($kullanici)->withHeaders(['X-Oturum-Zaman-Asimi' => '1'])->post(route('logout'))->assertRedirect();
 
         $this->assertGuest();
         $this->assertNull($kullanici->fresh()->son_cikis_ms);

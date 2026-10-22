@@ -68,12 +68,12 @@ class RegistrationController extends Controller
             $kullanici->notify(new EmailVerificationNotification);
 
             return redirect()
-                ->route('hizli-erisim')
+                ->route('quick-access')
                 ->with('status', 'Hesabınız açıldı. Adresinize gönderdiğimiz bağlantıyı onaylayın; yönetici onayından sonra giriş yapabilirsiniz.');
         }
 
         return redirect()
-            ->route('hizli-erisim')
+            ->route('quick-access')
             ->with('status', 'Hesabınız açıldı. Yönetici onayladıktan sonra giriş yapabilirsiniz.');
     }
 }

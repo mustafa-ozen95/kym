@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 /**
  * Bağlı uygulama: "bu kişi bende çıkış yaptı" (bkz. SharedLogout).
  *
- * İstemci kimliği ve sırrıyla doğrulanır, kimlik-durumu gibi. Kişi bu
+ * İstemci kimliği ve sırrıyla doğrulanır, identity-status gibi. Kişi bu
  * uygulamanın kapsamında değilse yok sayılır: bir uygulama yalnız kendi
  * kullanıcısını çıkarabilir. Yanıt her durumda aynı biçimdedir; uç kimin
  * var olduğunu söylemez.
@@ -33,7 +33,7 @@ class SessionClosedController extends Controller
         $istemci = OauthClient::dogrula($veri['client_id'], $veri['client_secret']);
 
         if ($istemci === null) {
-            return response()->json(['hata' => 'İstemci doğrulanamadı.'], 401);
+            return response()->json(['error' => 'İstemci doğrulanamadı.'], 401);
         }
 
         $kullanici = User::query()->where('uuid', $veri['subject'])->first();
@@ -43,6 +43,6 @@ class SessionClosedController extends Controller
             $recorder->record('cikis', $kullanici->email.' '.$istemci->name.' üzerinden çıkış yaptı · bütün oturumlar kapandı', $kullanici);
         }
 
-        return response()->json(['sonuc' => 'alındı']);
+        return response()->json(['result' => 'received']);
     }
 }

@@ -60,21 +60,21 @@ class TwoStepController extends Controller implements HasMiddleware
 
         $ikiAdim->baslat($kullanici);
 
-        return redirect()->route('hesap.iki-adim');
+        return redirect()->route('account.two-step');
     }
 
-    public function onayla(Request $request, TwoStep $ikiAdim, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function confirm(Request $request, TwoStep $ikiAdim, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         /* Yeni anahtarı bağlamak da parola ister (bkz. store). */
         $request->validate([
-            'kod' => ['required', 'string', 'max:10'],
+            'code' => ['required', 'string', 'max:10'],
             'password' => ['required', 'current_password'],
         ]);
 
-        $kodlar = $ikiAdim->onayla($kullanici, (string) $request->string('kod'));
+        $kodlar = $ikiAdim->onayla($kullanici, (string) $request->string('code'));
 
         if ($kodlar === null) {
-            return back()->withErrors(['kod' => 'Kod doğrulanamadı; uygulamadaki güncel kodu girin.']);
+            return back()->withErrors(['code' => 'Kod doğrulanamadı; uygulamadaki güncel kodu girin.']);
         }
 
         $recorder->record('iki-adim-acildi', $kullanici->email.' ikinci adımı açtı', $kullanici);
@@ -83,7 +83,7 @@ class TwoStepController extends Controller implements HasMiddleware
          * Kodlar bir sonraki ekranda BİR KEZ gösterilir ve oturumdan silinir;
          * kalıcı olarak hiçbir yerde düz metin durmaz.
          */
-        return redirect()->route('hesap.iki-adim')->with('kurtarma_kodlari', $kodlar);
+        return redirect()->route('account.two-step')->with('kurtarma_kodlari', $kodlar);
     }
 
     public function destroy(Request $request, TwoStep $ikiAdim, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
@@ -94,6 +94,6 @@ class TwoStepController extends Controller implements HasMiddleware
         $ikiAdim->kapat($kullanici);
         $recorder->record('iki-adim-kapandi', $kullanici->email.' ikinci adımı kapattı', $kullanici);
 
-        return redirect()->route('hesap.iki-adim')->with('status', 'İkinci adım kapatıldı.');
+        return redirect()->route('account.two-step')->with('status', 'İkinci adım kapatıldı.');
     }
 }

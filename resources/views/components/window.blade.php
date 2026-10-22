@@ -1,23 +1,23 @@
-@props(['ad', 'baslik', 'acik' => false])
+@props(['name', 'title', 'open' => false])
 
 {{--
     Pencere.
 
-    ADRESİ VARDIR: ?pencere={{ $ad }} ile doğrudan açılır ve doğrulama
+    ADRESİ VARDIR: ?window={{ $name }} ile doğrudan açılır ve doğrulama
     hatasında sunucu onu açık olarak geri gönderir. Betik yüklenmemişse de
     çalışır — o zaman sayfa yenilenerek açılır, kapanır.
 --}}
-<div class="pencere" id="pencere-{{ $ad }}" data-pencere="{{ $ad }}" role="dialog" aria-modal="true"
-     aria-labelledby="pencere-{{ $ad }}-baslik" @unless ($acik) hidden @endunless>
-    <div class="pencere__zemin" data-pencere-kapat></div>
+<div class="window" id="window-{{ $name }}" data-window="{{ $name }}" role="dialog" aria-modal="true"
+     aria-labelledby="window-{{ $name }}-title" @unless ($open) hidden @endunless>
+    <div class="window__backdrop" data-window-close></div>
 
-    <div class="pencere__kutu">
-        <div class="pencere__ust">
-            <h2 id="pencere-{{ $ad }}-baslik">{{ $baslik }}</h2>
-            <a class="pencere__kapat" href="{{ route('hizli-erisim') }}" data-pencere-kapat
+    <div class="window__box">
+        <div class="window__header">
+            <h2 id="window-{{ $name }}-title">{{ $title }}</h2>
+            <a class="window__close" href="{{ route('quick-access') }}" data-window-close
                aria-label="Pencereyi kapat">×</a>
         </div>
 
-        <div class="pencere__govde">{{ $slot }}</div>
+        <div class="window__body">{{ $slot }}</div>
     </div>
 </div>

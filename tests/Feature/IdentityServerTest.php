@@ -22,7 +22,7 @@ class IdentityServerTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function istemci(array $adresler = ['https://panel-b.ornek.test/giris/merkez/geri']): Client
+    private function istemci(array $adresler = ['https://panel-b.ornek.test/login/center/callback']): Client
     {
         return app(ClientRepository::class)->createAuthorizationCodeGrantClient('Network', $adresler);
     }
@@ -95,7 +95,7 @@ class IdentityServerTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->get('/oauth/authorize?'.http_build_query([
                 'client_id' => $istemci->getKey(),
-                'redirect_uri' => 'https://panel-b.ornek.test/giris/merkez/geri',
+                'redirect_uri' => 'https://panel-b.ornek.test/login/center/callback',
                 'response_type' => 'code',
                 'code_challenge' => str_repeat('a', 43),
                 'code_challenge_method' => 'S256',
@@ -111,9 +111,9 @@ class IdentityServerTest extends TestCase
 
         $this->get('/oauth/authorize?'.http_build_query([
             'client_id' => $istemci->getKey(),
-            'redirect_uri' => 'https://panel-b.ornek.test/giris/merkez/geri',
+            'redirect_uri' => 'https://panel-b.ornek.test/login/center/callback',
             'response_type' => 'code',
-        ]))->assertRedirect(route('hizli-erisim', ['pencere' => 'giris']));
+        ]))->assertRedirect(route('quick-access', ['window' => 'login']));
     }
 
     /** Kullanıcı ucu jetonsuz açılmaz. */
@@ -126,8 +126,8 @@ class IdentityServerTest extends TestCase
     #[Test]
     public function kullanici_ucu_jeton_ister(): void
     {
-        $this->getJson('/oauth/kullanici')->assertUnauthorized();
-        $this->get('/oauth/kullanici')->assertUnauthorized();
+        $this->getJson('/oauth/userinfo')->assertUnauthorized();
+        $this->get('/oauth/userinfo')->assertUnauthorized();
     }
 
     /**
@@ -145,16 +145,16 @@ class IdentityServerTest extends TestCase
             'email' => 'yonetici@ornek.test',
         ]);
 
-        $yanit = $this->actingAs($kullanici, 'api')->getJson('/oauth/kullanici')->assertOk();
+        $yanit = $this->actingAs($kullanici, 'api')->getJson('/oauth/userinfo')->assertOk();
 
         $yanit->assertJson([
             'sub' => $kullanici->uuid,
             'name' => 'Sistem Yöneticisi',
             'email' => 'yonetici@ornek.test',
-            'rol' => 'admin',
+            'role' => 'admin',
         ]);
 
-        foreach (['durum', 'password', 'totp_secret', 'yetkiler', 'template'] as $olmamali) {
+        foreach (['durum', 'status', 'password', 'totp_secret', 'yetkiler', 'template'] as $olmamali) {
             $yanit->assertJsonMissingPath($olmamali);
         }
     }
@@ -173,24 +173,24 @@ class IdentityServerTest extends TestCase
         $kullanici = User::factory()->create(['rol_id' => null]);
 
         $this->actingAs($kullanici, 'api')
-            ->getJson('/oauth/kullanici')
+            ->getJson('/oauth/userinfo')
             ->assertOk()
-            ->assertJson(['rol' => null, 'rol_adi' => null]);
+            ->assertJson(['role' => null, 'role_name' => null]);
     }
 
     /** Jeton ömrü kısa: kimlik lazım, uzun ömürlü erişim değil. */
     #[Test]
     public function jeton_omru_kisa_tutulur(): void
     {
-        $this->assertSame(10, config('identity.jeton_dakika'));
-        $this->assertSame(1, config('identity.yenileme_gun'));
+        $this->assertSame(10, config('identity.token_minutes'));
+        $this->assertSame(1, config('identity.refresh_days'));
     }
 
     /** İstemci kaydı https olmayan adresi kabul etmez. */
     #[Test]
     public function istemci_kaydi_guvensiz_adresi_reddeder(): void
     {
-        $this->artisan('kimlik:istemci-ekle', ['--ad' => 'Kötü', '--adres' => ['http://ornek.test/geri']])
+        $this->artisan('client:add', ['--name' => 'Kötü', '--address' => ['http://ornek.test/geri']])
             ->assertFailed();
 
         $this->assertDatabaseMissing('oauth_clients', ['name' => 'Kötü']);
@@ -199,9 +199,9 @@ class IdentityServerTest extends TestCase
     #[Test]
     public function istemci_kaydi_calisir_ve_kayda_gecer(): void
     {
-        $this->artisan('kimlik:istemci-ekle', [
-            '--ad' => 'Network',
-            '--adres' => ['https://panel-b.ornek.test/giris/merkez/geri'],
+        $this->artisan('client:add', [
+            '--name' => 'Network',
+            '--address' => ['https://panel-b.ornek.test/login/center/callback'],
         ])->assertSuccessful();
 
         $this->assertDatabaseHas('oauth_clients', ['name' => 'Network']);
@@ -209,7 +209,7 @@ class IdentityServerTest extends TestCase
     }
 
     /**
-     * Askıdaki hesabın jetonu /oauth/kullanici'de 500 değil 403 alır.
+     * Askıdaki hesabın jetonu /oauth/userinfo'de 500 değil 403 alır.
      *
      * Web grubundaki hesap kapısı oturum kapatmaya çalışıyordu; jeton
      * guard'ında oturum olmadığı için istek patlıyordu.
@@ -219,8 +219,8 @@ class IdentityServerTest extends TestCase
         $kullanici = User::factory()->askida()->create();
 
         $this->actingAs($kullanici, 'api')
-            ->getJson('/oauth/kullanici')
+            ->getJson('/oauth/userinfo')
             ->assertForbidden()
-            ->assertJsonPath('kod', 'hesap_etkin_degil');
+            ->assertJsonPath('code', 'account_inactive');
     }
 }

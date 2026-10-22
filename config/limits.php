@@ -29,7 +29,7 @@ return [
      * İKİNCİ ADIM SINIRI AYRI ve KAPATILMADI (aşağıda, iki_adim): altı
      * hanelik bir kod sınırsız denemeye bırakılamaz.
      */
-    'giris' => (int) env('LIMIT_GIRIS', 0),
+    'login' => (int) env('LIMIT_LOGIN', 0),
 
     /*
      * En kısa parola uzunluğu.
@@ -39,7 +39,7 @@ return [
      * Kayıt ekranı ve konsol komutu AYNI değeri kullanır; iki yere ayrı
      * yazılsaydı biri değişince diğeri sessizce eski kalırdı.
      */
-    'parola_uzunluk' => (int) env('LIMIT_PAROLA_UZUNLUK', 8),
+    'password_length' => (int) env('LIMIT_PASSWORD_LENGTH', 8),
 
     /*
      * İkinci adım kodu denemesi.
@@ -48,8 +48,8 @@ return [
      * bulunur; ikinci adımın anlamı kalmaz. Sayaç kullanıcı başına tutulur
      * ve beş dakika sonra düşer.
      */
-    'iki_adim' => (int) env('LIMIT_IKI_ADIM', 5),
-    'kayit' => (int) env('LIMIT_KAYIT', 5),
+    'two_step' => (int) env('LIMIT_TWO_STEP', 5),
+    'register' => (int) env('LIMIT_REGISTER', 5),
 
     /*
      * Doğrulama postasının yeniden gönderimi.
@@ -59,5 +59,5 @@ return [
      * olurdu. Sayaç adres başına değil IP başına tutulur ve on dakikada
      * düşer.
      */
-    'dogrulama_postasi' => (int) env('LIMIT_DOGRULAMA_POSTASI', 3),
+    'verify_mail' => (int) env('LIMIT_VERIFY_MAIL', 3),
 ];

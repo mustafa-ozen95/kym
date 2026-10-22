@@ -10,8 +10,8 @@
  * Değer yine sunucudan geliyor; yalnızca taşıma yolu değişti.
  */
 export function init() {
-    document.querySelectorAll('[data-nokta]').forEach((nokta) => {
-        const renk = nokta.dataset.nokta;
+    document.querySelectorAll('[data-dot]').forEach((nokta) => {
+        const renk = nokta.dataset.dot;
 
         /* Sunucu doğruluyor ama biçimi burada da denetlenir: CSS'e ne
            yazdığımızı bilmek istiyoruz. */

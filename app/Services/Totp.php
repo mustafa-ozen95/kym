@@ -22,14 +22,14 @@ use Random\RandomException;
  */
 class Totp
 {
-    private const ALFABE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    private const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-    private const ADIM = 30;
+    private const STEP = 30;
 
-    private const HANE = 6;
+    private const DIGITS = 6;
 
     /** Kabul edilen komşu adım sayısı (öncesi ve sonrası). */
-    private const PENCERE = 1;
+    private const WINDOW = 1;
 
     /**
      * Yeni bir gizli anahtar (base32, 160 bit).
@@ -47,13 +47,13 @@ class Totp
         return 'otpauth://totp/'.rawurlencode($yayinci).':'.rawurlencode($hesap)
             .'?secret='.$secret
             .'&issuer='.rawurlencode($yayinci)
-            .'&algorithm=SHA1&digits='.self::HANE.'&period='.self::ADIM;
+            .'&algorithm=SHA1&digits='.self::DIGITS.'&period='.self::STEP;
     }
 
     /** Verilen anın kodu; sınama ve test için. */
     public function code(string $secret, ?int $an = null): string
     {
-        return $this->step($secret, intdiv($an ?? time(), self::ADIM));
+        return $this->step($secret, intdiv($an ?? time(), self::STEP));
     }
 
     /**
@@ -85,13 +85,13 @@ class Totp
     {
         $kod = preg_replace('/\D/', '', $kod) ?? '';
 
-        if (strlen($kod) !== self::HANE) {
+        if (strlen($kod) !== self::DIGITS) {
             return null;
         }
 
-        $simdi = intdiv($an ?? time(), self::ADIM);
+        $simdi = intdiv($an ?? time(), self::STEP);
 
-        for ($kayma = -self::PENCERE; $kayma <= self::PENCERE; $kayma++) {
+        for ($kayma = -self::WINDOW; $kayma <= self::WINDOW; $kayma++) {
             $adim = $simdi + $kayma;
 
             if (hash_equals($this->step($secret, $adim), $kod)) {
@@ -105,7 +105,7 @@ class Totp
     /** Bir adımın geçerli kalabileceği en uzun süre (saniye). */
     public function pencereSaniyesi(): int
     {
-        return self::ADIM * (self::PENCERE * 2 + 1);
+        return self::STEP * (self::WINDOW * 2 + 1);
     }
 
     /**
@@ -139,7 +139,7 @@ class Totp
             | ((ord($ozet[$kaydirma + 2]) & 0xFF) << 8)
             | (ord($ozet[$kaydirma + 3]) & 0xFF);
 
-        return str_pad((string) ($sayi % (10 ** self::HANE)), self::HANE, '0', STR_PAD_LEFT);
+        return str_pad((string) ($sayi % (10 ** self::DIGITS)), self::DIGITS, '0', STR_PAD_LEFT);
     }
 
     private function base32(string $ham): string
@@ -153,7 +153,7 @@ class Totp
         $sonuc = '';
 
         foreach (str_split($bit, 5) as $parca) {
-            $sonuc .= self::ALFABE[bindec(str_pad($parca, 5, '0', STR_PAD_RIGHT))];
+            $sonuc .= self::ALPHABET[bindec(str_pad($parca, 5, '0', STR_PAD_RIGHT))];
         }
 
         return $sonuc;
@@ -164,7 +164,7 @@ class Totp
         $bit = '';
 
         foreach (str_split(strtoupper(rtrim($base32, '='))) as $harf) {
-            $sira = strpos(self::ALFABE, $harf);
+            $sira = strpos(self::ALPHABET, $harf);
 
             if ($sira === false) {
                 continue;

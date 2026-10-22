@@ -24,7 +24,7 @@ return new class extends Migration
     {
         Schema::table('gruplar', function (Blueprint $table): void {
             $table->boolean('ayri_sayfa')->default(false)->after('not');
-            $table->string('gorunurluk', 20)->default(System::HERKES)->after('ayri_sayfa');
+            $table->string('gorunurluk', 20)->default(System::EVERYONE)->after('ayri_sayfa');
         });
     }
 

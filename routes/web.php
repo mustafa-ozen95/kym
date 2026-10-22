@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Route;
  * göreceği kutucuk ve salon düzeyinde ayarlanır; sayfanın tamamını oturum
  * arkasına alan bir ayar yoktur, gerekirse buraya `auth` eklenir.
  */
-Route::get('/', QuickAccessController::class)->name('hizli-erisim');
+Route::get('/', QuickAccessController::class)->name('quick-access');
 
 /*
  * Salonun kendi sayfası.
@@ -41,7 +41,7 @@ Route::get('/', QuickAccessController::class)->name('hizli-erisim');
  * kutucukla gidilir. Şifre sormaz — görünürlüğü kutucuklarınkiyle aynı üç
  * düzeyde ve yetkisi olmayan 404 alır (403 "böyle bir sayfa var" derdi).
  */
-Route::get('salon/{grup:anahtar}', [QuickAccessController::class, 'salon'])->name('salon');
+Route::get('group/{group:anahtar}', [QuickAccessController::class, 'group'])->name('group');
 
 /*
  * Giriş ve kayıt PENCEREDEN yapılır ama uçları normal POST'tur: betik
@@ -52,25 +52,25 @@ Route::get('salon/{grup:anahtar}', [QuickAccessController::class, 'salon'])->nam
  * çeviriyordu, yani sınırı kaldırmak isteyen kişi ucu tümüyle kapatırdı.
  */
 Route::middleware('guest')->group(function (): void {
-    Route::post('giris', [LoginController::class, 'store'])
-        ->middleware(RequestLimit::rotaIcin('giris'))
-        ->name('giris');
+    Route::post('login', [LoginController::class, 'store'])
+        ->middleware(RequestLimit::forRoute('login'))
+        ->name('login');
 
     /* İkinci adım: oturum HENÜZ açılmadan, oturumda bekleyen kimlikle. */
-    Route::post('giris/dogrulama', [LoginController::class, 'dogrula'])
-        ->middleware(RequestLimit::rotaIcin('giris'))
-        ->name('giris.dogrulama');
+    Route::post('login/verify', [LoginController::class, 'verify'])
+        ->middleware(RequestLimit::forRoute('login'))
+        ->name('login.verify');
 
-    Route::post('kayit', [RegistrationController::class, 'store'])
-        ->middleware(RequestLimit::rotaIcin('kayit'))
-        ->name('kayit');
+    Route::post('register', [RegistrationController::class, 'store'])
+        ->middleware(RequestLimit::forRoute('register'))
+        ->name('register');
 
     /*
      * Yeni bağlantı isteği. Oturumsuz — doğrulanmamış kullanıcı giriş
      * yapamıyor; oturum şartı konsaydı kilitli kalırdı.
      */
-    Route::post('eposta/dogrulama', [EmailVerificationController::class, 'yenidenGonder'])
-        ->name('dogrulama.gonder');
+    Route::post('email/verification', [EmailVerificationController::class, 'resend'])
+        ->name('verification.resend');
 });
 
 /*
@@ -83,27 +83,27 @@ Route::middleware('guest')->group(function (): void {
  * Adı `verification.verify` olmak ZORUNDA: imzalı adresi üreten Laravel'in
  * kendi bildirimi bu adı arıyor.
  */
-Route::get('eposta/dogrula/{id}/{hash}', [EmailVerificationController::class, 'dogrula'])
+Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
 
 /*
  * Hesap ayarları: herkes yalnızca KENDİ hesabını yönetir.
  */
-Route::middleware('auth')->prefix('hesap')->name('hesap.')->group(function (): void {
-    Route::get('profil', [ProfileController::class, 'index'])->name('profil');
-    Route::put('profil', [ProfileController::class, 'update'])->name('profil.kaydet');
-    Route::put('parola', [ProfileController::class, 'parola'])->name('parola');
+Route::middleware('auth')->prefix('account')->name('account.')->group(function (): void {
+    Route::get('profile', [ProfileController::class, 'index'])->name('profile');
+    Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('password', [ProfileController::class, 'password'])->name('password');
 
-    Route::get('iki-adim', [TwoStepController::class, 'index'])->name('iki-adim');
-    Route::post('iki-adim', [TwoStepController::class, 'store'])->name('iki-adim.baslat');
-    Route::post('iki-adim/onay', [TwoStepController::class, 'onayla'])->name('iki-adim.onay');
-    Route::delete('iki-adim', [TwoStepController::class, 'destroy'])->name('iki-adim.kapat');
+    Route::get('two-step', [TwoStepController::class, 'index'])->name('two-step');
+    Route::post('two-step', [TwoStepController::class, 'store'])->name('two-step.start');
+    Route::post('two-step/confirm', [TwoStepController::class, 'confirm'])->name('two-step.confirm');
+    Route::delete('two-step', [TwoStepController::class, 'destroy'])->name('two-step.disable');
 });
 
-Route::post('cikis', [LoginController::class, 'destroy'])
+Route::post('logout', [LoginController::class, 'destroy'])
     ->middleware('auth')
-    ->name('cikis');
+    ->name('logout');
 
 /*
  * Yönetim.
@@ -116,40 +116,40 @@ Route::post('cikis', [LoginController::class, 'destroy'])
  * bölüm göstermek için. Yetkiler controller'da durur ki yeni bir uç
  * eklendiğinde grubun izni ona kendiliğinden yetmesin.
  */
-Route::middleware(['auth', 'can:yonet'])->prefix('yonetim')->name('yonetim.')->group(function (): void {
-    Route::get('sistemler', [SystemController::class, 'index'])->name('sistemler');
-    Route::post('sistemler', [SystemController::class, 'store'])->name('sistemler.ekle');
-    /* Sıra ucu {sistem} rotasından ÖNCE: yoksa "sira" bir uuid sanılırdı. */
-    Route::put('sistemler/sira/{grup:anahtar}', [SystemController::class, 'sirala'])->name('sistemler.sirala');
-    Route::put('sistemler/{sistem}', [SystemController::class, 'update'])->name('sistemler.guncelle');
-    Route::delete('sistemler/{sistem}', [SystemController::class, 'destroy'])->name('sistemler.sil');
+Route::middleware(['auth', 'can:yonet'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::get('systems', [SystemController::class, 'index'])->name('systems');
+    Route::post('systems', [SystemController::class, 'store'])->name('systems.store');
+    /* Sıra ucu {system} rotasından ÖNCE: yoksa "sira" bir uuid sanılırdı. */
+    Route::put('systems/order/{group:anahtar}', [SystemController::class, 'reorder'])->name('systems.reorder');
+    Route::put('systems/{system}', [SystemController::class, 'update'])->name('systems.update');
+    Route::delete('systems/{system}', [SystemController::class, 'destroy'])->name('systems.destroy');
 
     /* Salonlar: kutucukların dizildiği bölümler; bazıları kendi sayfası. */
-    Route::get('salonlar', [GroupController::class, 'index'])->name('gruplar');
-    Route::post('salonlar', [GroupController::class, 'store'])->name('gruplar.ekle');
-    Route::put('salonlar/sira', [GroupController::class, 'sirala'])->name('gruplar.sirala');
-    Route::put('salonlar/{grup}', [GroupController::class, 'update'])->name('gruplar.guncelle');
-    Route::delete('salonlar/{grup}', [GroupController::class, 'destroy'])->name('gruplar.sil');
+    Route::get('groups', [GroupController::class, 'index'])->name('groups');
+    Route::post('groups', [GroupController::class, 'store'])->name('groups.store');
+    Route::put('groups/order', [GroupController::class, 'reorder'])->name('groups.reorder');
+    Route::put('groups/{group}', [GroupController::class, 'update'])->name('groups.update');
+    Route::delete('groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
 
-    Route::get('ayarlar', [SettingController::class, 'index'])->name('ayarlar');
-    Route::put('ayarlar', [SettingController::class, 'update'])->name('ayarlar.kaydet');
-    Route::put('ayarlar/posta', [SettingController::class, 'posta'])->name('ayarlar.posta');
+    Route::get('settings', [SettingController::class, 'index'])->name('settings');
+    Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::put('settings/mail', [SettingController::class, 'mail'])->name('settings.mail');
 
     /* Deneme iletisi dışarıya çıkar; sınırlı, çünkü her basış gerçek posta gönderir. */
-    Route::post('ayarlar/posta/deneme', [SettingController::class, 'postaSina'])
+    Route::post('settings/mail/test', [SettingController::class, 'mailTest'])
         ->middleware('throttle:5,1')
-        ->name('ayarlar.posta.deneme');
+        ->name('settings.mail.test');
 
-    Route::get('kullanicilar', [UserController::class, 'index'])->name('kullanicilar');
-    Route::post('kullanicilar', [UserController::class, 'store'])->name('kullanicilar.ekle');
-    Route::put('kullanicilar/{user}', [UserController::class, 'update'])->name('kullanicilar.guncelle');
-    Route::delete('kullanicilar/{user}', [UserController::class, 'destroy'])->name('kullanicilar.sil');
+    Route::get('users', [UserController::class, 'index'])->name('users');
+    Route::post('users', [UserController::class, 'store'])->name('users.store');
+    Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
     /* Kişiye özel istisnalar: rolün şablonunun üstüne yazar. */
-    Route::get('kullanicilar/{user}/yetkiler', [UserPermissionController::class, 'show'])
-        ->name('kullanicilar.yetkiler');
-    Route::put('kullanicilar/{user}/yetkiler', [UserPermissionController::class, 'update'])
-        ->name('kullanicilar.yetkiler.kaydet');
+    Route::get('users/{user}/permissions', [UserPermissionController::class, 'show'])
+        ->name('users.permissions');
+    Route::put('users/{user}/permissions', [UserPermissionController::class, 'update'])
+        ->name('users.permissions.update');
 
     /*
      * Bağlı uygulamalar: yeni bir siteyi merkeze bağlamanın TEK yeri.
@@ -157,16 +157,16 @@ Route::middleware(['auth', 'can:yonet'])->prefix('yonetim')->name('yonetim.')->g
      * "Sil" yok, "kaldır" var: kayıt silinirse denetim kaydındaki "şu
      * uygulama şu kullanıcıyı sordu" satırları sahipsiz kalır.
      */
-    Route::get('uygulamalar', [ClientController::class, 'index'])->name('istemciler');
-    Route::post('uygulamalar', [ClientController::class, 'store'])->name('istemciler.ekle');
+    Route::get('clients', [ClientController::class, 'index'])->name('clients');
+    Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
 
     /* Projeye konacak tek dosya; sır İÇİNDE DEĞİL, .env'den okunur. */
-    Route::get('uygulamalar/{istemci}/kurulum', [ClientController::class, 'kurulumDosyasi'])
-        ->name('istemciler.kurulum');
-    Route::put('uygulamalar/{istemci}', [ClientController::class, 'update'])->name('istemciler.guncelle');
-    Route::put('uygulamalar/{istemci}/sir', [ClientController::class, 'sirYenile'])->name('istemciler.sir');
-    Route::delete('uygulamalar/{istemci}', [ClientController::class, 'destroy'])->name('istemciler.kaldir');
-    Route::delete('uygulamalar/{istemci}/kalici', [ClientController::class, 'kaliciSil'])->name('istemciler.kalici-sil');
+    Route::get('clients/{client}/setup', [ClientController::class, 'setupFile'])
+        ->name('clients.setup');
+    Route::put('clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+    Route::put('clients/{client}/secret', [ClientController::class, 'regenerateSecret'])->name('clients.secret');
+    Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.revoke');
+    Route::delete('clients/{client}/purge', [ClientController::class, 'purge'])->name('clients.purge');
 
     /*
      * Roller, Ayarlar'ın bir SEKMESİDİR (bkz. SettingSections): kullanıcı onu
@@ -180,34 +180,34 @@ Route::middleware(['auth', 'can:yonet'])->prefix('yonetim')->name('yonetim.')->g
      * SERTİFİKA. Tur sunucuda koşar; panel isteği bırakır ve sonucu okur
      * (bkz. CertificateController).
      */
-    Route::get('ayarlar/sertifika', [CertificateController::class, 'index'])->name('sertifika');
-    Route::post('ayarlar/sertifika/tur', [CertificateController::class, 'baslat'])->name('sertifika.baslat');
-    Route::post('ayarlar/sertifika/onayla', [CertificateController::class, 'tamamla'])->name('sertifika.tamamla');
+    Route::get('settings/certificate', [CertificateController::class, 'index'])->name('certificate');
+    Route::post('settings/certificate/run', [CertificateController::class, 'run'])->name('certificate.run');
+    Route::post('settings/certificate/confirm', [CertificateController::class, 'confirm'])->name('certificate.confirm');
 
     /*
      * VERİTABANI. Panel bağlantıyı sınar ve taşıma isteğini bırakır; kopya
      * yeniden başlatmada, merkez kapalıyken yapılır (bkz. DatabaseController
      * ve ConnectionFile).
      */
-    Route::get('ayarlar/veritabani', [DatabaseController::class, 'index'])->name('veritabani');
-    Route::post('ayarlar/veritabani/sina', [DatabaseController::class, 'sina'])->name('veritabani.sina');
-    Route::post('ayarlar/veritabani/tasi', [DatabaseController::class, 'tasi'])->name('veritabani.tasi');
+    Route::get('settings/database', [DatabaseController::class, 'index'])->name('database');
+    Route::post('settings/database/test', [DatabaseController::class, 'test'])->name('database.test');
+    Route::post('settings/database/migrate', [DatabaseController::class, 'migrate'])->name('database.migrate');
 
     /*
      * GÜNCELLEME. Yalnızca bakar: çalışan sürüm GitHub'daki son başarılı
      * derlemeyle karşılaştırılır (bkz. UpdateCheck).
      */
-    Route::get('ayarlar/guncelleme', [UpdateController::class, 'index'])->name('guncelleme');
-    Route::post('ayarlar/guncelleme', [UpdateController::class, 'denetle'])->name('guncelleme.denetle');
+    Route::get('settings/update', [UpdateController::class, 'index'])->name('update');
+    Route::post('settings/update', [UpdateController::class, 'check'])->name('update.check');
 
-    Route::get('ayarlar/kayitlar', [AuditController::class, 'index'])->name('kayitlar');
-    Route::post('ayarlar/kayitlar/dogrula', [AuditController::class, 'dogrula'])->name('kayitlar.dogrula');
+    Route::get('settings/logs', [AuditController::class, 'index'])->name('logs');
+    Route::post('settings/logs/verify', [AuditController::class, 'verify'])->name('logs.verify');
 
-    Route::get('ayarlar/roller', [RoleController::class, 'index'])->name('roller');
-    Route::post('ayarlar/roller', [RoleController::class, 'store'])->name('roller.ekle');
-    Route::get('ayarlar/roller/{rol}', [RoleController::class, 'show'])->name('roller.goster');
-    Route::put('ayarlar/roller/{rol}', [RoleController::class, 'update'])->name('roller.guncelle');
-    Route::delete('ayarlar/roller/{rol}', [RoleController::class, 'destroy'])->name('roller.sil');
+    Route::get('settings/roles', [RoleController::class, 'index'])->name('roles');
+    Route::post('settings/roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::get('settings/roles/{role}', [RoleController::class, 'show'])->name('roles.show');
+    Route::put('settings/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+    Route::delete('settings/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
 });
 
 /*
@@ -217,7 +217,7 @@ Route::middleware(['auth', 'can:yonet'])->prefix('yonetim')->name('yonetim.')->g
  * sayfasına yönlendirir, nginx `auth_request` ise 2xx/401/403 dışındaki her
  * yanıtı 500 sayar. Kimlik kontrolü controller içinde yapılır ve 401 döner.
  */
-Route::middleware('web')->get('kapi/{anahtar}', GateController::class)->name('kapi');
+Route::middleware('web')->get('gate/{anahtar}', GateController::class)->name('gate');
 
 /*
  * Kimlik uçları.
@@ -226,5 +226,5 @@ Route::middleware('web')->get('kapi/{anahtar}', GateController::class)->name('ka
  * tamamlar: istemci kurulumu için keşif belgesi, giriş sonrası kimliği okumak
  * için kullanıcı ucu.
  */
-Route::get('.well-known/openid-configuration', DiscoveryController::class)->name('kimlik.kesif');
-Route::get('oauth/kullanici', UserInfoController::class)->name('kimlik.kullanici');
+Route::get('.well-known/openid-configuration', DiscoveryController::class)->name('identity.discovery');
+Route::get('oauth/userinfo', UserInfoController::class)->name('identity.userinfo');

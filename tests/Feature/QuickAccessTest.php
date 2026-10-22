@@ -51,7 +51,7 @@ class QuickAccessTest extends TestCase
 
         $govde = $this->get('/')->assertOk()->getContent();
 
-        $this->assertStringContainsString('id="sistem-verisi"', $govde);
+        $this->assertStringContainsString('id="system-data"', $govde);
         $this->assertStringContainsString('CRM', $govde);
         $this->assertStringContainsString('https:\/\/crm.test', $govde);
     }
@@ -121,13 +121,13 @@ class QuickAccessTest extends TestCase
     {
         $salon = Group::create(['ad' => 'Salon A', 'anahtar' => 'salon-a', 'ayri_sayfa' => true]);
 
-        $this->get(route('salon', $salon->anahtar))
+        $this->get(route('group', $salon->anahtar))
             ->assertOk()
-            ->assertSee('class="baglanti geri"', false)
-            ->assertSee(route('hizli-erisim'), false);
+            ->assertSee('class="link back"', false)
+            ->assertSee(route('quick-access'), false);
 
-        $this->get(route('hizli-erisim'))
+        $this->get(route('quick-access'))
             ->assertOk()
-            ->assertDontSee('class="baglanti geri"', false);
+            ->assertDontSee('class="link back"', false);
     }
 }

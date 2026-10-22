@@ -16,12 +16,12 @@ use Illuminate\Support\Facades\Gate;
 class AdminSections
 {
     /** @var list<array{label: string, route: string, yetki: ?string}> */
-    private const BOLUMLER = [
-        ['label' => 'Sistemler', 'route' => 'yonetim.sistemler', 'yetki' => 'sistem.gor'],
-        ['label' => 'Salonlar', 'route' => 'yonetim.gruplar', 'yetki' => 'grup.gor'],
-        ['label' => 'Kullanıcılar', 'route' => 'yonetim.kullanicilar', 'yetki' => 'kullanici.gor'],
-        ['label' => 'Uygulamalar', 'route' => 'yonetim.istemciler', 'yetki' => 'istemci.gor'],
-        ['label' => 'Hızlı Erişim', 'route' => 'hizli-erisim', 'yetki' => null],
+    private const SECTIONS = [
+        ['label' => 'Sistemler', 'route' => 'admin.systems', 'yetki' => 'sistem.gor'],
+        ['label' => 'Salonlar', 'route' => 'admin.groups', 'yetki' => 'grup.gor'],
+        ['label' => 'Kullanıcılar', 'route' => 'admin.users', 'yetki' => 'kullanici.gor'],
+        ['label' => 'Uygulamalar', 'route' => 'admin.clients', 'yetki' => 'istemci.gor'],
+        ['label' => 'Hızlı Erişim', 'route' => 'quick-access', 'yetki' => null],
         /*
          * Ayarlar sonda: panellerin ortak standardı.
          *
@@ -30,7 +30,7 @@ class AdminSections
          * sekmelerden herhangi biri: yalnızca rol yetkisi olan biri de
          * Ayarlar'a girebilmeli.
          */
-        ['label' => 'Ayarlar', 'route' => 'yonetim.ayarlar', 'yetki' => 'ayarlar-serit'],
+        ['label' => 'Ayarlar', 'route' => 'admin.settings', 'yetki' => 'ayarlar-serit'],
     ];
 
     /**
@@ -42,7 +42,7 @@ class AdminSections
     {
         $liste = [];
 
-        foreach (self::BOLUMLER as $bolum) {
+        foreach (self::SECTIONS as $bolum) {
             if ($this->gorebilirMi($bolum['yetki'])) {
                 $liste[] = [
                     'label' => $bolum['label'],
@@ -84,7 +84,7 @@ class AdminSections
     public function ilkAdres(): ?string
     {
         foreach ($this->gorunen() as $bolum) {
-            if ($bolum['route'] !== 'hizli-erisim') {
+            if ($bolum['route'] !== 'quick-access') {
                 return $bolum['url'];
             }
         }

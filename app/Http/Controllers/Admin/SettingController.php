@@ -44,10 +44,10 @@ class SettingController extends Controller implements HasMiddleware
     {
         return [
             new Middleware(['auth', 'can:ayar.gor'], only: ['index']),
-            new Middleware(['auth', 'can:ayar.duzenle'], only: ['update', 'posta']),
+            new Middleware(['auth', 'can:ayar.duzenle'], only: ['update', 'mail']),
 
             /* Deneme iletisi DIŞARIYA çıkar: ayrı yetki (bkz. config/permissions.php). */
-            new Middleware(['auth', 'can:ayar.posta-dene'], only: ['postaSina']),
+            new Middleware(['auth', 'can:ayar.posta-dene'], only: ['mailTest']),
         ];
     }
 
@@ -58,8 +58,8 @@ class SettingController extends Controller implements HasMiddleware
 
         return view('admin.settings', [
             'serit' => $this->bolumler->serit(),
-            'yoneticiZorunlu' => Setting::bool(TwoStepRequired::YONETICI),
-            'kullaniciZorunlu' => Setting::bool(TwoStepRequired::KULLANICI),
+            'yoneticiZorunlu' => Setting::bool(TwoStepRequired::ADMIN),
+            'kullaniciZorunlu' => Setting::bool(TwoStepRequired::USER),
             'hazirKullanici' => User::whereNotNull('totp_confirmed_at')->count(),
             'toplamKullanici' => User::count(),
 
@@ -103,13 +103,13 @@ class SettingController extends Controller implements HasMiddleware
      * Parola ekrana HİÇ basılmaz; boş bırakıldığında eskisi korunur (bkz.
      * MailSettings::kaydet).
      */
-    public function posta(MailSettingRequest $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function mail(MailSettingRequest $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         $this->posta->kaydet($request->validated());
 
         $recorder->record(
             'ayar-degisti',
-            'Posta ayarları güncellendi: '.$request->string('sunucu').':'.$request->string('port'),
+            'Posta ayarları güncellendi: '.$request->string('server').':'.$request->string('port'),
             $kullanici,
         );
 
@@ -124,7 +124,7 @@ class SettingController extends Controller implements HasMiddleware
      * alıcı isteği yapan kişinin KENDİ adresidir — bu uç, başkasına posta
      * göndermenin yolu olmamalı.
      */
-    public function postaSina(ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function mailTest(ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         [$oldu, $mesaj] = $this->posta->sina($kullanici->email);
 
@@ -135,8 +135,8 @@ class SettingController extends Controller implements HasMiddleware
 
     public function update(Request $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
-        $yonetici = $request->boolean('iki_adim_zorunlu');
-        $herkes = $request->boolean('iki_adim_zorunlu_kullanici');
+        $yonetici = $request->boolean('two_step_required_admins');
+        $herkes = $request->boolean('two_step_required_users');
 
         /*
          * Kendini kilitlemeyi ENGELLE.
@@ -149,7 +149,7 @@ class SettingController extends Controller implements HasMiddleware
             return back()->with('error', 'Önce kendi ikinci adımınızı kurun; yoksa bu ayarı açar açmaz siz de giremezsiniz.');
         }
 
-        $eposta = $request->boolean('eposta_dogrulama_zorunlu');
+        $eposta = $request->boolean('email_verification_required');
 
         /*
          * POSTA GİTMİYORKEN ZORUNLULUK AÇILMAZ.
@@ -163,20 +163,20 @@ class SettingController extends Controller implements HasMiddleware
             return back()->with('error', 'Önce posta ayarlarını kaydedip deneme iletisi gönderin; postanın gittiği kanıtlanmadan doğrulama zorunlu tutulamaz.');
         }
 
-        Setting::yaz(TwoStepRequired::YONETICI, $yonetici);
-        Setting::yaz(TwoStepRequired::KULLANICI, $herkes);
-        Setting::yaz(EmailVerification::AYAR, $eposta);
-        Setting::yaz(RegistrationOpen::AYAR, $request->boolean('kayit_acik'));
+        Setting::yaz(TwoStepRequired::ADMIN, $yonetici);
+        Setting::yaz(TwoStepRequired::USER, $herkes);
+        Setting::yaz(EmailVerification::SETTING, $eposta);
+        Setting::yaz(RegistrationOpen::SETTING, $request->boolean('registration_open'));
 
         /*
          * Saat dilimi listeden GEÇERLİ olmalı: serbest metin kabul edilseydi
          * yazım hatası bütün tarihleri sessizce UTC'ye düşürürdü.
          */
-        $dilim = (string) $request->input('saat_dilimi', '');
+        $dilim = (string) $request->input('timezone', '');
         $dilimDegisti = false;
 
         if ($dilim !== '' && TimeZone::gecerliMi($dilim) && $dilim !== TimeZone::secili()) {
-            Setting::yaz(TimeZone::AYAR, $dilim);
+            Setting::yaz(TimeZone::SETTING, $dilim);
             TimeZone::uygula();
             $dilimDegisti = true;
         }
@@ -186,7 +186,7 @@ class SettingController extends Controller implements HasMiddleware
             'İkinci adım zorunluluğu — yöneticiler: '.($yonetici ? 'açık' : 'kapalı')
                 .', tüm kullanıcılar: '.($herkes ? 'açık' : 'kapalı')
                 .'; e-posta doğrulama: '.($eposta ? 'zorunlu' : 'isteğe bağlı')
-                .'; kayıt: '.($request->boolean('kayit_acik') ? 'açık' : 'kapalı')
+                .'; kayıt: '.($request->boolean('registration_open') ? 'açık' : 'kapalı')
                 .($dilimDegisti ? '; saat dilimi: '.$dilim : ''),
             $kullanici,
         );

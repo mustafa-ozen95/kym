@@ -53,7 +53,7 @@ final class AuditTest extends TestCase
         /** @var OauthClient $istemci */
         $istemci = app(ClientRepository::class)->createAuthorizationCodeGrantClient(
             'NYS',
-            ['https://panel-b.ornek.test/giris/merkez/geri'],
+            ['https://panel-b.ornek.test/login/center/callback'],
         );
 
         /*
@@ -67,7 +67,7 @@ final class AuditTest extends TestCase
         $jeton = new AccessToken(['oauth_client_id' => $istemci->getKey()]);
 
         $this->actingAs($kullanici->withAccessToken($jeton), 'api')
-            ->getJson(route('kimlik.kullanici'))
+            ->getJson(route('identity.userinfo'))
             ->assertOk()
             ->assertJsonPath('email', $kullanici->email);
 
@@ -169,7 +169,7 @@ final class AuditTest extends TestCase
     {
         [$recorder] = $this->ucKayit();
 
-        DB::table('ayarlar')->where('anahtar', ActivityRecorder::CAPA)
+        DB::table('ayarlar')->where('anahtar', ActivityRecorder::ANCHOR)
             ->update(['deger' => json_encode(['head' => null, 'n' => 0, 'mac' => 'x'])]);
 
         $this->assertFalse($recorder->verify()['ok']);
@@ -195,11 +195,11 @@ final class AuditTest extends TestCase
     public function test_capasiz_eski_zincir_dogrulanir_ve_sonra_capalanir(): void
     {
         [$recorder, , , $son] = $this->ucKayit();
-        DB::table('ayarlar')->where('anahtar', ActivityRecorder::CAPA)->delete();
+        DB::table('ayarlar')->where('anahtar', ActivityRecorder::ANCHOR)->delete();
 
         /* İlk doğrulama çapayı kurar. */
         $this->assertTrue($recorder->verify()['ok']);
-        $this->assertDatabaseHas('ayarlar', ['anahtar' => ActivityRecorder::CAPA]);
+        $this->assertDatabaseHas('ayarlar', ['anahtar' => ActivityRecorder::ANCHOR]);
 
         /* Kurulduktan SONRAki kesme görülür. */
         ActivityLog::where('id', $son->id)->delete();
@@ -209,7 +209,7 @@ final class AuditTest extends TestCase
     public function test_capasiz_eski_zincire_kayit_eklenince_capa_kurulur(): void
     {
         [$recorder] = $this->ucKayit();
-        DB::table('ayarlar')->where('anahtar', ActivityRecorder::CAPA)->delete();
+        DB::table('ayarlar')->where('anahtar', ActivityRecorder::ANCHOR)->delete();
 
         $yeni = $recorder->record('deneme', 'capadan sonra', $this->kullanici('admin'));
         $this->assertTrue($recorder->verify()['ok']);
@@ -227,7 +227,7 @@ final class AuditTest extends TestCase
         app(ActivityRecorder::class)->record('deneme', 'gorunur olmali', $yonetici);
 
         $this->actingAs($yonetici)
-            ->get(route('yonetim.kayitlar'))
+            ->get(route('admin.logs'))
             ->assertOk()
             ->assertSee('gorunur olmali')
             ->assertSee('Denetim kaydı');
@@ -242,7 +242,7 @@ final class AuditTest extends TestCase
         $recorder->record('ikinci-eylem', 'baska satir', $yonetici);
 
         $this->actingAs($yonetici)
-            ->get(route('yonetim.kayitlar', ['eylem' => 'birinci-eylem']))
+            ->get(route('admin.logs', ['action' => 'birinci-eylem']))
             ->assertOk()
             ->assertSee('aranan satir')
             ->assertDontSee('baska satir');
@@ -253,7 +253,7 @@ final class AuditTest extends TestCase
         $yonetici = $this->kullanici('admin');
 
         $this->actingAs($yonetici)
-            ->post(route('yonetim.kayitlar.dogrula'))
+            ->post(route('admin.logs.verify'))
             ->assertRedirect()
             ->assertSessionHas('status');
 
@@ -269,7 +269,7 @@ final class AuditTest extends TestCase
         ActivityLog::where('id', $hedef->id)->update(['ozet' => 'degistirildi']);
 
         $this->actingAs($yonetici)
-            ->post(route('yonetim.kayitlar.dogrula'))
+            ->post(route('admin.logs.verify'))
             ->assertSessionHas('error');
     }
 
@@ -278,7 +278,7 @@ final class AuditTest extends TestCase
     public function test_kayit_gormek_yetki_ister(): void
     {
         $this->actingAs($this->kullanici('network'))
-            ->get(route('yonetim.kayitlar'))
+            ->get(route('admin.logs'))
             ->assertForbidden();
     }
 
@@ -296,11 +296,11 @@ final class AuditTest extends TestCase
         $kullanici = $this->kullanici('muhasebe');
 
         UserPermission::create([
-            'user_id' => $kullanici->id, 'yetenek' => 'kayit.gor', 'etki' => UserPermission::IZIN,
+            'user_id' => $kullanici->id, 'yetenek' => 'kayit.gor', 'etki' => UserPermission::ALLOW,
         ]);
 
-        $this->actingAs($kullanici)->get(route('yonetim.kayitlar'))->assertOk();
-        $this->actingAs($kullanici)->post(route('yonetim.kayitlar.dogrula'))->assertForbidden();
+        $this->actingAs($kullanici)->get(route('admin.logs'))->assertOk();
+        $this->actingAs($kullanici)->post(route('admin.logs.verify'))->assertForbidden();
     }
 
     /**
@@ -310,10 +310,10 @@ final class AuditTest extends TestCase
      */
     public function test_silme_ucu_yoktur(): void
     {
-        $this->assertNull(Route::getRoutes()->getByName('yonetim.kayitlar.sil'));
+        $this->assertNull(Route::getRoutes()->getByName('admin.logs.destroy'));
 
         $this->actingAs($this->kullanici('admin'))
-            ->delete(route('yonetim.kayitlar'))
+            ->delete(route('admin.logs'))
             ->assertStatus(405);
     }
 
@@ -328,7 +328,7 @@ final class AuditTest extends TestCase
     public function test_app_key_degisince_zincir_ayri_anahtarla_dogrulanmaya_devam_eder(): void
     {
         $eskiAnahtar = (string) config('app.key');
-        config(['audit.zincir_anahtari' => $eskiAnahtar]);
+        config(['audit.chain_key' => $eskiAnahtar]);
 
         $kullanici = $this->kullanici('admin');
         $recorder = app(ActivityRecorder::class);
@@ -346,7 +346,7 @@ final class AuditTest extends TestCase
         $this->assertTrue(app(ActivityRecorder::class)->verify()['ok']);
 
         // Zincir anahtarı değişirse (ya da APP_KEY'e düşerse) imzalar tutmaz.
-        config(['audit.zincir_anahtari' => (string) config('app.key')]);
+        config(['audit.chain_key' => (string) config('app.key')]);
         $this->assertFalse(app(ActivityRecorder::class)->verify()['ok']);
     }
 }

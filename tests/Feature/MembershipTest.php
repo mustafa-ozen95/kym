@@ -27,7 +27,7 @@ class MembershipTest extends TestCase
     #[Test]
     public function kayit_olan_hesap_beklemede_dogar_ve_iceri_alinmaz(): void
     {
-        $yanit = $this->post(route('kayit'), [
+        $yanit = $this->post(route('register'), [
             'name' => 'Yeni Kişi',
             'email' => 'yeni@ornek.test',
             'password' => 'cok-gizli-1234',
@@ -40,7 +40,7 @@ class MembershipTest extends TestCase
         /* Kayıt olan kullanıcı içeri ALINMAZ; alınsaydı onay kuralı ekranda yalan söylerdi. */
         $this->assertGuest();
 
-        $yanit->assertRedirect(route('hizli-erisim'))
+        $yanit->assertRedirect(route('quick-access'))
             ->assertSessionHas('status', fn (string $m): bool => str_contains($m, 'onayladıktan sonra'));
     }
 
@@ -58,7 +58,7 @@ class MembershipTest extends TestCase
             'password' => Hash::make('parola-1234'),
         ]);
 
-        $this->post(route('giris'), ['email' => 'bekleyen@ornek.test', 'password' => 'parola-1234'])
+        $this->post(route('login'), ['email' => 'bekleyen@ornek.test', 'password' => 'parola-1234'])
             ->assertSessionHasErrors(['email' => 'Onay bekliyor. Yönetici hesabınızı etkinleştirdiğinde girebilirsiniz.']);
 
         $this->assertGuest();
@@ -72,7 +72,7 @@ class MembershipTest extends TestCase
             'password' => Hash::make('parola-1234'),
         ]);
 
-        $this->post(route('giris'), ['email' => 'askida@ornek.test', 'password' => 'parola-1234']);
+        $this->post(route('login'), ['email' => 'askida@ornek.test', 'password' => 'parola-1234']);
 
         $this->assertGuest();
     }
@@ -85,8 +85,8 @@ class MembershipTest extends TestCase
             'password' => Hash::make('parola-1234'),
         ]);
 
-        $this->post(route('giris'), ['email' => 'etkin@ornek.test', 'password' => 'parola-1234'])
-            ->assertRedirect(route('hizli-erisim'));
+        $this->post(route('login'), ['email' => 'etkin@ornek.test', 'password' => 'parola-1234'])
+            ->assertRedirect(route('quick-access'));
 
         $this->assertAuthenticatedAs($kullanici);
         $this->assertNotNull($kullanici->fresh()->son_giris_at, 'Son giriş zamanı yazılmalı.');
@@ -101,7 +101,7 @@ class MembershipTest extends TestCase
     {
         User::factory()->create(['email' => 'etkin@ornek.test', 'password' => Hash::make('parola-1234')]);
 
-        $this->post(route('giris'), ['email' => 'etkin@ornek.test', 'password' => 'yanlis'])
+        $this->post(route('login'), ['email' => 'etkin@ornek.test', 'password' => 'yanlis'])
             ->assertSessionHasErrors('email');
 
         $this->assertGuest();
@@ -113,7 +113,7 @@ class MembershipTest extends TestCase
      * Sabit yazılsaydı görsel test koşusu ortada takılır, testler kodla
      * ilgisiz biçimde düşerdi.
      *
-     * Rotadaki "dakikada kaç istek" sayısı (`limits.giris`) ile "art arda kaç
+     * Rotadaki "dakikada kaç istek" sayısı (`limits.login`) ile "art arda kaç
      * yanlış parola" ayrı anahtarlardır; bu sınama kilidi sınar.
      */
     #[Test]
@@ -124,10 +124,10 @@ class MembershipTest extends TestCase
         User::factory()->create(['email' => 'etkin@ornek.test', 'password' => Hash::make('parola-1234')]);
 
         for ($i = 0; $i < 3; $i++) {
-            $this->post(route('giris'), ['email' => 'etkin@ornek.test', 'password' => 'yanlis']);
+            $this->post(route('login'), ['email' => 'etkin@ornek.test', 'password' => 'yanlis']);
         }
 
-        $this->post(route('giris'), ['email' => 'etkin@ornek.test', 'password' => 'parola-1234'])
+        $this->post(route('login'), ['email' => 'etkin@ornek.test', 'password' => 'parola-1234'])
             ->assertSessionHasErrors('email');
 
         $this->assertStringContainsString(
@@ -154,11 +154,11 @@ class MembershipTest extends TestCase
     #[Test]
     public function uretim_sinir_varsayilanlari(): void
     {
-        $this->assertSame(0, config('limits.giris'));
+        $this->assertSame(0, config('limits.login'));
         $this->assertSame(0, config('auth.max_attempts'));
-        $this->assertSame(5, config('limits.iki_adim'));
-        $this->assertSame(5, config('limits.kayit'));
-        $this->assertSame(8, config('limits.parola_uzunluk'));
+        $this->assertSame(5, config('limits.two_step'));
+        $this->assertSame(5, config('limits.register'));
+        $this->assertSame(8, config('limits.password_length'));
     }
 
     #[Test]
@@ -166,7 +166,7 @@ class MembershipTest extends TestCase
     {
         $kullanici = User::factory()->create();
 
-        $this->actingAs($kullanici)->post(route('cikis'))->assertRedirect(route('hizli-erisim'));
+        $this->actingAs($kullanici)->post(route('logout'))->assertRedirect(route('quick-access'));
 
         $this->assertGuest();
         $this->assertDatabaseHas('activity_logs', ['eylem' => 'cikis', 'user_id' => $kullanici->id]);
@@ -210,13 +210,13 @@ class MembershipTest extends TestCase
     {
         $kullanici = User::factory()->create(['durum' => Status::Etkin]);
 
-        $this->actingAs($kullanici)->get(route('hesap.profil'))->assertOk();
+        $this->actingAs($kullanici)->get(route('account.profile'))->assertOk();
 
         $kullanici->forceFill(['durum' => Status::Askida])->save();
 
         $this->actingAs($kullanici)
-            ->get(route('hesap.profil'))
-            ->assertRedirect(route('hizli-erisim', ['pencere' => 'giris']));
+            ->get(route('account.profile'))
+            ->assertRedirect(route('quick-access', ['window' => 'login']));
 
         $this->assertGuest();
     }

@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
          */
         Event::listen(Login::class, function (): void {
             if (request()->hasSession()) {
-                request()->session()->put(SharedLogout::OTURUM_ANAHTARI, SharedLogout::simdiMs());
+                request()->session()->put(SharedLogout::SESSION_KEY, SharedLogout::simdiMs());
             }
         });
 
@@ -85,8 +85,8 @@ class AppServiceProvider extends ServiceProvider
          * Jeton ömürleri KISA: bize kimlik lazım, uzun ömürlü API erişimi
          * değil. Uzun ömürlü bir jeton, çalındığında uzun süre geçerli olur.
          */
-        Passport::tokensExpireIn(now()->addMinutes((int) config('identity.jeton_dakika')));
-        Passport::refreshTokensExpireIn(now()->addDays((int) config('identity.yenileme_gun')));
+        Passport::tokensExpireIn(now()->addMinutes((int) config('identity.token_minutes')));
+        Passport::refreshTokensExpireIn(now()->addDays((int) config('identity.refresh_days')));
 
         Passport::authorizationView(fn ($parametreler) => view('oauth.consent', $parametreler));
 

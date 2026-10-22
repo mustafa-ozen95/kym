@@ -8,7 +8,7 @@ import QRCode from 'qrcode';
  * ele geçiren herkes geçerli kod üretebilir.
  */
 export function init() {
-    const tuval = document.getElementById('totp-karekod');
+    const tuval = document.getElementById('totp-qr');
 
     if (!tuval?.dataset.uri) {
         return;

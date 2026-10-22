@@ -20,7 +20,7 @@ use Throwable;
 trait NotifiesClients
 {
     /** Yanıt beklemesi (saniye). Proje kapalıysa kuyruk burada tıkanmamalı. */
-    private const ZAMAN_ASIMI = 5;
+    private const TIMEOUT = 5;
 
     /**
      * @param  callable(OauthClient): bool|null  $suzgec
@@ -75,8 +75,8 @@ trait NotifiesClients
     private function gonder(string $adres, array $govde, string $imza, string $istemciAdi): void
     {
         try {
-            $yanit = Http::timeout(self::ZAMAN_ASIMI)
-                ->withHeaders(['X-Kimlik-Imza' => $imza])
+            $yanit = Http::timeout(self::TIMEOUT)
+                ->withHeaders(['X-Identity-Signature' => $imza])
                 ->acceptJson()
                 ->post($adres, $govde);
 

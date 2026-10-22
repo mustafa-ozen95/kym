@@ -84,7 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * kendisine ait olduğunu hiç kanıtlamadığı hâlde iddia "true" gitmeye
      * devam eder ve bağlı projede o adrese karşılık gelen, henüz hiçbir
      * kimliğe bağlanmamış hesap onun olurdu. Kurulumdan sonra
-     * `kimlik:yonetici-ekle` ile açılan hesap tam olarak böyledir — ilk SSO
+     * `admin:add` ile açılan hesap tam olarak böyledir — ilk SSO
      * girişine kadar bağsız durur.
      *
      * KURAL MODELDE, denetleyicide DEĞİL: adres üç ayrı yerden

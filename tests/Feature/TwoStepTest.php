@@ -43,11 +43,11 @@ class TwoStepTest extends TestCase
     {
         $this->kurulu();
 
-        $this->post(route('giris'), ['email' => 'iki@ornek.test', 'password' => 'parola-1234'])
-            ->assertRedirect(route('hizli-erisim', ['pencere' => 'dogrulama']));
+        $this->post(route('login'), ['email' => 'iki@ornek.test', 'password' => 'parola-1234'])
+            ->assertRedirect(route('quick-access', ['window' => 'verify']));
 
         $this->assertGuest();
-        $this->assertNotNull(session(LoginController::BEKLEYEN), 'Kimlik oturumda beklemeli.');
+        $this->assertNotNull(session(LoginController::PENDING), 'Kimlik oturumda beklemeli.');
     }
 
     #[Test]
@@ -55,22 +55,22 @@ class TwoStepTest extends TestCase
     {
         $kullanici = $this->kurulu();
 
-        $this->post(route('giris'), ['email' => 'iki@ornek.test', 'password' => 'parola-1234']);
+        $this->post(route('login'), ['email' => 'iki@ornek.test', 'password' => 'parola-1234']);
 
-        $this->post(route('giris.dogrulama'), ['kod' => $this->kod($kullanici)])
-            ->assertRedirect(route('hizli-erisim'));
+        $this->post(route('login.verify'), ['code' => $this->kod($kullanici)])
+            ->assertRedirect(route('quick-access'));
 
         $this->assertAuthenticatedAs($kullanici);
-        $this->assertNull(session(LoginController::BEKLEYEN), 'Bekleyen kimlik temizlenmeli.');
+        $this->assertNull(session(LoginController::PENDING), 'Bekleyen kimlik temizlenmeli.');
     }
 
     #[Test]
     public function yanlis_kod_oturum_acmaz(): void
     {
         $this->kurulu();
-        $this->post(route('giris'), ['email' => 'iki@ornek.test', 'password' => 'parola-1234']);
+        $this->post(route('login'), ['email' => 'iki@ornek.test', 'password' => 'parola-1234']);
 
-        $this->post(route('giris.dogrulama'), ['kod' => '000000'])->assertSessionHasErrors('kod');
+        $this->post(route('login.verify'), ['code' => '000000'])->assertSessionHasErrors('code');
 
         $this->assertGuest();
     }
@@ -79,8 +79,8 @@ class TwoStepTest extends TestCase
     #[Test]
     public function bekleyen_kimlik_olmadan_kod_ise_yaramaz(): void
     {
-        $this->post(route('giris.dogrulama'), ['kod' => '123456'])
-            ->assertRedirect(route('hizli-erisim', ['pencere' => 'giris']));
+        $this->post(route('login.verify'), ['code' => '123456'])
+            ->assertRedirect(route('quick-access', ['window' => 'login']));
 
         $this->assertGuest();
     }
@@ -93,16 +93,16 @@ class TwoStepTest extends TestCase
     #[Test]
     public function kod_denemesi_sinirlanir(): void
     {
-        config(['limits.iki_adim' => 3]);
+        config(['limits.two_step' => 3]);
 
         $kullanici = $this->kurulu();
-        $this->post(route('giris'), ['email' => 'iki@ornek.test', 'password' => 'parola-1234']);
+        $this->post(route('login'), ['email' => 'iki@ornek.test', 'password' => 'parola-1234']);
 
         for ($i = 0; $i < 3; $i++) {
-            $this->post(route('giris.dogrulama'), ['kod' => '000000']);
+            $this->post(route('login.verify'), ['code' => '000000']);
         }
 
-        $this->post(route('giris.dogrulama'), ['kod' => $this->kod($kullanici)]);
+        $this->post(route('login.verify'), ['code' => $this->kod($kullanici)]);
 
         /* Sınıra takılan istek DOĞRU kodla bile geçmemeli. */
         $this->assertGuest();
@@ -124,14 +124,14 @@ class TwoStepTest extends TestCase
         $this->assertNotNull($kodlar);
         $kurtarma = $kodlar[0];
 
-        $this->post(route('giris'), ['email' => 'kurtar@ornek.test', 'password' => 'parola-1234']);
-        $this->post(route('giris.dogrulama'), ['kod' => $kurtarma])->assertRedirect(route('hizli-erisim'));
+        $this->post(route('login'), ['email' => 'kurtar@ornek.test', 'password' => 'parola-1234']);
+        $this->post(route('login.verify'), ['code' => $kurtarma])->assertRedirect(route('quick-access'));
         $this->assertAuthenticated();
 
         /* Aynı kod ikinci kez geçmemeli. */
-        $this->post(route('cikis'));
-        $this->post(route('giris'), ['email' => 'kurtar@ornek.test', 'password' => 'parola-1234']);
-        $this->post(route('giris.dogrulama'), ['kod' => $kurtarma])->assertSessionHasErrors('kod');
+        $this->post(route('logout'));
+        $this->post(route('login'), ['email' => 'kurtar@ornek.test', 'password' => 'parola-1234']);
+        $this->post(route('login.verify'), ['code' => $kurtarma])->assertSessionHasErrors('code');
 
         $this->assertGuest();
         $this->assertCount(9, $kullanici->fresh()->totp_recovery, 'Kullanılan kod listeden düşmeli.');
@@ -143,7 +143,7 @@ class TwoStepTest extends TestCase
     {
         $kullanici = User::factory()->create();
 
-        $this->actingAs($kullanici)->post(route('hesap.iki-adim.baslat'), ['password' => 'parola-1234'])->assertRedirect();
+        $this->actingAs($kullanici)->post(route('account.two-step.start'), ['password' => 'parola-1234'])->assertRedirect();
 
         $kullanici->refresh();
 
@@ -156,20 +156,20 @@ class TwoStepTest extends TestCase
     {
         $kullanici = User::factory()->create();
 
-        $this->actingAs($kullanici)->post(route('hesap.iki-adim.baslat'), ['password' => 'parola-1234']);
+        $this->actingAs($kullanici)->post(route('account.two-step.start'), ['password' => 'parola-1234']);
         $kullanici->refresh();
 
         $this->actingAs($kullanici)
-            ->post(route('hesap.iki-adim.onay'), ['kod' => $this->kod($kullanici), 'password' => 'parola-1234'])
+            ->post(route('account.two-step.confirm'), ['code' => $this->kod($kullanici), 'password' => 'parola-1234'])
             ->assertSessionHas('kurtarma_kodlari');
 
         $this->assertTrue($kullanici->fresh()->ikiAdimliMi());
 
         /* Kodlar İLK ziyarette görünür... */
-        $this->actingAs($kullanici)->get(route('hesap.iki-adim'))->assertOk()->assertSee('Kurtarma kodları');
+        $this->actingAs($kullanici)->get(route('account.two-step'))->assertOk()->assertSee('Kurtarma kodları');
 
         /* ...ikincisinde yok: bir kez gösterilir, sunucuda düz metni durmaz. */
-        $this->actingAs($kullanici)->get(route('hesap.iki-adim'))->assertOk()->assertDontSee('Kurtarma kodları');
+        $this->actingAs($kullanici)->get(route('account.two-step'))->assertOk()->assertDontSee('Kurtarma kodları');
     }
 
     /** Kapatmak parola ister: oturumu ele geçiren biri kapatamasın. */
@@ -178,12 +178,12 @@ class TwoStepTest extends TestCase
     {
         $kullanici = $this->kurulu();
 
-        $this->actingAs($kullanici)->delete(route('hesap.iki-adim.kapat'), ['password' => 'yanlis'])
+        $this->actingAs($kullanici)->delete(route('account.two-step.disable'), ['password' => 'yanlis'])
             ->assertSessionHasErrors('password');
 
         $this->assertTrue($kullanici->fresh()->ikiAdimliMi());
 
-        $this->actingAs($kullanici)->delete(route('hesap.iki-adim.kapat'), ['password' => 'parola-1234']);
+        $this->actingAs($kullanici)->delete(route('account.two-step.disable'), ['password' => 'parola-1234']);
 
         $this->assertFalse($kullanici->fresh()->ikiAdimliMi());
     }
@@ -216,11 +216,11 @@ class TwoStepTest extends TestCase
         $eskiSir = $kullanici->totp_secret;
 
         $this->actingAs($kullanici)
-            ->post(route('hesap.iki-adim.baslat'))
+            ->post(route('account.two-step.start'))
             ->assertSessionHasErrors('password');
 
         $this->actingAs($kullanici)
-            ->post(route('hesap.iki-adim.baslat'), ['password' => 'yanlis-parola'])
+            ->post(route('account.two-step.start'), ['password' => 'yanlis-parola'])
             ->assertSessionHasErrors('password');
 
         $kullanici->refresh();
@@ -233,11 +233,11 @@ class TwoStepTest extends TestCase
     {
         $kullanici = User::factory()->create();
 
-        $this->actingAs($kullanici)->post(route('hesap.iki-adim.baslat'), ['password' => 'parola-1234']);
+        $this->actingAs($kullanici)->post(route('account.two-step.start'), ['password' => 'parola-1234']);
         $kullanici->refresh();
 
         $this->actingAs($kullanici)
-            ->post(route('hesap.iki-adim.onay'), ['kod' => $this->kod($kullanici)])
+            ->post(route('account.two-step.confirm'), ['code' => $this->kod($kullanici)])
             ->assertSessionHasErrors('password');
 
         $this->assertFalse($kullanici->fresh()->ikiAdimliMi());

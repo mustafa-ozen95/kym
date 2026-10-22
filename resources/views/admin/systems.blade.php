@@ -4,8 +4,8 @@
             <x-ui.page-head title="Sistemler"
                             subtitle="Hızlı Erişim sayfasındaki kutucuklar. Buradan eklenir, düzenlenir ve kaldırılır.">
                 <x-slot:actions>
-                    <a href="{{ route('yonetim.sistemler', ['pencere' => 'ekle']) }}"
-                       class="btn btn--primary btn--sm" data-modal-open="sistem-ekle">Yeni kutucuk</a>
+                    <a href="{{ route('admin.systems', ['window' => 'add']) }}"
+                       class="btn btn--primary btn--sm" data-modal-open="system-add">Yeni kutucuk</a>
                 </x-slot:actions>
             </x-ui.page-head>
 
@@ -26,7 +26,7 @@
                     doğardı.
                 --}}
                 <x-ui.collapsible :title="$salon->ad"
-                               :subtitle="($salon->ayri_sayfa ? 'kendi sayfası /salon/'.$salon->anahtar : 'ana sayfada')
+                               :subtitle="($salon->ayri_sayfa ? 'kendi sayfası /group/'.$salon->anahtar : 'ana sayfada')
                                    . ' · ' . ($salonaGore[$salon->anahtar] ?? collect())->count() . ' kutucuk'"
                                :open="$loop->first">
                     <table class="table">
@@ -42,19 +42,19 @@
                         </thead>
                         {{--
                             Satırlar SÜRÜKLENEREK sıralanır; sıra sayısı elle
-                            yazılmaz. `data-sira` bırakma anında yeni dizilimin
+                            yazılmaz. `data-order` bırakma anında yeni dizilimin
                             gönderileceği adresi taşır.
                         --}}
-                        <tbody data-sira="{{ route('yonetim.sistemler.sirala', $salon->anahtar) }}"
-                               data-sira-alan="sira">
+                        <tbody data-order="{{ route('admin.systems.reorder', $salon->anahtar) }}"
+                               data-order-field="order">
                             @forelse ($salonaGore[$salon->anahtar] ?? [] as $sistem)
-                                <tr draggable="true" data-sira-kimlik="{{ $sistem->uuid }}">
+                                <tr draggable="true" data-order-id="{{ $sistem->uuid }}">
                                     <td>
                                         {{-- Tutamak ayrı bir hedef değil, "buradan sürüklenir" ipucu. --}}
-                                        <span class="tutamak" aria-hidden="true">⣿</span>
+                                        <span class="handle" aria-hidden="true">⣿</span>
 
                                         {{-- Renk, kaydı tanımanın en hızlı yolu; kartın ışığı da bu. --}}
-                                        <span class="renk-noktasi" data-nokta="{{ $sistem->renk }}"></span>{{ $sistem->ad }}
+                                        <span class="color-dot" data-dot="{{ $sistem->renk }}"></span>{{ $sistem->ad }}
                                         @if ($sistem->kod)
                                             <span class="text-sm text-muted mono">{{ $sistem->kod }}</span>
                                         @endif
@@ -80,10 +80,10 @@
                                     </td>
                                     <td>
                                         <div class="row-actions row--end">
-                                            <a href="{{ route('yonetim.sistemler', ['pencere' => 'duzenle', 'kayit' => $sistem->uuid]) }}"
+                                            <a href="{{ route('admin.systems', ['window' => 'edit', 'record' => $sistem->uuid]) }}"
                                                class="btn btn--sm">Düzenle</a>
 
-                                            <x-ui.delete-form :action="route('yonetim.sistemler.sil', $sistem)"
+                                            <x-ui.delete-form :action="route('admin.systems.destroy', $sistem)"
                                                               confirm="{{ $sistem->ad }} kutucuğu sayfadan kaldırılacak."
                                                               title="Kutucuğu sil"
                                                               verify="{{ $sistem->ad }}" />
@@ -131,10 +131,10 @@
                                 <tr>
                                     <td>
                                         {{-- Tutamak ayrı bir hedef değil, "buradan sürüklenir" ipucu. --}}
-                                        <span class="tutamak" aria-hidden="true">⣿</span>
+                                        <span class="handle" aria-hidden="true">⣿</span>
 
                                         {{-- Renk, kaydı tanımanın en hızlı yolu; kartın ışığı da bu. --}}
-                                        <span class="renk-noktasi" data-nokta="{{ $sistem->renk }}"></span>{{ $sistem->ad }}
+                                        <span class="color-dot" data-dot="{{ $sistem->renk }}"></span>{{ $sistem->ad }}
                                         @if ($sistem->kod)
                                             <span class="text-sm text-muted mono">{{ $sistem->kod }}</span>
                                         @endif
@@ -160,10 +160,10 @@
                                     </td>
                                     <td>
                                         <div class="row-actions row--end">
-                                            <a href="{{ route('yonetim.sistemler', ['pencere' => 'duzenle', 'kayit' => $sistem->uuid]) }}"
+                                            <a href="{{ route('admin.systems', ['window' => 'edit', 'record' => $sistem->uuid]) }}"
                                                class="btn btn--sm">Düzenle</a>
 
-                                            <x-ui.delete-form :action="route('yonetim.sistemler.sil', $sistem)"
+                                            <x-ui.delete-form :action="route('admin.systems.destroy', $sistem)"
                                                               confirm="{{ $sistem->ad }} kutucuğu sayfadan kaldırılacak."
                                                               title="Kutucuğu sil"
                                                               verify="{{ $sistem->ad }}" />

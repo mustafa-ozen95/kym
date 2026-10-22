@@ -32,31 +32,31 @@ use Illuminate\Http\Request;
 class IdentityStatusController extends Controller
 {
     /** Tek istekte sorulabilecek kimlik sayısı. */
-    private const SINIR = 500;
+    private const LIMIT = 500;
 
     public function __invoke(Request $request): JsonResponse
     {
         $veri = $request->validate([
             'client_id' => ['required', 'string', 'max:64'],
             'client_secret' => ['required', 'string', 'max:255'],
-            'kimlikler' => ['required', 'array', 'min:1', 'max:'.self::SINIR],
-            'kimlikler.*' => ['string', 'uuid'],
+            'identities' => ['required', 'array', 'min:1', 'max:'.self::LIMIT],
+            'identities.*' => ['string', 'uuid'],
         ]);
 
         $istemci = OauthClient::dogrula($veri['client_id'], $veri['client_secret']);
 
         if ($istemci === null) {
-            return response()->json(['hata' => 'İstemci doğrulanamadı.'], 401);
+            return response()->json(['error' => 'İstemci doğrulanamadı.'], 401);
         }
 
         $kullanicilar = User::with('rol')
-            ->whereIn('uuid', $veri['kimlikler'])
+            ->whereIn('uuid', $veri['identities'])
             ->get()
             ->keyBy('uuid');
 
         $yanit = [];
 
-        foreach ($veri['kimlikler'] as $uuid) {
+        foreach ($veri['identities'] as $uuid) {
             $kullanici = $kullanicilar->get($uuid);
 
             /*
@@ -84,18 +84,18 @@ class IdentityStatusController extends Controller
              * değişmez: askıya alınan kişiyi proje yine tanıyabilmeli.
              */
             $yanit[$uuid] = $kullanici === null
-                ? ['durum' => 'yok', 'rol' => null]
+                ? ['status' => 'missing', 'role' => null]
                 : [
-                    'durum' => $kullanici->durum->value,
-                    'girebilir' => $istemci->erisebilirMi($kullanici),
+                    'status' => $kullanici->durum->value,
+                    'can_enter' => $istemci->erisebilirMi($kullanici),
                     /* Ortak çıkış: bildirim kaybolursa paneller bu anı buradan öğrenir (bkz. SharedLogout). */
-                    'son_cikis' => $kullanici->son_cikis_ms,
+                    'last_logout' => $kullanici->son_cikis_ms,
                     ...($istemci->kapsamdaMi($kullanici)
-                        ? ['rol' => $kullanici->rol?->slug, 'eposta' => $kullanici->email]
-                        : ['rol' => null]),
+                        ? ['role' => $kullanici->rol?->slug, 'email' => $kullanici->email]
+                        : ['role' => null]),
                 ];
         }
 
-        return response()->json(['kimlikler' => $yanit]);
+        return response()->json(['identities' => $yanit]);
     }
 }

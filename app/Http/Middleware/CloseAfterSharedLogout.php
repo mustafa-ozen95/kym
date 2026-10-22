@@ -33,7 +33,7 @@ class CloseAfterSharedLogout
         $request->session()->regenerateToken();
 
         return redirect()
-            ->route('hizli-erisim', ['pencere' => 'giris'])
+            ->route('quick-access', ['window' => 'login'])
             ->withErrors(['email' => 'Bağlı bir uygulamadan çıkış yapıldığı için oturumunuz kapatıldı.']);
     }
 }

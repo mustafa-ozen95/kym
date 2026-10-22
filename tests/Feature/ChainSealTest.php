@@ -40,7 +40,7 @@ final class ChainSealTest extends TestCase
         ActivityLog::whereKey($s[1]->id)->update(['ozet' => 'iki (eski bozukluk)']);
         $this->assertFalse($recorder->verify()['ok']);
 
-        $this->artisan('kimlik:zincir-muhurle', ['--onay' => true])->assertSuccessful();
+        $this->artisan('identity:chain-seal', ['--confirm' => true])->assertSuccessful();
 
         $sonuc = $recorder->verify();
         $this->assertTrue($sonuc['ok'], json_encode($sonuc));
@@ -79,9 +79,9 @@ final class ChainSealTest extends TestCase
         ActivityLog::whereKey($s[1]->id)->update(['ozet' => 'iki (eski bozukluk)']);
         $recorder->muhurle('test');
 
-        $deger = json_decode((string) DB::table('ayarlar')->where('anahtar', ActivityRecorder::MUHUR)->value('deger'), true);
+        $deger = json_decode((string) DB::table('ayarlar')->where('anahtar', ActivityRecorder::SEAL)->value('deger'), true);
         $deger['govde'] = str_replace('test', 'oynanmis', $deger['govde']);
-        DB::table('ayarlar')->where('anahtar', ActivityRecorder::MUHUR)->update(['deger' => json_encode($deger)]);
+        DB::table('ayarlar')->where('anahtar', ActivityRecorder::SEAL)->update(['deger' => json_encode($deger)]);
 
         $this->assertSame($s[1]->id, $recorder->verify()['broken_id']);
     }

@@ -38,10 +38,10 @@ use RuntimeException;
  */
 class ConnectionFile
 {
-    public const DURUMLAR = ['tasinacak', 'tasiniyor', 'deneniyor', 'etkin', 'basarisiz'];
+    public const STATES = ['tasinacak', 'tasiniyor', 'deneniyor', 'etkin', 'basarisiz'];
 
     /** Bağlantının alanları; başka alan okunmaz, yazılmaz. */
-    public const ALANLAR = ['host', 'port', 'database', 'username', 'password'];
+    public const FIELDS = ['host', 'port', 'database', 'username', 'password'];
 
     private string $dizin;
 
@@ -89,7 +89,7 @@ class ConnectionFile
         $yol = $this->dizin.'/state.json';
         $veri = is_file($yol) ? json_decode((string) file_get_contents($yol), true) : null;
 
-        return is_array($veri) && in_array($veri['durum'] ?? null, self::DURUMLAR, true) ? $veri : null;
+        return is_array($veri) && in_array($veri['durum'] ?? null, self::STATES, true) ? $veri : null;
     }
 
     public function asama(): ?string
@@ -108,7 +108,7 @@ class ConnectionFile
      */
     public function asamaYaz(string $durum, ?string $aciklama = null, array $ek = []): void
     {
-        if (! in_array($durum, self::DURUMLAR, true)) {
+        if (! in_array($durum, self::STATES, true)) {
             throw new RuntimeException('Bilinmeyen aşama: '.$durum);
         }
 

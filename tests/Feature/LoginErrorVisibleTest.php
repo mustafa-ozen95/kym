@@ -12,7 +12,7 @@ use Tests\TestCase;
 /**
  * Giriş hatası KULLANICIYA GÖRÜNÜR.
  *
- * Pencere yalnızca adresteki ?pencere= ile açılsaydı yetmezdi: kullanıcı
+ * Pencere yalnızca adresteki ?window= ile açılsaydı yetmezdi: kullanıcı
  * pencereyi bağlantıdan açtığında adreste o yazmaz (betik açar); giriş
  * başarısız olunca Laravel "geri" döndürür ve pencere kapalı gelirdi. Ör.
  * "Hesabınız beklemede" iletisi ekranda hiç görünmez, kullanıcı neden
@@ -30,7 +30,7 @@ final class LoginErrorVisibleTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        $yanit = $this->from(route('hizli-erisim'))->post(route('giris'), [
+        $yanit = $this->from(route('quick-access'))->post(route('login'), [
             'email' => $kullanici->email,
             'password' => 'parola-12345',
         ]);
@@ -39,7 +39,7 @@ final class LoginErrorVisibleTest extends TestCase
         $this->assertGuest();
 
         /* Dönülen sayfada pencere AÇIK ve sebep yazılı olmalı. */
-        $sayfa = $this->followingRedirects()->from(route('hizli-erisim'))->post(route('giris'), [
+        $sayfa = $this->followingRedirects()->from(route('quick-access'))->post(route('login'), [
             'email' => $kullanici->email,
             'password' => 'parola-12345',
         ]);
@@ -51,7 +51,7 @@ final class LoginErrorVisibleTest extends TestCase
          */
         $sayfa->assertOk()
             ->assertSee('Yönetici hesabınızı etkinleştirdiğinde girebilirsiniz.')
-            ->assertDontSee('aria-labelledby="pencere-giris-baslik" hidden', false);
+            ->assertDontSee('aria-labelledby="window-login-title" hidden', false);
     }
 
     public function test_yanlis_parolada_da_pencere_acik_gelir(): void
@@ -62,10 +62,10 @@ final class LoginErrorVisibleTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        $this->followingRedirects()->from(route('hizli-erisim'))
-            ->post(route('giris'), ['email' => $kullanici->email, 'password' => 'yanlis'])
+        $this->followingRedirects()->from(route('quick-access'))
+            ->post(route('login'), ['email' => $kullanici->email, 'password' => 'yanlis'])
             ->assertOk()
             ->assertSee('E-posta veya parola hatalı.')
-            ->assertDontSee('aria-labelledby="pencere-giris-baslik" hidden', false);
+            ->assertDontSee('aria-labelledby="window-login-title" hidden', false);
     }
 }

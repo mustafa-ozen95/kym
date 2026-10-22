@@ -52,8 +52,8 @@ class AdminTest extends TestCase
     #[Test]
     public function oturumsuz_kullanici_girise_yonlendirilir(): void
     {
-        $this->get(route('yonetim.sistemler'))
-            ->assertRedirect(route('hizli-erisim', ['pencere' => 'giris']));
+        $this->get(route('admin.systems'))
+            ->assertRedirect(route('quick-access', ['window' => 'login']));
     }
 
     /**
@@ -65,7 +65,7 @@ class AdminTest extends TestCase
     public function yetkisiz_kullanici_yonetime_giremez(): void
     {
         $this->actingAs(User::factory()->rol('muhasebe')->create())
-            ->get(route('yonetim.sistemler'))
+            ->get(route('admin.systems'))
             ->assertForbidden();
     }
 
@@ -78,10 +78,10 @@ class AdminTest extends TestCase
 
         $network = User::factory()->rol('network')->create();
 
-        $this->actingAs($network)->get(route('yonetim.sistemler'))->assertOk();
+        $this->actingAs($network)->get(route('admin.systems'))->assertOk();
 
         $this->actingAs($network)
-            ->post(route('yonetim.sistemler.ekle'), $this->veri())
+            ->post(route('admin.systems.store'), $this->veri())
             ->assertForbidden();
     }
 
@@ -96,11 +96,11 @@ class AdminTest extends TestCase
     {
         $teknik = User::factory()->rol('teknik')->create();
 
-        $this->actingAs($teknik)->get(route('yonetim.sistemler'))->assertForbidden();
-        $this->actingAs($teknik)->get(route('yonetim.gruplar'))->assertForbidden();
+        $this->actingAs($teknik)->get(route('admin.systems'))->assertForbidden();
+        $this->actingAs($teknik)->get(route('admin.groups'))->assertForbidden();
 
         $this->actingAs($teknik)
-            ->post(route('yonetim.sistemler.ekle'), $this->veri())
+            ->post(route('admin.systems.store'), $this->veri())
             ->assertForbidden();
     }
 
@@ -108,8 +108,8 @@ class AdminTest extends TestCase
     public function yonetici_kutucuk_ekleyebilir(): void
     {
         $this->actingAs($this->yonetici())
-            ->post(route('yonetim.sistemler.ekle'), $this->veri())
-            ->assertRedirect(route('yonetim.sistemler'));
+            ->post(route('admin.systems.store'), $this->veri())
+            ->assertRedirect(route('admin.systems'));
 
         $this->assertDatabaseHas('sistemler', ['ad' => 'Yeni Sistem', 'grup' => 'ic', 'etkin' => true]);
         $this->assertDatabaseHas('activity_logs', ['eylem' => 'sistem-eklendi']);
@@ -118,9 +118,9 @@ class AdminTest extends TestCase
     #[Test]
     public function eklenen_kutucuk_hizli_erisim_sayfasinda_gorunur(): void
     {
-        $this->actingAs($this->yonetici())->post(route('yonetim.sistemler.ekle'), $this->veri());
+        $this->actingAs($this->yonetici())->post(route('admin.systems.store'), $this->veri());
 
-        $this->get(route('hizli-erisim'))->assertOk()->assertSee('Yeni Sistem');
+        $this->get(route('quick-access'))->assertOk()->assertSee('Yeni Sistem');
     }
 
     #[Test]
@@ -129,18 +129,18 @@ class AdminTest extends TestCase
         $sistem = System::create($this->veri(['etkin' => true]));
 
         $this->actingAs($this->yonetici())
-            ->delete(route('yonetim.sistemler.sil', $sistem))
-            ->assertRedirect(route('yonetim.sistemler'));
+            ->delete(route('admin.systems.destroy', $sistem))
+            ->assertRedirect(route('admin.systems'));
 
         /*
          * Ad artık SİLİNDİ BİLDİRİMİNDE geçiyor; "sayfada hiç görünmesin"
          * demek bildirimi de yasaklamak olurdu. Asıl soru kutucuğun ÇİZİM
          * VERİSİNDEN düşüp düşmediği — sayfa onu o listeden çiziyor.
          */
-        $govde = $this->get(route('hizli-erisim'))->assertOk()->getContent();
-        $this->assertStringContainsString('id="sistem-verisi"', $govde, 'Cizim verisi bulunamadi; asagidaki kontrol bosa duserdi.');
+        $govde = $this->get(route('quick-access'))->assertOk()->getContent();
+        $this->assertStringContainsString('id="system-data"', $govde, 'Cizim verisi bulunamadi; asagidaki kontrol bosa duserdi.');
 
-        $veri = str($govde)->after('id="sistem-verisi"')->before('</script>')->toString();
+        $veri = str($govde)->after('id="system-data"')->before('</script>')->toString();
 
         $this->assertStringNotContainsString('Yeni Sistem', $veri);
         $this->assertDatabaseHas('activity_logs', ['eylem' => 'sistem-silindi']);
@@ -156,7 +156,7 @@ class AdminTest extends TestCase
     public function taninmayan_grup_ve_serit_reddedilir(): void
     {
         $this->actingAs($this->yonetici())
-            ->post(route('yonetim.sistemler.ekle'), $this->veri(['grup' => 'olmayan', 'serit' => 's99']))
+            ->post(route('admin.systems.store'), $this->veri(['grup' => 'olmayan', 'serit' => 's99']))
             ->assertSessionHasErrors(['grup', 'serit']);
     }
 
@@ -164,7 +164,7 @@ class AdminTest extends TestCase
     public function yan_baglanti_yarim_birakilamaz(): void
     {
         $this->actingAs($this->yonetici())
-            ->post(route('yonetim.sistemler.ekle'), $this->veri(['yan_etiket' => 'Yedekler']))
+            ->post(route('admin.systems.store'), $this->veri(['yan_etiket' => 'Yedekler']))
             ->assertSessionHasErrors('yan_adres');
     }
 
@@ -174,9 +174,9 @@ class AdminTest extends TestCase
         $bekleyen = User::factory()->beklemede()->create();
 
         $this->actingAs($this->yonetici())
-            ->put(route('yonetim.kullanicilar.guncelle', $bekleyen), [
-                'durum' => Status::Etkin->value,
-                'rol' => Role::firstWhere('slug', 'muhasebe')->uuid,
+            ->put(route('admin.users.update', $bekleyen), [
+                'status' => Status::Etkin->value,
+                'role' => Role::firstWhere('slug', 'muhasebe')->uuid,
             ])
             ->assertRedirect();
 
@@ -196,9 +196,9 @@ class AdminTest extends TestCase
         $yonetici = $this->yonetici();
 
         $this->actingAs($yonetici)
-            ->put(route('yonetim.kullanicilar.guncelle', $yonetici), [
-                'durum' => Status::Askida->value,
-                'rol' => Role::firstWhere('slug', 'muhasebe')->uuid,
+            ->put(route('admin.users.update', $yonetici), [
+                'status' => Status::Askida->value,
+                'role' => Role::firstWhere('slug', 'muhasebe')->uuid,
             ]);
 
         $yonetici->refresh();
@@ -212,13 +212,13 @@ class AdminTest extends TestCase
     public function yonetim_baglantisi_yalnizca_yetkilide_gorunur(): void
     {
         $this->actingAs($this->yonetici())
-            ->get(route('hizli-erisim'))
-            ->assertSee(route('yonetim.sistemler'), escape: false);
+            ->get(route('quick-access'))
+            ->assertSee(route('admin.systems'), escape: false);
 
         /* Hiçbir yönetim yetkisi olmayan bağlantıyı hiç görmez. */
         $this->actingAs(User::factory()->rol('muhasebe')->create())
-            ->get(route('hizli-erisim'))
-            ->assertDontSee(route('yonetim.sistemler'), escape: false);
+            ->get(route('quick-access'))
+            ->assertDontSee(route('admin.systems'), escape: false);
     }
 
     /**
@@ -231,7 +231,7 @@ class AdminTest extends TestCase
     public function iki_adimsiz_yonetici_de_yonetime_girebilir(): void
     {
         $this->actingAs(User::factory()->yonetici()->create())
-            ->get(route('yonetim.sistemler'))
+            ->get(route('admin.systems'))
             ->assertOk();
     }
 
@@ -240,7 +240,7 @@ class AdminTest extends TestCase
     public function iki_adim_ekrani_her_kullaniciya_acik(): void
     {
         $this->actingAs(User::factory()->create())
-            ->get(route('hesap.iki-adim'))
+            ->get(route('account.two-step'))
             ->assertOk();
     }
 }

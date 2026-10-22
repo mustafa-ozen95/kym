@@ -30,7 +30,7 @@ final class AdminPermissionScopeTest extends TestCase
 
         foreach (Route::getRoutes() as $rota) {
             /** @var YonlendirmeRotasi $rota */
-            if (! str_starts_with($rota->uri(), 'yonetim')) {
+            if (! str_starts_with($rota->uri(), 'admin')) {
                 continue;
             }
 
@@ -56,7 +56,7 @@ final class AdminPermissionScopeTest extends TestCase
         $istemci->forceFill(['revoked' => true])->save();
 
         $this->actingAs(User::factory()->rol('muhasebe')->create())
-            ->delete(route('yonetim.istemciler.kalici-sil', $istemci))
+            ->delete(route('admin.clients.purge', $istemci))
             ->assertForbidden();
 
         $this->assertDatabaseHas('oauth_clients', ['id' => $istemci->getKey()]);
@@ -67,7 +67,7 @@ final class AdminPermissionScopeTest extends TestCase
         $this->yetkiDagitimiAc('muhasebe', ['sistem.gor']);
 
         $this->actingAs(User::factory()->rol('muhasebe')->create())
-            ->put(route('yonetim.sistemler.sirala', Group::create(['anahtar' => 'deneme', 'ad' => 'Deneme'])), ['sira' => []])
+            ->put(route('admin.systems.reorder', Group::create(['anahtar' => 'deneme', 'ad' => 'Deneme'])), ['order' => []])
             ->assertForbidden();
     }
 }

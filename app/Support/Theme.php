@@ -24,17 +24,17 @@ final class Theme
 {
     public const COOKIE = 'dc-tema';
 
-    private const GECERLI = ['light', 'dark'];
+    private const VALID = ['light', 'dark'];
 
     /** Varsayılan KOYU: paneller koyu tasarlandı. */
-    public const VARSAYILAN = 'dark';
+    public const DEFAULT = 'dark';
 
     public static function secilen(): string
     {
         $deger = Request::cookie(self::COOKIE);
 
-        return is_string($deger) && in_array($deger, self::GECERLI, true)
+        return is_string($deger) && in_array($deger, self::VALID, true)
             ? $deger
-            : self::VARSAYILAN;
+            : self::DEFAULT;
     }
 }

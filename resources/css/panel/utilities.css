@@ -55,4 +55,4 @@
 [hidden] { display: none !important; }
 
 /* Satır içi `style="margin-top: 1rem"` yerine; gerekçe alert.css'te. */
-.row--ustu-bosluklu { margin-top: 1rem; }
+.row--spaced-top { margin-top: 1rem; }

@@ -26,12 +26,12 @@ class Setting extends Model
 
     protected $fillable = ['anahtar', 'deger'];
 
-    private const ONBELLEK = 'ayarlar';
+    private const CACHE_KEY = 'ayarlar';
 
     /** @return array<string, string|null> */
     public static function hepsi(): array
     {
-        return Cache::rememberForever(self::ONBELLEK, fn (): array => self::pluck('deger', 'anahtar')->all());
+        return Cache::rememberForever(self::CACHE_KEY, fn (): array => self::pluck('deger', 'anahtar')->all());
     }
 
     public static function bool(string $anahtar, bool $varsayilan = false): bool
@@ -55,6 +55,6 @@ class Setting extends Model
             ['deger' => is_bool($deger) ? (string) (int) $deger : (string) $deger],
         );
 
-        Cache::forget(self::ONBELLEK);
+        Cache::forget(self::CACHE_KEY);
     }
 }

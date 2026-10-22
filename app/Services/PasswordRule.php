@@ -23,7 +23,7 @@ class PasswordRule
 {
     public static function uzunluk(): int
     {
-        return (int) config('limits.parola_uzunluk');
+        return (int) config('limits.password_length');
     }
 
     /** Laravel doğrulama kuralı — otorite budur. */

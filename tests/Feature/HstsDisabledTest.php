@@ -25,7 +25,7 @@ class HstsDisabledTest extends TestCase
 
     public function test_hsts_sifir_gonderilir(): void
     {
-        $yanit = $this->get(route('hizli-erisim', ['pencere' => 'giris']));
+        $yanit = $this->get(route('quick-access', ['window' => 'login']));
 
         $yanit->assertOk();
         $yanit->assertHeader('Strict-Transport-Security', 'max-age=0');

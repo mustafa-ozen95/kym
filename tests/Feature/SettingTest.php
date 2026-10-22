@@ -25,25 +25,25 @@ class SettingTest extends TestCase
     #[Test]
     public function varsayilan_olarak_zorunlu_degildir(): void
     {
-        $this->assertFalse(Setting::bool(TwoStepRequired::YONETICI));
+        $this->assertFalse(Setting::bool(TwoStepRequired::ADMIN));
 
         $this->actingAs(User::factory()->yonetici()->create())
-            ->get(route('yonetim.sistemler'))
+            ->get(route('admin.systems'))
             ->assertOk();
     }
 
     #[Test]
     public function acildiginda_iki_adimsiz_yonetici_kuruluma_yonlendirilir(): void
     {
-        Setting::yaz(TwoStepRequired::YONETICI, true);
+        Setting::yaz(TwoStepRequired::ADMIN, true);
 
         $this->actingAs(User::factory()->yonetici()->create())
-            ->get(route('yonetim.sistemler'))
-            ->assertRedirect(route('hesap.iki-adim'));
+            ->get(route('admin.systems'))
+            ->assertRedirect(route('account.two-step'));
 
         /* İkinci adımı kurmuş yönetici etkilenmez. */
         $this->actingAs(User::factory()->yonetici()->ikiAdimli()->create())
-            ->get(route('yonetim.sistemler'))
+            ->get(route('admin.systems'))
             ->assertOk();
     }
 
@@ -56,17 +56,17 @@ class SettingTest extends TestCase
     public function acildiginda_yetki_verilmis_yonetici_olmayan_da_kuruluma_yonlendirilir(): void
     {
         $this->yetkiDagitimiAc('muhasebe', ['kullanici.gor']);
-        Setting::yaz(TwoStepRequired::YONETICI, true);
+        Setting::yaz(TwoStepRequired::ADMIN, true);
 
         $yetkili = User::factory()->rol('muhasebe')->create();
 
         $this->actingAs($yetkili)
-            ->get(route('yonetim.kullanicilar'))
-            ->assertRedirect(route('hesap.iki-adim'));
+            ->get(route('admin.users'))
+            ->assertRedirect(route('account.two-step'));
 
         /* Yönetim yetkisi OLMAYAN kullanıcı bu kuraldan etkilenmez. */
         $this->actingAs(User::factory()->rol('network')->create())
-            ->get(route('hizli-erisim'))
+            ->get(route('quick-access'))
             ->assertOk();
     }
 
@@ -82,10 +82,10 @@ class SettingTest extends TestCase
         $yonetici = User::factory()->yonetici()->create();
 
         $this->actingAs($yonetici)
-            ->put(route('yonetim.ayarlar.kaydet'), ['iki_adim_zorunlu' => '1'])
+            ->put(route('admin.settings.update'), ['two_step_required_admins' => '1'])
             ->assertSessionHas('error');
 
-        $this->assertFalse(Setting::bool(TwoStepRequired::YONETICI), 'Ayar açılmamalıydı.');
+        $this->assertFalse(Setting::bool(TwoStepRequired::ADMIN), 'Ayar açılmamalıydı.');
     }
 
     /**
@@ -96,14 +96,14 @@ class SettingTest extends TestCase
     #[Test]
     public function kullanici_anahtari_acikken_herkes_kuruluma_gonderilir(): void
     {
-        Setting::yaz(TwoStepRequired::KULLANICI, true);
+        Setting::yaz(TwoStepRequired::USER, true);
 
         $this->actingAs(User::factory()->create())
-            ->get(route('hizli-erisim'))
-            ->assertRedirect(route('hesap.iki-adim'));
+            ->get(route('quick-access'))
+            ->assertRedirect(route('account.two-step'));
 
         /* Kurulum sayfasının kendisi ve çıkış kapanmaz; yoksa kurulum yapılamazdı. */
-        $this->actingAs(User::factory()->create())->get(route('hesap.iki-adim'))->assertOk();
+        $this->actingAs(User::factory()->create())->get(route('account.two-step'))->assertOk();
     }
 
     #[Test]
@@ -111,15 +111,15 @@ class SettingTest extends TestCase
     {
         $yonetici = User::factory()->yonetici()->ikiAdimli()->create();
 
-        $this->actingAs($yonetici)->put(route('yonetim.ayarlar.kaydet'), [
-            'iki_adim_zorunlu' => '1',
-            'iki_adim_zorunlu_kullanici' => '1',
+        $this->actingAs($yonetici)->put(route('admin.settings.update'), [
+            'two_step_required_admins' => '1',
+            'two_step_required_users' => '1',
         ]);
-        $this->assertTrue(Setting::bool(TwoStepRequired::YONETICI));
-        $this->assertTrue(Setting::bool(TwoStepRequired::KULLANICI));
+        $this->assertTrue(Setting::bool(TwoStepRequired::ADMIN));
+        $this->assertTrue(Setting::bool(TwoStepRequired::USER));
 
-        $this->actingAs($yonetici)->put(route('yonetim.ayarlar.kaydet'), []);
-        $this->assertFalse(Setting::bool(TwoStepRequired::YONETICI));
+        $this->actingAs($yonetici)->put(route('admin.settings.update'), []);
+        $this->assertFalse(Setting::bool(TwoStepRequired::ADMIN));
 
         $this->assertDatabaseHas('activity_logs', ['eylem' => 'ayar-degisti']);
     }
@@ -128,7 +128,7 @@ class SettingTest extends TestCase
     public function siradan_kullanici_ayarlara_giremez(): void
     {
         $this->actingAs(User::factory()->create())
-            ->get(route('yonetim.ayarlar'))
+            ->get(route('admin.settings'))
             ->assertForbidden();
     }
 }

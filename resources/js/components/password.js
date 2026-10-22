@@ -19,25 +19,25 @@ const DENETIMLER = {
 
 function olcutler(satir) {
     try {
-        return JSON.parse(satir.dataset.olcutler || '{}');
+        return JSON.parse(satir.dataset.criteria || '{}');
     } catch {
         return {};
     }
 }
 
 function yaz(satir) {
-    const alan = document.getElementById(satir.dataset.alan);
+    const alan = document.getElementById(satir.dataset.field);
 
     if (!alan) {
         return;
     }
 
-    const tekrarAlani = satir.dataset.tekrar
-        ? document.getElementById(satir.dataset.tekrar)
+    const tekrarAlani = satir.dataset.repeat
+        ? document.getElementById(satir.dataset.repeat)
         : null;
 
     const baglam = {
-        uzunluk: Number(satir.dataset.uzunluk) || 0,
+        uzunluk: Number(satir.dataset.length) || 0,
         tekrar: tekrarAlani ? tekrarAlani.value : '',
     };
 
@@ -66,7 +66,7 @@ function yaz(satir) {
 }
 
 export function init() {
-    const satirlar = () => document.querySelectorAll('[data-parola-olcut]');
+    const satirlar = () => document.querySelectorAll('[data-password-meter]');
 
     document.addEventListener('input', (olay) => {
         if (!(olay.target instanceof HTMLInputElement)) {
@@ -74,7 +74,7 @@ export function init() {
         }
 
         satirlar().forEach((satir) => {
-            if (olay.target.id === satir.dataset.alan || olay.target.id === satir.dataset.tekrar) {
+            if (olay.target.id === satir.dataset.field || olay.target.id === satir.dataset.repeat) {
                 yaz(satir);
             }
         });

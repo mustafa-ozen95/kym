@@ -108,11 +108,11 @@ return Application::configure(basePath: dirname(__DIR__))
              * kullanıcının giriş penceresine gitmesi gerekir. Yalnızca
              * jetonla konuşulan uçlar 401 alır.
              */
-            if ($request->expectsJson() || $request->is('oauth/kullanici', 'api/*')) {
+            if ($request->expectsJson() || $request->is('oauth/userinfo', 'api/*')) {
                 return null;
             }
 
-            return route('hizli-erisim', ['pencere' => 'giris']);
+            return route('quick-access', ['window' => 'login']);
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -42,10 +42,10 @@ final class IdentityStatusTest extends TestCase
         [$kimlik] = $this->istemci();
         $kullanici = User::factory()->create();
 
-        $this->postJson(route('api.kimlik-durumu'), [
+        $this->postJson(route('api.identity-status'), [
             'client_id' => $kimlik,
             'client_secret' => 'yanlis-sir',
-            'kimlikler' => [$kullanici->uuid],
+            'identities' => [$kullanici->uuid],
         ])->assertUnauthorized();
     }
 
@@ -58,10 +58,10 @@ final class IdentityStatusTest extends TestCase
 
         OauthClient::whereKey($kimlik)->update(['revoked' => true]);
 
-        $this->postJson(route('api.kimlik-durumu'), [
+        $this->postJson(route('api.identity-status'), [
             'client_id' => $kimlik,
             'client_secret' => $sir,
-            'kimlikler' => [$kullanici->uuid],
+            'identities' => [$kullanici->uuid],
         ])->assertUnauthorized();
     }
 
@@ -73,15 +73,15 @@ final class IdentityStatusTest extends TestCase
         $etkin = User::factory()->rol('network')->create(['durum' => Status::Etkin]);
         $askida = User::factory()->rol('teknik')->create(['durum' => Status::Askida]);
 
-        $yanit = $this->postJson(route('api.kimlik-durumu'), [
+        $yanit = $this->postJson(route('api.identity-status'), [
             'client_id' => $kimlik,
             'client_secret' => $sir,
-            'kimlikler' => [$etkin->uuid, $askida->uuid],
+            'identities' => [$etkin->uuid, $askida->uuid],
         ])->assertOk();
 
-        $yanit->assertJsonPath("kimlikler.{$etkin->uuid}.rol", 'network');
-        $yanit->assertJsonPath("kimlikler.{$etkin->uuid}.girebilir", true);
-        $yanit->assertJsonPath("kimlikler.{$askida->uuid}.girebilir", false);
+        $yanit->assertJsonPath("identities.{$etkin->uuid}.role", 'network');
+        $yanit->assertJsonPath("identities.{$etkin->uuid}.can_enter", true);
+        $yanit->assertJsonPath("identities.{$askida->uuid}.can_enter", false);
     }
 
     /**
@@ -96,13 +96,13 @@ final class IdentityStatusTest extends TestCase
         [$kimlik, $sir] = $this->istemci();
         $silinen = (string) Str::uuid7();
 
-        $this->postJson(route('api.kimlik-durumu'), [
+        $this->postJson(route('api.identity-status'), [
             'client_id' => $kimlik,
             'client_secret' => $sir,
-            'kimlikler' => [$silinen],
+            'identities' => [$silinen],
         ])
             ->assertOk()
-            ->assertJsonPath("kimlikler.{$silinen}.durum", 'yok');
+            ->assertJsonPath("identities.{$silinen}.status", 'missing');
     }
 
     /**
@@ -118,23 +118,23 @@ final class IdentityStatusTest extends TestCase
 
         User::factory()->count(3)->create();
 
-        $this->postJson(route('api.kimlik-durumu'), [
+        $this->postJson(route('api.identity-status'), [
             'client_id' => $kimlik,
             'client_secret' => $sir,
         ])->assertUnprocessable();
     }
 
-    /** Sıralı birincil anahtar geçmez: kimlikler uuid ile sorulur. */
+    /** Sıralı birincil anahtar geçmez: identities uuid ile sorulur. */
     #[Test]
     public function sirali_anahtarla_sorulamaz(): void
     {
         [$kimlik, $sir] = $this->istemci();
         $kullanici = User::factory()->create();
 
-        $this->postJson(route('api.kimlik-durumu'), [
+        $this->postJson(route('api.identity-status'), [
             'client_id' => $kimlik,
             'client_secret' => $sir,
-            'kimlikler' => [(string) $kullanici->getKey()],
+            'identities' => [(string) $kullanici->getKey()],
         ])->assertUnprocessable();
     }
 
@@ -154,19 +154,19 @@ final class IdentityStatusTest extends TestCase
         $disarda = User::factory()->rol('teknik')->create();
         $rolsuz = User::factory()->create(['rol_id' => null]);
 
-        $yanit = $this->postJson(route('api.kimlik-durumu'), [
+        $yanit = $this->postJson(route('api.identity-status'), [
             'client_id' => $kimlik, 'client_secret' => $sir,
-            'kimlikler' => [$icerde->uuid, $disarda->uuid, $rolsuz->uuid],
+            'identities' => [$icerde->uuid, $disarda->uuid, $rolsuz->uuid],
         ])->assertOk();
 
-        $yanit->assertJsonPath("kimlikler.{$icerde->uuid}.eposta", $icerde->email);
-        $yanit->assertJsonPath("kimlikler.{$icerde->uuid}.rol", 'network');
-        $yanit->assertJsonPath("kimlikler.{$icerde->uuid}.girebilir", true);
+        $yanit->assertJsonPath("identities.{$icerde->uuid}.email", $icerde->email);
+        $yanit->assertJsonPath("identities.{$icerde->uuid}.role", 'network');
+        $yanit->assertJsonPath("identities.{$icerde->uuid}.can_enter", true);
 
         foreach ([$disarda, $rolsuz] as $kisi) {
-            $yanit->assertJsonPath("kimlikler.{$kisi->uuid}.girebilir", false);
-            $yanit->assertJsonPath("kimlikler.{$kisi->uuid}.rol", null);
-            $yanit->assertJsonMissingPath("kimlikler.{$kisi->uuid}.eposta");
+            $yanit->assertJsonPath("identities.{$kisi->uuid}.can_enter", false);
+            $yanit->assertJsonPath("identities.{$kisi->uuid}.role", null);
+            $yanit->assertJsonMissingPath("identities.{$kisi->uuid}.email");
         }
     }
 
@@ -179,10 +179,10 @@ final class IdentityStatusTest extends TestCase
 
         $askida = User::factory()->rol('network')->create(['durum' => Status::Askida]);
 
-        $this->postJson(route('api.kimlik-durumu'), [
-            'client_id' => $kimlik, 'client_secret' => $sir, 'kimlikler' => [$askida->uuid],
+        $this->postJson(route('api.identity-status'), [
+            'client_id' => $kimlik, 'client_secret' => $sir, 'identities' => [$askida->uuid],
         ])->assertOk()
-            ->assertJsonPath("kimlikler.{$askida->uuid}.girebilir", false)
-            ->assertJsonPath("kimlikler.{$askida->uuid}.eposta", $askida->email);
+            ->assertJsonPath("identities.{$askida->uuid}.can_enter", false)
+            ->assertJsonPath("identities.{$askida->uuid}.email", $askida->email);
     }
 }

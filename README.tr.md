@@ -28,18 +28,18 @@ Yalnızca **Authorization Code + PKCE** açıktır. Parola akışı kapatılmı�
 | --- | --- |
 | `/.well-known/openid-configuration` | Keşif belgesi — başka dildeki projeler yalnızca bunu bilir |
 | `/oauth/authorize` · `/oauth/token` | Passport'tan gelen standart uçlar |
-| `/oauth/kullanici` | Kimlik bilgisi: `sub` (uuid), ad, e-posta, doğrulanmış mı, rol |
-| `/api/kimlik-durumu` | Arka kanal: bağlı projeler "bu kimlikler şu an ne durumda" diye sorar |
+| `/oauth/userinfo` | Kimlik bilgisi: `sub` (uuid), ad, e-posta, doğrulanmış mı, rol |
+| `/api/identity-status` | Arka kanal: bağlı projeler "bu kimlikler şu an ne durumda" diye sorar |
 
 Jeton ömrü **10 dakika**, yenileme jetonu 1 gün. `id_token` üretilmez ve keşif
 belgesi bunu açıkça söyler.
 
 ### Yeni bir uygulama bağlamak
 
-`/yonetim/uygulamalar` → "Yeni uygulama". Sır **bir kez** gösterilir. Laravel
-projeleri için tek dosya üretilir (`app/KimlikMerkezi.php`): rotalar, giriş
+`/admin/clients` → "Yeni uygulama". Sır **bir kez** gösterilir. Laravel
+projeleri için tek dosya üretilir (`app/IdentityCenter.php`): rotalar, giriş
 düğmesi, PKCE akışı ve hesap eşleştirme birlikte gelir; projede yapılacaklar
-üçe iner — dosyayı at, sağlayıcıyı kaydet, `@kimlikGiris` koy. Başka diller
+üçe iner — dosyayı at, sağlayıcıyı kaydet, `@identityLogin` koy. Başka diller
 için ekranda ham protokol ve çalışan bir Node.js örneği vardır.
 
 Sır yenilemek verilmiş bütün jetonları düşürür: sır sızdığı için
@@ -62,13 +62,13 @@ Süzme veritabanında yapılır: "hepsini getir sonra ekranda gizle" güvenlik
 değildir — kaynak koda bakan kişi kutucuğun adını ve adresini yine görürdü.
 Boş kalan salon tümüyle çizilmez.
 
-Bir salon **kendi sayfası** olarak işaretlenebilir (`/salon/salon-a`).
+Bir salon **kendi sayfası** olarak işaretlenebilir (`/group/salon-a`).
 Göremediği salona giren 404 alır, 403 değil: 403 "böyle bir sayfa var" demek
 olurdu.
 
 ### Kapı ucu
 
-`/kapi/{anahtar}` nginx'in `auth_request` yönergesi içindir: oturum yoksa 401,
+`/gate/{anahtar}` nginx'in `auth_request` yönergesi içindir: oturum yoksa 401,
 yetki yoksa 403, varsa 200 ve kimlik başlıkları. Kural liste ile aynı yerden
 geçer ve bir test ikisinin ayrışmadığını kilitler.
 
@@ -106,8 +106,8 @@ değişkenler: `docker/README.md`, `.env.example`.
 
 ```bash
 composer setup
-php artisan kimlik:yonetici-ekle --ad="Ad Soyad" --eposta=ad@ornek.test
-php artisan kimlik:istemci-ekle --ad="NYS" --adres=https://ornek/giris/merkez/geri
+php artisan admin:add --name="Ad Soyad" --email=ad@ornek.test
+php artisan client:add --name="NYS" --address=https://ornek/login/center/callback
 ```
 
 Panelde "kendini yönetici yap" diye bir yol **yoktur**; ilk yönetici bu

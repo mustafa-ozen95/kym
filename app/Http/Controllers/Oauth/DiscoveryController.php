@@ -26,7 +26,7 @@ class DiscoveryController extends Controller
             'issuer' => url('/'),
             'authorization_endpoint' => url('/oauth/authorize'),
             'token_endpoint' => url('/oauth/token'),
-            'userinfo_endpoint' => url('/oauth/kullanici'),
+            'userinfo_endpoint' => url('/oauth/userinfo'),
             'response_types_supported' => ['code'],
             'grant_types_supported' => ['authorization_code', 'refresh_token'],
             'code_challenge_methods_supported' => ['S256'],

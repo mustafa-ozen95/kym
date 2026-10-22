@@ -22,16 +22,16 @@ use Laravel\Passport\ClientRepository;
  */
 class ClientAddCommand extends Command
 {
-    protected $signature = 'kimlik:istemci-ekle
-                            {--ad= : Projenin adı (onay ekranında görünür)}
-                            {--adres=* : İzin verilen dönüş adresi; birden çok verilebilir}';
+    protected $signature = 'client:add
+                            {--name= : Projenin adı (onay ekranında görünür)}
+                            {--address=* : İzin verilen dönüş adresi; birden çok verilebilir}';
 
     protected $description = 'Bir projeyi kimlik merkezine istemci olarak kaydeder';
 
     public function handle(ClientRepository $istemciler, ActivityRecorder $recorder): int
     {
-        $ad = $this->option('ad') ?: $this->ask('Proje adı');
-        $adresler = $this->option('adres') ?: [$this->ask('Dönüş adresi (https://.../giris/merkez/geri)')];
+        $ad = $this->option('name') ?: $this->ask('Proje adı');
+        $adresler = $this->option('address') ?: [$this->ask('Dönüş adresi (https://.../login/center/callback)')];
 
         foreach ($adresler as $adres) {
             if (! filter_var($adres, FILTER_VALIDATE_URL) || ! str_starts_with($adres, 'https://')) {

@@ -31,17 +31,17 @@ class ClientRequest extends FormRequest
             'name' => ['required', 'string', 'max:80', 'not_regex:/\*\/|["\'`\\\\\r\n]/'],
 
             /* Birden çok adres satır satır yazılır; boş satırlar atılır. */
-            'adresler' => ['required', 'string', 'max:2000'],
+            'addresses' => ['required', 'string', 'max:2000'],
 
             /*
              * GİREBİLEN ROLLER. Boş liste = herkes; kısıt eklemek bilinçli
              * bir adımdır. Değerler rol uuid'leridir: sıralı kimlik dışarı
              * çıkmaz.
              */
-            'roller' => ['nullable', 'array'],
-            'roller.*' => ['string', 'exists:roller,uuid'],
+            'roles' => ['nullable', 'array'],
+            'roles.*' => ['string', 'exists:roller,uuid'],
 
-            'otomatik_hesap' => ['nullable', 'boolean'],
+            'auto_account' => ['nullable', 'boolean'],
         ];
     }
 
@@ -54,7 +54,7 @@ class ClientRequest extends FormRequest
     {
         $liste = [];
 
-        foreach (preg_split('/\R/', (string) $this->input('adresler')) ?: [] as $satir) {
+        foreach (preg_split('/\R/', (string) $this->input('addresses')) ?: [] as $satir) {
             $adres = trim($satir);
 
             if ($adres !== '') {
@@ -81,8 +81,8 @@ class ClientRequest extends FormRequest
 
         if ($this->adresler() === [] || $hatali !== []) {
             $this->validator->errors()->add(
-                'adresler',
-                'Her dönüş adresi https ile başlayan tam bir adres olmalı (ör. https://ornek.ornek.test/giris/merkez/geri).',
+                'addresses',
+                'Her dönüş adresi https ile başlayan tam bir adres olmalı (ör. https://ornek.ornek.test/login/center/callback).',
             );
 
             $this->failedValidation($this->validator);
@@ -92,6 +92,6 @@ class ClientRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['name' => 'uygulama adı', 'adresler' => 'dönüş adresleri'];
+        return ['name' => 'uygulama adı', 'addresses' => 'dönüş adresleri'];
     }
 }

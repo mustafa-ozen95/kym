@@ -39,8 +39,8 @@ class UserDeletionTest extends TestCase
         DB::table('oauth_refresh_tokens')->insert(['id' => Str::random(40), 'access_token_id' => $jeton, 'revoked' => false, 'expires_at' => now()->addDay()]);
 
         $this->actingAs($this->rolde('admin'))
-            ->delete(route('yonetim.kullanicilar.sil', $hedef))
-            ->assertRedirect(route('yonetim.kullanicilar'));
+            ->delete(route('admin.users.destroy', $hedef))
+            ->assertRedirect(route('admin.users'));
 
         $this->assertDatabaseMissing('users', ['id' => $hedef->id]);
         $this->assertSame(0, DB::table('oauth_access_tokens')->where('user_id', $hedef->id)->count());
@@ -56,7 +56,7 @@ class UserDeletionTest extends TestCase
         $hedef = $this->rolde('muhasebe');
 
         $this->actingAs($this->rolde('teknik'))
-            ->delete(route('yonetim.kullanicilar.sil', $hedef))
+            ->delete(route('admin.users.destroy', $hedef))
             ->assertForbidden();
 
         $this->assertNotNull($hedef->fresh());
@@ -67,7 +67,7 @@ class UserDeletionTest extends TestCase
         $admin = $this->rolde('admin');
 
         $this->actingAs($admin)
-            ->delete(route('yonetim.kullanicilar.sil', $admin))
+            ->delete(route('admin.users.destroy', $admin))
             ->assertForbidden();
 
         $this->assertNotNull($admin->fresh());
@@ -78,9 +78,9 @@ class UserDeletionTest extends TestCase
         $admin = $this->rolde('admin');
         $hedef = $this->rolde('muhasebe');
 
-        $this->actingAs($admin)->get(route('yonetim.kullanicilar'))
+        $this->actingAs($admin)->get(route('admin.users'))
             ->assertOk()
-            ->assertSee('action="'.route('yonetim.kullanicilar.sil', $hedef).'"', false)
-            ->assertDontSee('action="'.route('yonetim.kullanicilar.sil', $admin).'"', false);
+            ->assertSee('action="'.route('admin.users.destroy', $hedef).'"', false)
+            ->assertDontSee('action="'.route('admin.users.destroy', $admin).'"', false);
     }
 }

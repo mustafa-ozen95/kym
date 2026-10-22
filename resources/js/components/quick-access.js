@@ -7,27 +7,27 @@
  * Veri, sayfadaki application/json etiketinden okunur — ayrı bir istek
  * yapılmaz, sayfa açılır açılmaz elimizdedir.
  */
-const CRMS = JSON.parse(document.getElementById("sistem-verisi")?.textContent || "[]");
+const CRMS = JSON.parse(document.getElementById("system-data")?.textContent || "[]");
 
 /* ---------- kart altındaki şeritler, her kartta ayrı ---------- */
 const TAPE = [5,11,7,14,4,9,13,6,10,16,5,8,12,7,15,6,10,4,13,9];
 const STRIPS = {
-  s1: `${Array.from({length:26},(_,i)=>`<rect class="eq" x="${i*7.7}" y="2" width="4.4" height="12" rx="1.2" fill="currentColor" data-gecikme="${(i*.075).toFixed(2)}s"/>`).join("")}`,
+  s1: `${Array.from({length:26},(_,i)=>`<rect class="eq" x="${i*7.7}" y="2" width="4.4" height="12" rx="1.2" fill="currentColor" data-delay="${(i*.075).toFixed(2)}s"/>`).join("")}`,
   s2: `<g class="run"><path d="M0 8 q 12.5 -6.5 25 0 t 25 0 t 25 0 t 25 0 t 25 0 t 25 0 t 25 0 t 25 0 t 25 0 t 25 0 t 25 0 t 25 0" fill="none" stroke="currentColor" stroke-width="1.8" opacity=".7"/></g>`,
   s3: `<line class="ln" pathLength="100" x1="0" y1="3" x2="150" y2="3"/>
-       <line class="ln" pathLength="100" x1="0" y1="8" x2="196" y2="8" data-gecikme=".5s"/>
-       <line class="ln" pathLength="100" x1="0" y1="13" x2="104" y2="13" data-gecikme="1s"/>`,
-  s4: `${Array.from({length:11},(_,i)=>`<rect class="fld" x="${i*18.5}" y="4" width="${[13,9,15,11,7,14,10,16,8,12,9][i]}" height="8" rx="1.4" fill="currentColor" data-gecikme="${(i*.16).toFixed(2)}s"/>`).join("")}`,
+       <line class="ln" pathLength="100" x1="0" y1="8" x2="196" y2="8" data-delay=".5s"/>
+       <line class="ln" pathLength="100" x1="0" y1="13" x2="104" y2="13" data-delay="1s"/>`,
+  s4: `${Array.from({length:11},(_,i)=>`<rect class="fld" x="${i*18.5}" y="4" width="${[13,9,15,11,7,14,10,16,8,12,9][i]}" height="8" rx="1.4" fill="currentColor" data-delay="${(i*.16).toFixed(2)}s"/>`).join("")}`,
   s5: `<line class="wire" x1="0" y1="8" x2="200" y2="8" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 5" opacity=".3"/>
-       ${[8,52,100,148,192].map((x,i)=>`<circle class="hop" cx="${x}" cy="8" r="3" fill="currentColor" data-gecikme="${(i*.52).toFixed(2)}s"/>`).join("")}
+       ${[8,52,100,148,192].map((x,i)=>`<circle class="hop" cx="${x}" cy="8" r="3" fill="currentColor" data-delay="${(i*.52).toFixed(2)}s"/>`).join("")}
        <circle class="pkt" cx="0" cy="8" r="2.4" fill="currentColor"/>`,
-  s11: `${[0,1,2].map(i=>`<rect class="frame" x="${i*68}" y="1" width="64" height="14" rx="2" fill="currentColor" data-gecikme="${(i*1.1).toFixed(1)}s"/>`).join("")}`,
+  s11: `${[0,1,2].map(i=>`<rect class="frame" x="${i*68}" y="1" width="64" height="14" rx="2" fill="currentColor" data-delay="${(i*1.1).toFixed(1)}s"/>`).join("")}`,
   s12: `<line x1="0" y1="8" x2="200" y2="8" stroke="currentColor" stroke-width="1.2" opacity=".18"/>
         ${Array.from({length:21},(_,i)=>`<rect x="${i*10}" y="${i%5?5.5:3.5}" width="1.3" height="${i%5?5:9}" rx=".6" fill="currentColor" opacity=".28"/>`).join("")}
         <rect class="fill" x="0" y="6.5" width="200" height="3" rx="1.5" fill="currentColor" opacity=".55"/>
         <circle class="mark" cx="0" cy="8" r="3.4" fill="currentColor"/>`,
   s10: `<line x1="0" y1="8" x2="200" y2="8" stroke="currentColor" stroke-width="1.2" opacity=".2"/>
-        ${[26,74,122,170].map((x,i)=>`<circle class="ping" cx="${x}" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" data-gecikme="${(i*.68).toFixed(2)}s"/>
+        ${[26,74,122,170].map((x,i)=>`<circle class="ping" cx="${x}" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" data-delay="${(i*.68).toFixed(2)}s"/>
            <circle cx="${x}" cy="8" r="2.2" fill="currentColor" opacity=".5"/>`).join("")}`,
   s9: `<g class="tape">${[0,200].map(off => TAPE.map((h,i) =>
          `<rect x="${off + i*10}" y="${8 - h/2}" width="3.2" height="${h}" rx="1.2" fill="currentColor" opacity=".5"/>`).join("")).join("")}</g>`,
@@ -39,7 +39,7 @@ const STRIPS = {
   s6: `<line x1="0" y1="8" x2="200" y2="8" stroke="currentColor" stroke-width="1.2" opacity=".22"/>
        <rect class="ask" x="0" y="5" width="16" height="6" rx="3" fill="currentColor"/>
        <rect class="ans" x="184" y="5" width="16" height="6" rx="3" fill="currentColor"/>`,
-  s13: `${Array.from({length:14},(_,i)=>{const h=3+i*.72; return `<rect class="grow" x="${i*14.4}" y="${14-h}" width="6" height="${h}" rx="1" fill="currentColor" opacity=".3" data-gecikme="${(i*.11).toFixed(2)}s"/>`;}).join("")}
+  s13: `${Array.from({length:14},(_,i)=>{const h=3+i*.72; return `<rect class="grow" x="${i*14.4}" y="${14-h}" width="6" height="${h}" rx="1" fill="currentColor" opacity=".3" data-delay="${(i*.11).toFixed(2)}s"/>`;}).join("")}
         <path class="trend" pathLength="100" d="M2 13 L40 10 L78 11 L116 6 L154 5 L196 1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
 };
 
@@ -118,12 +118,12 @@ const vent = (x,y,n,w=1.3) => Array.from({length:n},(_,i)=>`<rect x="${x+i*2.6}"
 /* 1 — sunucu + disk rafı */
 const k1 = (id)=>`<g class="gear">
 ${Array.from({length:6},(_,i)=>{const y=18+i*10.5; return `<g>${bez(y,9)}${vent(38,y+2.6,7)}
-  <circle class="led" cx="20" cy="${y+4.5}" r="1.5" fill="currentColor" data-gecikme="${(5-i)*.15}s"/>
+  <circle class="led" cx="20" cy="${y+4.5}" r="1.5" fill="currentColor" data-delay="${(5-i)*.15}s"/>
   <circle cx="24.5" cy="${y+4.5}" r="1.5" fill="var(--m3)"/></g>`;}).join("")}
 <g>${bez(82,24)}
 ${Array.from({length:8},(_,i)=>{const x=18.5+(i%4)*11, y=84.5+Math.floor(i/4)*10.5;
   return `<rect x="${x}" y="${y}" width="9.5" height="8.5" rx="1" fill="var(--m3)"/>
-          <rect class="disk" x="${x+1.2}" y="${y+6}" width="7" height="1.4" rx=".7" fill="currentColor" data-gecikme="${(i*97%17)/11}s"/>
+          <rect class="disk" x="${x+1.2}" y="${y+6}" width="7" height="1.4" rx=".7" fill="currentColor" data-delay="${(i*97%17)/11}s"/>
           <rect x="${x+1.2}" y="${y+1.5}" width="7" height="3" rx=".6" fill="var(--m3)"/>`;}).join("")}</g></g>`;
 
 /* 2 — patch panel + switch + kablo kolu */
@@ -131,12 +131,12 @@ const k2 = (id)=>`<g class="gear">
 <g>${bez(18,18)}
 ${Array.from({length:16},(_,i)=>{const x=18+(i%8)*5.5, y=20.5+Math.floor(i/8)*7.5;
   return `<rect x="${x}" y="${y}" width="4.4" height="5.4" rx=".7" fill="var(--m2)"/>
-          <rect class="port" x="${x+.9}" y="${y+1.4}" width="2.6" height="1.8" rx=".4" fill="currentColor" data-gecikme="${(i*131%19)/13}s"/>`;}).join("")}</g>
+          <rect class="port" x="${x+.9}" y="${y+1.4}" width="2.6" height="1.8" rx=".4" fill="currentColor" data-delay="${(i*131%19)/13}s"/>`;}).join("")}</g>
 ${[39,51].map((y,k)=>`<g>${bez(y,10)}
-  ${Array.from({length:10},(_,i)=>`<rect class="port" x="${18+i*4.3}" y="${y+3}" width="3" height="4" rx=".5" fill="currentColor" data-gecikme="${(i*67%23)/15+k*.28}s"/>`).join("")}
+  ${Array.from({length:10},(_,i)=>`<rect class="port" x="${18+i*4.3}" y="${y+3}" width="3" height="4" rx=".5" fill="currentColor" data-delay="${(i*67%23)/15+k*.28}s"/>`).join("")}
   <circle cx="57" cy="${y+5}" r="1.3" fill="currentColor" opacity=".5"/></g>`).join("")}
 <rect x="16" y="64" width="44" height="42" rx="1.2" fill="var(--m2)"/>
-${[0,1,2,3].map(i=>`<path class="patch" d="M20 ${69+i*9} q 11 6 20 0 t 16 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".55" data-gecikme="${i*.3}s"/>`).join("")}
+${[0,1,2,3].map(i=>`<path class="patch" d="M20 ${69+i*9} q 11 6 20 0 t 16 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".55" data-delay="${i*.3}s"/>`).join("")}
 </g>`;
 
 /* 3 — blade şasi + omurga hattı */
@@ -145,7 +145,7 @@ const k3 = (id)=>`<g class="gear">
 <rect x="16" y="29" width="44" height="54" rx="1.5" fill="var(--m4)"/><rect x="16" y="29" width="44" height=".9" fill="var(--m5)"/>
 <rect x="18" y="32" width="40" height="48" rx="1" fill="var(--m2)"/>
 ${Array.from({length:7},(_,i)=>{const x=19+i*5.6; return `<rect x="${x}" y="33.5" width="4.4" height="45" rx=".8" fill="var(--m4)"/>
-  <rect class="blade" x="${x+1}" y="36" width="2.4" height="1.8" rx=".5" fill="currentColor" data-gecikme="${i*.2}s"/>
+  <rect class="blade" x="${x+1}" y="36" width="2.4" height="1.8" rx=".5" fill="currentColor" data-delay="${i*.2}s"/>
   <rect x="${x+1}" y="71" width="2.4" height="4" rx=".6" fill="var(--m3)"/>`;}).join("")}
 <line class="bus" x1="18" y1="84.5" x2="58" y2="84.5" stroke="currentColor" stroke-width="1.4" opacity=".7"/>
 <g>${bez(88,18)}${vent(21,93,13)}${vent(21,98,13)}</g></g>`;
@@ -172,7 +172,7 @@ const k5 = (id)=>`<g class="gear">
   <stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
 <g clip-path="url(#bay-${id})">
   ${[18,31,44,57,70,83,96].map((y,i)=>`<g>${bez(y,11)}
-    ${Array.from({length:5},(_,j)=>`<rect class="queue" x="${19+j*8.4}" y="${y+4}" width="6" height="3" rx=".7" fill="currentColor" data-gecikme="${(i*.18+j*.09).toFixed(2)}s"/>`).join("")}</g>`).join("")}
+    ${Array.from({length:5},(_,j)=>`<rect class="queue" x="${19+j*8.4}" y="${y+4}" width="6" height="3" rx=".7" fill="currentColor" data-delay="${(i*.18+j*.09).toFixed(2)}s"/>`).join("")}</g>`).join("")}
   <rect class="wave" x="12" y="16" width="52" height="26" fill="url(#glow-${id})"/>
 </g></g>`;
 
@@ -195,9 +195,9 @@ ${[63,74,85,96].map(y=>`<g>${bez(y,9)}${vent(38,y+2.6,7)}<circle cx="20" cy="${y
 const k7 = (id)=>`<g class="gear">
 <rect x="16" y="18" width="8" height="88" rx="1.2" fill="var(--m4)"/>
 <rect x="16" y="18" width="8" height=".9" fill="var(--m5)"/>
-${Array.from({length:11},(_,i)=>`<rect class="outlet" x="17.6" y="${21+i*7.7}" width="4.8" height="5.4" rx="1" fill="currentColor" data-gecikme="${((10-i)*.15).toFixed(2)}s"/>`).join("")}
+${Array.from({length:11},(_,i)=>`<rect class="outlet" x="17.6" y="${21+i*7.7}" width="4.8" height="5.4" rx="1" fill="currentColor" data-delay="${((10-i)*.15).toFixed(2)}s"/>`).join("")}
 <g><rect x="27" y="18" width="33" height="13" rx="1.2" fill="var(--m4)"/><rect x="27" y="18" width="33" height=".9" fill="var(--m5)"/>
-  ${Array.from({length:8},(_,i)=>`<rect class="sfp" x="${29+i*3.9}" y="21" width="2.8" height="4.4" rx=".5" fill="currentColor" data-gecikme="${(i*89%17)/11}s"/>`).join("")}
+  ${Array.from({length:8},(_,i)=>`<rect class="sfp" x="${29+i*3.9}" y="21" width="2.8" height="4.4" rx=".5" fill="currentColor" data-delay="${(i*89%17)/11}s"/>`).join("")}
   <rect x="29" y="27" width="28" height="2" rx="1" fill="var(--m3)"/></g>
 <g><rect x="27" y="34" width="33" height="11" rx="1.2" fill="var(--m4)"/><rect x="27" y="34" width="33" height=".9" fill="var(--m5)"/>
   <circle cx="31" cy="39.5" r="1.5" fill="currentColor" opacity=".7"/><circle cx="35" cy="39.5" r="1.5" fill="var(--m3)"/>
@@ -215,7 +215,7 @@ const k8 = (id)=>`<g class="gear">
   <circle cx="24.5" cy="23" r="1.5" fill="var(--m3)"/>${vent(38,20.5,7)}</g>
 <rect x="16" y="31" width="44" height="53" rx="1.5" fill="var(--m4)"/><rect x="16" y="31" width="44" height=".9" fill="var(--m5)"/>
 <rect x="18.5" y="33.5" width="39" height="48" rx="1" fill="var(--m1)"/>
-${Array.from({length:13},(_,i)=>`<rect class="col" x="${20+i*2.9}" y="36" width="2.3" height="43" rx=".3" fill="currentColor" data-gecikme="${(i*.17).toFixed(2)}s"/>`).join("")}
+${Array.from({length:13},(_,i)=>`<rect class="col" x="${20+i*2.9}" y="36" width="2.3" height="43" rx=".3" fill="currentColor" data-delay="${(i*.17).toFixed(2)}s"/>`).join("")}
 ${Array.from({length:10},(_,j)=>`<rect x="18.5" y="${37.6+j*4.4}" width="39" height="1.5" fill="var(--m1)"/>`).join("")}
 ${Array.from({length:13},(_,i)=>`<rect x="${22.3+i*2.9}" y="36" width=".6" height="43" fill="var(--m1)"/>`).join("")}
 ${[87,98].map(y=>`<g>${bez(y,9)}${vent(21,y+2.6,13)}</g>`).join("")}
@@ -240,7 +240,7 @@ const k10 = (id)=>`<g class="gear">
 <rect x="16" y="31" width="44" height="34" rx="1.5" fill="var(--m4)"/><rect x="16" y="31" width="44" height=".9" fill="var(--m5)"/>
 <rect x="18.5" y="33.5" width="39" height="29" rx="1" fill="var(--m1)"/>
 ${Array.from({length:12},(_,n)=>{const i=n%4, j=Math.floor(n/4);
-  return `<circle class="lamp" cx="${23+i*10.4}" cy="${38.5+j*9}" r="3" fill="currentColor" data-gecikme="${(n*97%23)/9}s"/>`;}).join("")}
+  return `<circle class="lamp" cx="${23+i*10.4}" cy="${38.5+j*9}" r="3" fill="currentColor" data-delay="${(n*97%23)/9}s"/>`;}).join("")}
 <g>${bez(68,20)}
   <rect x="19" y="71" width="38" height="14" rx="1" fill="var(--m1)"/>
   <path d="M25 83 A 13 13 0 0 1 51 83" fill="none" stroke="var(--m3)" stroke-width="1.4"/>
@@ -255,7 +255,7 @@ const k11 = (id)=>`<g class="gear">
 <rect x="16" y="31" width="44" height="40" rx="1.5" fill="var(--m4)"/><rect x="16" y="31" width="44" height=".9" fill="var(--m5)"/>
 <rect x="18.5" y="33.5" width="39" height="35" rx="1" fill="var(--m1)"/>
 ${Array.from({length:4},(_,n)=>{const i=n%2, j=Math.floor(n/2), x=19.5+i*19.5, y=34.5+j*17.5;
-  return `<rect class="quad" x="${x}" y="${y}" width="18.5" height="16.5" rx=".8" fill="currentColor" data-gecikme="${(n*.85).toFixed(2)}s"/>
+  return `<rect class="quad" x="${x}" y="${y}" width="18.5" height="16.5" rx=".8" fill="currentColor" data-delay="${(n*.85).toFixed(2)}s"/>
           ${[3,6,9,12].map(o=>`<rect x="${x}" y="${y+o}" width="18.5" height="1.1" fill="var(--m1)" opacity=".8"/>`).join("")}`;}).join("")}
 <g>${bez(74,14)}
   <circle class="rec" cx="21.5" cy="81" r="2.2" fill="currentColor"/>
@@ -274,7 +274,7 @@ ${[26,36].map((x,k)=>`<rect x="${x}" y="36" width="7" height="34" rx="1.4" fill=
 ${Array.from({length:7},(_,i)=>`<rect x="46" y="${38+i*4.6}" width="8" height="1.4" rx=".7" fill="var(--m3)"/>`).join("")}
 ${Array.from({length:6},(_,i)=>`<rect x="20.5" y="${39+i*5.4}" width="3.4" height="1.2" rx=".6" fill="var(--m3)"/>`).join("")}
 <g>${bez(78,12)}
-  ${Array.from({length:3},(_,i)=>`<circle class="probe" cx="${23+i*11}" cy="84" r="2.4" fill="currentColor" data-gecikme="${(i*.6).toFixed(1)}s"/>
+  ${Array.from({length:3},(_,i)=>`<circle class="probe" cx="${23+i*11}" cy="84" r="2.4" fill="currentColor" data-delay="${(i*.6).toFixed(1)}s"/>
      <rect x="${22.2+i*11}" y="79.5" width="1.6" height="3" rx=".7" fill="var(--m3)"/>`).join("")}
   ${vent(46,81,5)}</g>
 <g>${bez(93,13)}${vent(21,97,13)}${vent(21,102,13)}</g>
@@ -284,11 +284,11 @@ const k13 = (id)=>`<g class="gear">
 <g>${bez(18,9)}<circle class="tick" cx="20" cy="22.5" r="1.5" fill="currentColor"/>
   <circle cx="24.5" cy="22.5" r="1.5" fill="var(--m3)"/>${vent(38,20,7)}</g>
 <g>${bez(30,13)}<rect x="19" y="32.5" width="38" height="8" rx="1" fill="var(--m1)"/>
-  ${Array.from({length:6},(_,i)=>`<rect class="digit" x="${20.5+i*6.2}" y="34" width="4.4" height="5" rx=".6" fill="currentColor" data-gecikme="${(i*.28).toFixed(2)}s"/>`).join("")}</g>
+  ${Array.from({length:6},(_,i)=>`<rect class="digit" x="${20.5+i*6.2}" y="34" width="4.4" height="5" rx=".6" fill="currentColor" data-delay="${(i*.28).toFixed(2)}s"/>`).join("")}</g>
 <rect x="16" y="46" width="44" height="37" rx="1.5" fill="var(--m4)"/><rect x="16" y="46" width="44" height=".9" fill="var(--m5)"/>
 <rect x="18.5" y="48.5" width="39" height="32" rx="1" fill="var(--m1)"/>
 <line x1="19.5" y1="77.5" x2="56.5" y2="77.5" stroke="var(--m3)" stroke-width=".9"/>
-${Array.from({length:6},(_,i)=>{const h=7+i*3.4; return `<rect class="bar" x="${21+i*6.2}" y="${77-h}" width="4" height="${h}" rx=".8" fill="currentColor" data-gecikme="${(i*.22).toFixed(2)}s"/>`;}).join("")}
+${Array.from({length:6},(_,i)=>{const h=7+i*3.4; return `<rect class="bar" x="${21+i*6.2}" y="${77-h}" width="4" height="${h}" rx=".8" fill="currentColor" data-delay="${(i*.22).toFixed(2)}s"/>`;}).join("")}
 <g>${bez(86,9)}${vent(21,89,13)}</g>
 <g>${bez(97,9)}${vent(21,100,13)}</g></g>`;
 const BUILD = { k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13 };
@@ -301,7 +301,7 @@ const BUILD = { k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13 };
  * üstelik kutucuklar yetkiye göre süzüldüğü için bir salon boş kalabiliyor ve
  * geriye yalnız bir başlık kalıyordu.
  */
-const HALLS = JSON.parse(document.getElementById("grup-verisi")?.textContent || "[]");
+const HALLS = JSON.parse(document.getElementById("group-data")?.textContent || "[]");
 const halls = document.getElementById("halls");
 const bins = {};
 const sections = {};
@@ -327,7 +327,7 @@ HALLS.forEach(h => {
  *
  * Dış sistemlerde ana bilgisayar okunur (crm.ornek.test). İÇ bağlantılarda
  * ise host bu sayfanın kendi adresidir ve hiçbir şey söylemez — orada yol
- * gösterilir (/salon/salon-a).
+ * gösterilir (/group/salon-a).
  */
 const hostOf = (u) => {
   if (!u || u === "#") return "adres bekleniyor";
@@ -384,8 +384,8 @@ CRMS.forEach((c, i) => {
    * (Chromium konsolunda: "Applying inline style violates ... style-src").
    * Buradan yazmak CSP'ye takılmaz.
    */
-  a.querySelectorAll("[data-gecikme]").forEach((n) => {
-    n.style.animationDelay = n.dataset.gecikme;
+  a.querySelectorAll("[data-delay]").forEach((n) => {
+    n.style.animationDelay = n.dataset.delay;
   });
 
   const link = a.querySelector(".name");
@@ -449,7 +449,7 @@ const root = document.documentElement;
 const media = window.matchMedia("(prefers-color-scheme: light)");
 const btn = document.getElementById("theme");
 
-const alanAdi = () => document.querySelector('meta[name="tema-alan"]')?.content?.trim() ?? "";
+const alanAdi = () => document.querySelector('meta[name="theme-domain"]')?.content?.trim() ?? "";
 const secim = () => (document.cookie.match(/(?:^|;\s*)dc-tema=(light|dark)(?:;|$)/) ?? [])[1] ?? null;
 
 const remember = (mode) => {

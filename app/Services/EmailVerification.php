@@ -25,13 +25,13 @@ use App\Services\Mail\MailSettings;
  */
 class EmailVerification
 {
-    public const AYAR = 'eposta_dogrulama_zorunlu';
+    public const SETTING = 'eposta_dogrulama_zorunlu';
 
     public function __construct(private MailSettings $posta) {}
 
     public function zorunluMu(): bool
     {
-        return Setting::bool(self::AYAR);
+        return Setting::bool(self::SETTING);
     }
 
     /**

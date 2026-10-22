@@ -84,7 +84,7 @@ class LoginRequest extends FormRequest
     private function sinirlaVeSay(): void
     {
         /*
-         * AYAR `limits.giris` DEĞİL.
+         * AYAR `limits.login` DEĞİL.
          *
          * İkisi aynı şeyi saymıyor: o rotadaki DAKİKADAKİ İSTEK sayısı, bu art
          * arda YANLIŞ PAROLA sayısı. Tek anahtara bağlı olsalar sınırı ayardan

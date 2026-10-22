@@ -19,7 +19,7 @@ ARG PHP_VERSION=8.5
 # -----------------------------------------------------------------------------
 #  1. Arayüz varlıkları
 # -----------------------------------------------------------------------------
-FROM node:22-bookworm-slim AS varliklar
+FROM node:22-bookworm-slim AS assets
 
 WORKDIR /uygulama
 
@@ -35,12 +35,12 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 #  2. PHP tabanı — hem bağımlılık çözümü hem çalışma zamanı bunu paylaşır
 # -----------------------------------------------------------------------------
-FROM debian:bookworm-slim AS php-taban
+FROM debian:bookworm-slim AS php-base
 
 ARG PHP_VERSION
 # Güvenlik sürümü çıkınca artır: değeri değişen katman önbellekten gelmez, Debian ve PHP
 # paketleri yeniden çekilir; depodaki PHP bundan eskiyse derleme durur.
-ARG PHP_EN_AZ=8.5.12
+ARG PHP_MIN_VERSION=8.5.12
 ENV DEBIAN_FRONTEND=noninteractive
 
 # PHP 8.5 Debian'da yok; Sury deposu eklenir.
@@ -65,8 +65,8 @@ RUN apt-get update \
       php${PHP_VERSION}-xml \
       php${PHP_VERSION}-zip \
  && rm -rf /var/lib/apt/lists/* \
- && php${PHP_VERSION} -r 'exit(version_compare(PHP_VERSION, getenv("PHP_EN_AZ"), ">=") ? 0 : 1);' \
-    || { echo "PHP en az $PHP_EN_AZ olmalı" >&2; exit 1; }
+ && php${PHP_VERSION} -r 'exit(version_compare(PHP_VERSION, getenv("PHP_MIN_VERSION"), ">=") ? 0 : 1);' \
+    || { echo "PHP en az $PHP_MIN_VERSION olmalı" >&2; exit 1; }
 # NOT: php8.5-opcache diye ayrı bir paket YOK; 8.5'te opcache php-common
 # içinde geliyor. Alışkanlıkla eklenirse derleme "Unable to locate package"
 # ile düşer.
@@ -76,7 +76,7 @@ RUN update-alternatives --set php /usr/bin/php${PHP_VERSION}
 # -----------------------------------------------------------------------------
 #  3. PHP bağımlılıkları
 # -----------------------------------------------------------------------------
-FROM php-taban AS saticilar
+FROM php-base AS vendors
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -93,7 +93,7 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative
 # -----------------------------------------------------------------------------
 #  4. Çalışma zamanı
 # -----------------------------------------------------------------------------
-FROM php-taban AS calisma
+FROM php-base AS runtime
 
 ARG PHP_VERSION
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -122,8 +122,8 @@ RUN useradd --system --create-home --home-dir /uygulama --shell /usr/sbin/nologi
 WORKDIR /uygulama
 
 COPY --chown=kimlik:kimlik . .
-COPY --from=saticilar --chown=kimlik:kimlik /uygulama/vendor ./vendor
-COPY --from=varliklar --chown=kimlik:kimlik /uygulama/public/build ./public/build
+COPY --from=vendors --chown=kimlik:kimlik /uygulama/vendor ./vendor
+COPY --from=assets --chown=kimlik:kimlik /uygulama/public/build ./public/build
 
 # Yapılandırmalar ve başlatıcı
 COPY docker/rootfs/ /
@@ -152,12 +152,12 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 
 # Hangi commit'ten derlendiği: merkez kendi sürümünü buradan bilir (Ayarlar →
 # Güncelleme). Son katmanda: değeri her derlemede değişir, önbelleği bozmasın.
-ARG SURUM=""
-ENV UYGULAMA_SURUMU=${SURUM}
-# SURUM verilmezse (NineDeploy gibi platformlar derlemeye commit vermez)
-# bağlamdaki .git'ten okunur ve /uygulama/SURUM'a yazılır; config önce
+ARG VERSION=""
+ENV APP_VERSION=${VERSION}
+# VERSION verilmezse (NineDeploy gibi platformlar derlemeye commit vermez)
+# bağlamdaki .git'ten okunur ve /uygulama/VERSION'a yazılır; config önce
 # ortama, sonra bu dosyaya bakar. .git yoksa (zip) dosya boş kalır.
-RUN --mount=type=bind,target=/tmp/baglam sh /tmp/baglam/docker/version-read.sh > /uygulama/SURUM
+RUN --mount=type=bind,target=/tmp/context sh /tmp/context/docker/version-read.sh > /uygulama/VERSION
 
 ENTRYPOINT ["/usr/local/bin/identity-entrypoint"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]

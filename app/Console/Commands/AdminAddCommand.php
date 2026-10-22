@@ -24,28 +24,28 @@ use Illuminate\Support\Facades\Validator;
  */
 class AdminAddCommand extends Command
 {
-    protected $signature = 'kimlik:yonetici-ekle
-                            {--ad= : Görünen ad}
-                            {--eposta= : E-posta}
-                            {--parola= : Parola (sorulmazsa istenir)}';
+    protected $signature = 'admin:add
+                            {--name= : Görünen ad}
+                            {--email= : E-posta}
+                            {--password= : Parola (sorulmazsa istenir)}';
 
     protected $description = 'Merkeze yönetici yetkili, etkin bir kullanıcı ekler';
 
     public function handle(ActivityRecorder $recorder): int
     {
-        $ad = $this->option('ad') ?: $this->ask('Ad');
-        $eposta = $this->option('eposta') ?: $this->ask('E-posta');
+        $ad = $this->option('name') ?: $this->ask('Ad');
+        $eposta = $this->option('email') ?: $this->ask('E-posta');
         $mevcut = User::where('email', $eposta)->first();
 
-        $parola = $this->option('parola')
+        $parola = $this->option('password')
             ?: ($mevcut ? null : $this->secret('Parola'));
 
         $dogrulama = Validator::make(
-            ['ad' => $ad, 'eposta' => $eposta, 'parola' => $parola],
+            ['name' => $ad, 'email' => $eposta, 'password' => $parola],
             [
-                'ad' => ['required', 'string', 'max:120'],
-                'eposta' => ['required', 'email', 'max:255'],
-                'parola' => [$mevcut ? 'nullable' : 'required', PasswordRule::kural()],
+                'name' => ['required', 'string', 'max:120'],
+                'email' => ['required', 'email', 'max:255'],
+                'password' => [$mevcut ? 'nullable' : 'required', PasswordRule::kural()],
             ],
         );
 

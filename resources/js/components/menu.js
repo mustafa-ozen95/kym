@@ -6,7 +6,7 @@
  * anlamaz.
  */
 function liste() {
-    return document.querySelector('[data-menu-liste]');
+    return document.querySelector('[data-menu-list]');
 }
 
 function kapat() {
@@ -14,13 +14,13 @@ function kapat() {
 
     if (kutu && !kutu.hidden) {
         kutu.hidden = true;
-        document.querySelector('[data-menu-ac]')?.setAttribute('aria-expanded', 'false');
+        document.querySelector('[data-menu-open]')?.setAttribute('aria-expanded', 'false');
     }
 }
 
 export function init() {
     document.addEventListener('click', (olay) => {
-        const tetik = olay.target.closest('[data-menu-ac]');
+        const tetik = olay.target.closest('[data-menu-open]');
 
         if (tetik) {
             olay.preventDefault();

@@ -60,7 +60,7 @@ final class PermissionTest extends TestCase
 
         foreach (['kullanici.gor', 'kullanici.onayla'] as $yetenek) {
             UserPermission::create([
-                'user_id' => $kullanici->id, 'yetenek' => $yetenek, 'etki' => UserPermission::IZIN,
+                'user_id' => $kullanici->id, 'yetenek' => $yetenek, 'etki' => UserPermission::ALLOW,
             ]);
         }
 
@@ -78,14 +78,14 @@ final class PermissionTest extends TestCase
      */
     public function test_yonetim_yalnizca_yoneticide(): void
     {
-        config(['permissions.yonetim_yalnizca_yonetici' => true]);
+        config(['permissions.admin_only_management' => true]);
 
         Role::where('slug', 'network')->first()->update(['template' => ['sistem.gor', 'grup.gor']]);
 
         $kullanici = $this->rolde('network');
 
         UserPermission::create([
-            'user_id' => $kullanici->id, 'yetenek' => 'kullanici.gor', 'etki' => UserPermission::IZIN,
+            'user_id' => $kullanici->id, 'yetenek' => 'kullanici.gor', 'etki' => UserPermission::ALLOW,
         ]);
 
         foreach (['sistem.gor', 'grup.gor', 'kullanici.gor', 'ayar.duzenle', 'rol.duzenle'] as $yetki) {
@@ -94,8 +94,8 @@ final class PermissionTest extends TestCase
 
         $this->assertFalse($kullanici->can('yonet'), 'Yönetim kapısı kapalı olmalı.');
 
-        $this->actingAs($kullanici)->get(route('yonetim.sistemler'))->assertForbidden();
-        $this->actingAs($kullanici)->get(route('yonetim.kullanicilar'))->assertForbidden();
+        $this->actingAs($kullanici)->get(route('admin.systems'))->assertForbidden();
+        $this->actingAs($kullanici)->get(route('admin.users'))->assertForbidden();
     }
 
     /**
@@ -107,12 +107,12 @@ final class PermissionTest extends TestCase
      */
     public function test_yonetim_kapaliyken_kutucuk_erisimi_calisir(): void
     {
-        config(['permissions.yonetim_yalnizca_yonetici' => true]);
+        config(['permissions.admin_only_management' => true]);
 
         $kutucuk = System::create([
             'ad' => 'Gizli Pano', 'adres' => 'https://ornek.test', 'grup' => 'ic',
             'renk' => '#79c8a4', 'durum' => 'up',
-            'gorunurluk' => System::YETKILI, 'etkin' => true,
+            'gorunurluk' => System::AUTHORIZED, 'etkin' => true,
         ]);
 
         $yetki = $kutucuk->yetenek();
@@ -194,7 +194,7 @@ final class PermissionTest extends TestCase
     public function test_network_kutucuk_ekleyemez(): void
     {
         $this->actingAs($this->rolde('network'))
-            ->post(route('yonetim.sistemler.ekle'), ['ad' => 'Kaçak', 'adres' => 'https://ornek.test'])
+            ->post(route('admin.systems.store'), ['ad' => 'Kaçak', 'adres' => 'https://ornek.test'])
             ->assertForbidden();
     }
 
@@ -202,7 +202,7 @@ final class PermissionTest extends TestCase
      * TEKNİK merkezin yönetimine HİÇ GİRMEZ.
      *
      * Kural: teknik yönetim ekranlarının hiçbirini açmaz, hiçbir şey ekleyip
-     * silip düzenlemez; salt okuma da /yonetim kapısını açacağı için verilmez.
+     * silip düzenlemez; salt okuma da /admin kapısını açacağı için verilmez.
      *
      * Kapının kendisi de sınanıyor: yetki listesi boşalınca `yonet` geçidi
      * kapanmalı, yoksa boş bir ekrana girilirdi.
@@ -238,7 +238,7 @@ final class PermissionTest extends TestCase
         $this->assertFalse($muhasebe->can('yonet'));
         $this->assertFalse($muhasebe->can('sistem.gor'));
 
-        $this->actingAs($muhasebe)->get(route('yonetim.sistemler'))->assertForbidden();
+        $this->actingAs($muhasebe)->get(route('admin.systems'))->assertForbidden();
     }
 
     /* ── Kişisel istisnalar ── */
@@ -248,7 +248,7 @@ final class PermissionTest extends TestCase
         $editor = $this->rolde('network');
 
         UserPermission::create([
-            'user_id' => $editor->id, 'yetenek' => 'kullanici.gor', 'etki' => UserPermission::IZIN,
+            'user_id' => $editor->id, 'yetenek' => 'kullanici.gor', 'etki' => UserPermission::ALLOW,
         ]);
 
         $this->assertTrue($editor->can('kullanici.gor'));
@@ -266,7 +266,7 @@ final class PermissionTest extends TestCase
         $editor = $this->rolde('network');
 
         UserPermission::create([
-            'user_id' => $editor->id, 'yetenek' => 'sistem.gor', 'etki' => UserPermission::RED,
+            'user_id' => $editor->id, 'yetenek' => 'sistem.gor', 'etki' => UserPermission::DENY,
         ]);
 
         $this->assertFalse($editor->can('sistem.gor'));
@@ -279,7 +279,7 @@ final class PermissionTest extends TestCase
         $yonetici = $this->rolde('admin');
 
         UserPermission::create([
-            'user_id' => $yonetici->id, 'yetenek' => 'sistem.sil', 'etki' => UserPermission::RED,
+            'user_id' => $yonetici->id, 'yetenek' => 'sistem.sil', 'etki' => UserPermission::DENY,
         ]);
 
         $this->assertTrue($yonetici->can('sistem.sil'));
@@ -291,9 +291,9 @@ final class PermissionTest extends TestCase
     {
         $editor = $this->rolde('network');
 
-        $this->actingAs($editor)->get(route('yonetim.kullanicilar'))->assertForbidden();
-        $this->actingAs($editor)->get(route('yonetim.ayarlar'))->assertForbidden();
-        $this->actingAs($editor)->get(route('yonetim.sistemler'))->assertOk();
+        $this->actingAs($editor)->get(route('admin.users'))->assertForbidden();
+        $this->actingAs($editor)->get(route('admin.settings'))->assertForbidden();
+        $this->actingAs($editor)->get(route('admin.systems'))->assertOk();
     }
 
     /**
@@ -304,7 +304,7 @@ final class PermissionTest extends TestCase
      */
     public function test_menude_yalnizca_acilabilen_bolumler_gorunur(): void
     {
-        $yanit = $this->actingAs($this->rolde('network'))->get(route('yonetim.sistemler'));
+        $yanit = $this->actingAs($this->rolde('network'))->get(route('admin.systems'));
 
         $yanit->assertOk()
             ->assertSee('Sistemler')
@@ -325,9 +325,9 @@ final class PermissionTest extends TestCase
         $hedef = $this->rolde('muhasebe');
 
         $this->actingAs($sorumlu)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), [
-                'durum' => Status::Etkin->value,
-                'rol' => Role::firstWhere('is_admin', true)->uuid,
+            ->put(route('admin.users.update', $hedef), [
+                'status' => Status::Etkin->value,
+                'role' => Role::firstWhere('is_admin', true)->uuid,
             ])
             ->assertForbidden();
 
@@ -341,7 +341,7 @@ final class PermissionTest extends TestCase
         $hedef = $this->rolde('muhasebe');
 
         $this->actingAs($sorumlu)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), ['durum' => Status::Askida->value])
+            ->put(route('admin.users.update', $hedef), ['status' => Status::Askida->value])
             ->assertRedirect();
 
         $this->assertSame(Status::Askida, $hedef->fresh()->durum);
@@ -354,7 +354,7 @@ final class PermissionTest extends TestCase
         $rol = Role::firstWhere('slug', 'network');
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.roller.guncelle', $rol), [
+            ->put(route('admin.roles.update', $rol), [
                 'slug' => 'network', 'label' => 'Network', 'badge' => 'blue',
                 'template' => ['sistem.gor', 'kullanici.gor'],
             ])
@@ -374,7 +374,7 @@ final class PermissionTest extends TestCase
         $rol = Role::firstWhere('slug', 'network');
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.roller.guncelle', $rol), [
+            ->put(route('admin.roles.update', $rol), [
                 'slug' => 'network', 'label' => 'Network', 'badge' => 'blue',
                 'template' => ['sistem.gor', 'uydurma.yetki'],
             ]);
@@ -388,7 +388,7 @@ final class PermissionTest extends TestCase
         $rol = Role::firstWhere('slug', 'admin');
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.roller.guncelle', $rol), [
+            ->put(route('admin.roles.update', $rol), [
                 'slug' => 'admin', 'label' => 'Yönetici', 'badge' => 'purple',
             ])
             ->assertSessionHas('error');
@@ -401,7 +401,7 @@ final class PermissionTest extends TestCase
         $rol = Role::firstWhere('slug', 'network');
 
         $this->actingAs($this->rolde('admin'))
-            ->delete(route('yonetim.roller.sil', $rol))
+            ->delete(route('admin.roles.destroy', $rol))
             ->assertSessionHas('error');
 
         $this->assertModelExists($rol);
@@ -413,7 +413,7 @@ final class PermissionTest extends TestCase
         User::factory()->create(['rol_id' => $rol->id]);
 
         $this->actingAs($this->rolde('admin'))
-            ->delete(route('yonetim.roller.sil', $rol))
+            ->delete(route('admin.roles.destroy', $rol))
             ->assertSessionHas('error');
 
         $this->assertModelExists($rol);
@@ -425,7 +425,7 @@ final class PermissionTest extends TestCase
         $editor = Role::firstWhere('slug', 'network');
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.roller.guncelle', $editor), [
+            ->put(route('admin.roles.update', $editor), [
                 'slug' => 'network', 'label' => 'Network', 'badge' => 'blue', 'is_default' => '1',
             ]);
 
@@ -447,13 +447,13 @@ final class PermissionTest extends TestCase
     {
         $yonetici = $this->rolde('admin');
 
-        foreach (['yonetim.sistemler', 'yonetim.kullanicilar', 'yonetim.roller', 'yonetim.ayarlar', 'yonetim.istemciler'] as $rota) {
+        foreach (['admin.systems', 'admin.users', 'admin.roles', 'admin.settings', 'admin.clients'] as $rota) {
             $this->actingAs($yonetici)->get(route($rota))->assertOk();
         }
 
         /* Rol AYRINTISI ayrı bir sayfa; listeyle birlikte kırılmasın. */
         $this->actingAs($yonetici)
-            ->get(route('yonetim.roller.goster', Role::firstWhere('slug', 'network')))
+            ->get(route('admin.roles.show', Role::firstWhere('slug', 'network')))
             ->assertOk();
     }
 
@@ -466,18 +466,18 @@ final class PermissionTest extends TestCase
     {
         $yonetici = $this->rolde('admin');
 
-        $this->assertStringContainsString('/yonetim/ayarlar/roller', route('yonetim.roller'));
+        $this->assertStringContainsString('/admin/settings/roles', route('admin.roles'));
 
         /* Şerit iki sayfada da aynı: Genel ve Roller. */
-        foreach (['yonetim.ayarlar', 'yonetim.roller'] as $rota) {
+        foreach (['admin.settings', 'admin.roles'] as $rota) {
             $this->actingAs($yonetici)->get(route($rota))
                 ->assertOk()
-                ->assertSee(route('yonetim.ayarlar'))
-                ->assertSee(route('yonetim.roller'));
+                ->assertSee(route('admin.settings'))
+                ->assertSee(route('admin.roles'));
         }
 
         /* Üst menüde artık yok. */
-        $this->actingAs($yonetici)->get(route('yonetim.sistemler'))
+        $this->actingAs($yonetici)->get(route('admin.systems'))
             ->assertOk()
             ->assertDontSee('>Roller<', false);
     }
@@ -493,17 +493,17 @@ final class PermissionTest extends TestCase
         $kullanici = $this->rolde('muhasebe');
 
         UserPermission::create([
-            'user_id' => $kullanici->id, 'yetenek' => 'rol.gor', 'etki' => UserPermission::IZIN,
+            'user_id' => $kullanici->id, 'yetenek' => 'rol.gor', 'etki' => UserPermission::ALLOW,
         ]);
 
-        $this->actingAs($kullanici)->get(route('yonetim.roller'))
+        $this->actingAs($kullanici)->get(route('admin.roles'))
             ->assertOk()
             ->assertSee('Roller')
             /* Şeritte yalnızca açabildiği sekme durur. */
             ->assertDontSee('>Genel<', false);
 
         /* Genel sekmesi görünmez ve açılmaz: o ayrı bir yetki. */
-        $this->actingAs($kullanici)->get(route('yonetim.ayarlar'))->assertForbidden();
+        $this->actingAs($kullanici)->get(route('admin.settings'))->assertForbidden();
     }
 
     /* ── Kişisel yetki ekranı ── */
@@ -513,7 +513,7 @@ final class PermissionTest extends TestCase
         $yonetici = $this->rolde('admin');
 
         $this->actingAs($yonetici)
-            ->put(route('yonetim.kullanicilar.yetkiler', $yonetici), [
+            ->put(route('admin.users.permissions', $yonetici), [
                 'yetkiler' => ['sistem.sil' => 'red'],
             ])
             ->assertSessionHas('error');
@@ -526,7 +526,7 @@ final class PermissionTest extends TestCase
         $hedef = $this->rolde('network');
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.kullanicilar.yetkiler', $hedef), [
+            ->put(route('admin.users.permissions', $hedef), [
                 'yetkiler' => ['sistem.sil' => '', 'kullanici.gor' => 'izin'],
             ])
             ->assertRedirect();
@@ -539,7 +539,7 @@ final class PermissionTest extends TestCase
     public function test_yetki_dagitmak_rol_yetkisi_ister(): void
     {
         $this->actingAs($this->hesapSorumlusu())
-            ->put(route('yonetim.kullanicilar.yetkiler', $this->rolde('muhasebe')), [
+            ->put(route('admin.users.permissions', $this->rolde('muhasebe')), [
                 'yetkiler' => ['sistem.sil' => 'izin'],
             ])
             ->assertForbidden();

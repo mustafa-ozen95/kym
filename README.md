@@ -30,19 +30,19 @@ Only **Authorization Code + PKCE** is enabled. The password grant is disabled
 | --- | --- |
 | `/.well-known/openid-configuration` | Discovery document — projects in other languages only need this |
 | `/oauth/authorize` · `/oauth/token` | Standard endpoints provided by Passport |
-| `/oauth/kullanici` | Identity: `sub` (uuid), name, e-mail, verified or not, role |
-| `/api/kimlik-durumu` | Back channel: connected projects ask "what is the state of these identities right now" |
+| `/oauth/userinfo` | Identity: `sub` (uuid), name, e-mail, verified or not, role |
+| `/api/identity-status` | Back channel: connected projects ask "what is the state of these identities right now" |
 
 Access tokens live **10 minutes**, refresh tokens 1 day. No `id_token` is
 issued, and the discovery document says so explicitly.
 
 ### Connecting a new application
 
-`/yonetim/uygulamalar` → "Yeni uygulama" (new application). The secret is shown
-**once**. For Laravel projects a single file is generated (`app/KimlikMerkezi.php`):
+`/admin/clients` → "Yeni uygulama" (new application). The secret is shown
+**once**. For Laravel projects a single file is generated (`app/IdentityCenter.php`):
 routes, the login button, the PKCE flow and account matching come together, so
 the work in the project comes down to three steps — drop in the file, register
-the provider, add `@kimlikGiris`. For other languages the screen shows the raw
+the provider, add `@identityLogin`. For other languages the screen shows the raw
 protocol and a working Node.js example.
 
 Rotating the secret revokes every issued token: if we rotate because the secret
@@ -65,12 +65,12 @@ Filtering happens in the database: "fetch everything, then hide it on screen" is
 not security — anyone reading the page source would still see the tile's name
 and address. A hall left empty is not drawn at all.
 
-A hall can be marked as **its own page** (`/salon/salon-a`). Someone entering
+A hall can be marked as **its own page** (`/group/salon-a`). Someone entering
 a hall they cannot see gets 404, not 403: 403 would say "such a page exists".
 
 ### Gate endpoint
 
-`/kapi/{anahtar}` is for nginx's `auth_request` directive: 401 without a
+`/gate/{anahtar}` is for nginx's `auth_request` directive: 401 without a
 session, 403 without permission, otherwise 200 plus identity headers. The rule
 goes through the same place as the listing, and a test locks that the two never
 diverge.
@@ -112,8 +112,8 @@ the same file on every platform). Details and variables: `docker/README.md`,
 
 ```bash
 composer setup
-php artisan kimlik:yonetici-ekle --ad="Ad Soyad" --eposta=ad@ornek.test
-php artisan kimlik:istemci-ekle --ad="NYS" --adres=https://ornek/giris/merkez/geri
+php artisan admin:add --name="Ad Soyad" --email=ad@ornek.test
+php artisan client:add --name="NYS" --address=https://ornek/login/center/callback
 ```
 
 There is **no** "make myself administrator" path in the panel; the first

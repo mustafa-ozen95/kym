@@ -77,9 +77,9 @@ class UserController extends Controller implements HasMiddleware
             'onaylayabilir' => $kullanici->can('kullanici.onayla'),
 
             /* Pencerenin ADRESİ vardır; doğrulama hatasında açık geri gelir. */
-            'pencere' => request()->query('pencere') === 'ekle' ? 'ekle' : null,
-            'duzenlenen' => request()->query('kayit')
-                ? User::firstWhere('uuid', request()->query('kayit'))
+            'window' => request()->query('window') === 'add' ? 'add' : null,
+            'duzenlenen' => request()->query('record')
+                ? User::firstWhere('uuid', request()->query('record'))
                 : null,
             'kaynaklar' => $rolVerebilir ? $this->sozluk->tumKaynaklar() : [],
         ]);
@@ -113,7 +113,7 @@ class UserController extends Controller implements HasMiddleware
 
         /* Onayı veren kişi adresin o kişiye ait olduğuna kefil (bkz. update). */
         /* Durum toplu atamaya kapalı; yetkisi doğrulanmış yönetici açıkça yazar. */
-        $yeni->durumuAyarla(Status::from($veri['durum'] ?? Status::Etkin->value));
+        $yeni->durumuAyarla(Status::from($veri['status'] ?? Status::Etkin->value));
 
         if ($yeni->durum === Status::Etkin && $dogrulama->onayDogrularMi()) {
             $yeni->forceFill(['email_verified_at' => now()])->save();
@@ -121,7 +121,7 @@ class UserController extends Controller implements HasMiddleware
 
         $recorder->record('kullanici-eklendi', $yeni->email.' hesabı açıldı', $kullanici);
 
-        return redirect()->route('yonetim.kullanicilar')->with('status', $yeni->name.' hesabı açıldı.');
+        return redirect()->route('admin.users')->with('status', $yeni->name.' hesabı açıldı.');
     }
 
     /**
@@ -134,13 +134,13 @@ class UserController extends Controller implements HasMiddleware
      */
     private function rolKimligi(array $veri, User $kullanici): ?int
     {
-        if (blank($veri['rol'] ?? null)) {
+        if (blank($veri['role'] ?? null)) {
             return null;
         }
 
         abort_unless($kullanici->can('kullanici.rol'), 403);
 
-        $rol = Role::where('uuid', $veri['rol'])->first();
+        $rol = Role::where('uuid', $veri['role'])->first();
 
         /*
          * YÖNETİCİ ROLÜNÜ YALNIZCA YÖNETİCİ VEREBİLİR.
@@ -202,14 +202,14 @@ class UserController extends Controller implements HasMiddleware
          */
         $kendisi = $user->is($kullanici);
 
-        if (array_key_exists('durum', $veri) && ! $kendisi) {
+        if (array_key_exists('status', $veri) && ! $kendisi) {
             abort_unless($kullanici->can('kullanici.onayla'), 403);
 
             /* Toplu atamaya kapalı: yetki doğrulandıktan sonra açıkça yazılır. */
-            $user->durumuAyarla(Status::from($veri['durum']));
+            $user->durumuAyarla(Status::from($veri['status']));
         }
 
-        if (filled($veri['rol'] ?? null) && ! $kendisi) {
+        if (filled($veri['role'] ?? null) && ! $kendisi) {
             $degisiklik['rol_id'] = $this->rolKimligi($veri, $kullanici);
         }
 
@@ -239,7 +239,7 @@ class UserController extends Controller implements HasMiddleware
         /*
          * TEMİZ ADRESE dönülür, back()'e DEĞİL.
          *
-         * Pencerenin adresi var (?pencere=duzenle&kayit=...) ve ekran o
+         * Pencerenin adresi var (?window=edit&record=...) ve ekran o
          * adreste pencereyi kendiliğinden açıyor. back() deseydik kaydettikten
          * sonra aynı adrese dönerdik ve pencere hemen yeniden açılırdı:
          * kullanıcı "kaydet"e bastığında hiçbir şey olmamış gibi görünürdü.
@@ -247,7 +247,7 @@ class UserController extends Controller implements HasMiddleware
          * Doğrulama hatasında ise pencere AÇIK gelmeli; o yol buradan değil,
          * Form Request'in kendi geri dönüşünden geçiyor ve etkilenmiyor.
          */
-        return redirect()->route('yonetim.kullanicilar')->with('status', $user->name.' güncellendi.');
+        return redirect()->route('admin.users')->with('status', $user->name.' güncellendi.');
     }
 
     /**
@@ -281,6 +281,6 @@ class UserController extends Controller implements HasMiddleware
             $recorder->record('kullanici-silindi', $eposta.' hesabı silindi', $kullanici);
         });
 
-        return redirect()->route('yonetim.kullanicilar')->with('status', $ad.' silindi.');
+        return redirect()->route('admin.users')->with('status', $ad.' silindi.');
     }
 }

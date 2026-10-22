@@ -12,8 +12,8 @@ namespace App\Support;
  * ucu tamamen kapatır.
  *
  * NEDEN VAR: sınırlar rotalarda doğrudan yazılıyordu —
- * `->middleware('throttle:'.config('limits.giris').',1')` — ve o biçimde
- * sıfırın anlamı yoktu. `LIMIT_GIRIS=0` verip "sınırı kaldırdım" sanan biri
+ * `->middleware('throttle:'.config('limits.login').',1')` — ve o biçimde
+ * sıfırın anlamı yoktu. `LIMIT_LOGIN=0` verip "sınırı kaldırdım" sanan biri
  * giriş ucunu herkese kapatırdı; panele kimse giremezdi ve sebebi ayarın
  * kendisinde görünmezdi.
  *
@@ -29,7 +29,7 @@ final class RequestLimit
     /**
      * @return array<int, string>
      */
-    public static function rotaIcin(string $ad): array
+    public static function forRoute(string $ad): array
     {
         /* Negatif sayı da "sınır yok" sayılır; eksi bir sınırın anlamı yok. */
         $sinir = max(0, (int) config('limits.'.$ad));

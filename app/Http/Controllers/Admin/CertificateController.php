@@ -38,7 +38,7 @@ class CertificateController extends Controller implements HasMiddleware
     {
         return [
             new Middleware(['auth', 'can:ayar.gor'], only: ['index']),
-            new Middleware(['auth', 'can:ayar.sertifika'], only: ['baslat', 'tamamla']),
+            new Middleware(['auth', 'can:ayar.sertifika'], only: ['run', 'confirm']),
         ];
     }
 
@@ -57,7 +57,7 @@ class CertificateController extends Controller implements HasMiddleware
     /**
      * Yeni tur: sunucu ACME siparişini açar ve TXT kayıtlarını yazar.
      */
-    public function baslat(): RedirectResponse
+    public function run(): RedirectResponse
     {
         if (! $this->sertifika->istekBirak('baslat')) {
             return $this->iletilemedi();
@@ -74,7 +74,7 @@ class CertificateController extends Controller implements HasMiddleware
      * sertifika sağlayıcısına gitmek olurdu; o deneme başarısız sayılır ve
      * tur baştan başlar.
      */
-    public function tamamla(): RedirectResponse
+    public function confirm(): RedirectResponse
     {
         $eksik = collect($this->sertifika->yayilmaDurumu())
             ->reject(fn (array $k): bool => $k['yayildi'])

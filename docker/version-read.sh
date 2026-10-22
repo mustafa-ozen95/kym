@@ -2,7 +2,7 @@
 # Derleme baglamindaki .git'ten calisan commit'i okur ve basar; okuyamazsa hicbir sey basmaz.
 # Derlemeye commit vermeyen platformlar (NineDeploy gibi) icin: .dockerignore .git'ten yalniz HEAD ve
 # ref'leri alir, nesneler imaja girmez. .git hic yoksa (zip indirme) bos doner, derleme bozulmaz.
-s=""; g=${1:-/tmp/baglam}/.git
+s=""; g=${1:-/tmp/context}/.git
 if [ -f "$g/HEAD" ]; then
   h=$(cat "$g/HEAD")
   case "$h" in

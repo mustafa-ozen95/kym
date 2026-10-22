@@ -41,9 +41,9 @@ h1{font-size:20px; font-weight:600; margin:0}
    * Başlık şeridi dar ekranda sarmalıyor ve ikisi alt satırın SOLUNA
    * düşüyordu; geniş ekranda sağda duruyorlar ve başparmağın uzandığı yer
    * de orası.
-   * İtici `.oturum`a veriliyor; tema düğmesi peşinden geliyor.
+   * İtici `.session`a veriliyor; tema düğmesi peşinden geliyor.
    */
-  .head .oturum{margin-left:auto}
+  .head .session{margin-left:auto}
 }
 
 .tile{

@@ -10,7 +10,7 @@
                     öğrenir. Parolanız o uygulamaya hiçbir zaman gitmez.
                 </p>
 
-                <div class="row row--end row--ustu-bosluklu">
+                <div class="row row--end row--spaced-top">
                     <form method="POST" action="{{ route('passport.authorizations.deny') }}">
                         @csrf
                         @method('DELETE')

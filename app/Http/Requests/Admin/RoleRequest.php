@@ -19,7 +19,7 @@ class RoleRequest extends FormRequest
     /** @return array<string, array<int, mixed>> */
     public function rules(): array
     {
-        $rol = $this->route('rol');
+        $rol = $this->route('role');
 
         return [
             'slug' => [

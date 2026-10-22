@@ -15,7 +15,7 @@
                 --}}
                 <x-ui.panel title="Kurtarma kodları"
                             subtitle="Bu kodlar bir daha gösterilmeyecek. Telefonunuzu kaybederseniz tek giriş yolunuz bunlar.">
-                    <ul class="kurtarma">
+                    <ul class="recovery">
                         @foreach ($kurtarmaKodlari as $kod)
                             <li class="mono">{{ $kod }}</li>
                         @endforeach
@@ -32,7 +32,7 @@
                         Kalan kurtarma kodu: <strong>{{ $kalanKurtarma }}</strong>
                     </p>
 
-                    <form method="POST" action="{{ route('hesap.iki-adim.kapat') }}" class="form-dar">
+                    <form method="POST" action="{{ route('account.two-step.disable') }}" class="form-narrow">
                         @csrf
                         @method('DELETE')
 
@@ -49,21 +49,21 @@
             @elseif ($kuruluyor)
                 <x-ui.panel title="Uygulamaya ekleyin"
                             subtitle="Karekodu doğrulayıcı uygulamanızla okutun, sonra ürettiği kodu girin.">
-                    <div class="iki-adim">
-                        <div class="iki-adim__kare">
+                    <div class="two-step">
+                        <div class="two-step__square">
                             {{-- Karekod tarayıcıda çizilir; anahtar sunucudan çıkıp başka bir yere uğramaz. --}}
-                            <canvas id="totp-karekod" data-uri="{{ $uri }}" width="200" height="200"></canvas>
+                            <canvas id="totp-qr" data-uri="{{ $uri }}" width="200" height="200"></canvas>
                         </div>
 
-                        <div class="iki-adim__metin">
+                        <div class="two-step__text">
                             <p class="text-sm text-muted">Karekodu okutamıyorsanız anahtarı elle girin:</p>
-                            <p class="mono anahtar">{{ trim(chunk_split($anahtar, 4, ' ')) }}</p>
+                            <p class="mono setup-key">{{ trim(chunk_split($anahtar, 4, ' ')) }}</p>
 
-                            <form method="POST" action="{{ route('hesap.iki-adim.onay') }}" class="form-dar">
+                            <form method="POST" action="{{ route('account.two-step.confirm') }}" class="form-narrow">
                                 @csrf
 
-                                <x-form.field name="kod" label="Uygulamadaki kod">
-                                    <x-form.input name="kod" inputmode="numeric" autocomplete="one-time-code" mono />
+                                <x-form.field name="code" label="Uygulamadaki kod">
+                                    <x-form.input name="code" inputmode="numeric" autocomplete="one-time-code" mono />
                                 </x-form.field>
 
                                 <x-form.field name="password" label="Parolanız"
@@ -80,7 +80,7 @@
             @else
                 <x-ui.panel title="Kapalı"
                             subtitle="Şu anda girişte yalnızca parola soruluyor.">
-                    <form method="POST" action="{{ route('hesap.iki-adim.baslat') }}" class="form-dar">
+                    <form method="POST" action="{{ route('account.two-step.start') }}" class="form-narrow">
                         @csrf
 
                         <x-form.field name="password" label="Parolanız"

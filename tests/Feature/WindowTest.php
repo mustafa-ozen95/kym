@@ -26,36 +26,36 @@ class WindowTest extends TestCase
     #[Test]
     public function pencere_varsayilan_olarak_kapali_gelir(): void
     {
-        $govde = $this->get(route('hizli-erisim'))->assertOk()->getContent();
+        $govde = $this->get(route('quick-access'))->assertOk()->getContent();
 
-        $this->assertMatchesRegularExpression('/id="pencere-giris"[^>]*hidden/', $govde);
+        $this->assertMatchesRegularExpression('/id="window-login"[^>]*hidden/', $govde);
     }
 
     /** Adresle gelindiğinde SUNUCU pencereyi açık çizer; betik gerekmez. */
     #[Test]
     public function adresle_gelince_pencere_acik_cizilir(): void
     {
-        $govde = $this->get(route('hizli-erisim', ['pencere' => 'giris']))->assertOk()->getContent();
+        $govde = $this->get(route('quick-access', ['window' => 'login']))->assertOk()->getContent();
 
-        $this->assertDoesNotMatchRegularExpression('/id="pencere-giris"[^>]*hidden/', $govde);
-        $this->assertMatchesRegularExpression('/id="pencere-kayit"[^>]*hidden/', $govde, 'Yalnızca istenen pencere açılmalı.');
+        $this->assertDoesNotMatchRegularExpression('/id="window-login"[^>]*hidden/', $govde);
+        $this->assertMatchesRegularExpression('/id="window-register"[^>]*hidden/', $govde, 'Yalnızca istenen pencere açılmalı.');
     }
 
     #[Test]
     public function kayit_penceresi_de_adresle_acilir(): void
     {
-        $govde = $this->get(route('hizli-erisim', ['pencere' => 'kayit']))->assertOk()->getContent();
+        $govde = $this->get(route('quick-access', ['window' => 'register']))->assertOk()->getContent();
 
-        $this->assertDoesNotMatchRegularExpression('/id="pencere-kayit"[^>]*hidden/', $govde);
+        $this->assertDoesNotMatchRegularExpression('/id="window-register"[^>]*hidden/', $govde);
     }
 
     /** Tanınmayan değer sessizce yok sayılır; ekran bozulmaz. */
     #[Test]
     public function taninmayan_pencere_adi_yok_sayilir(): void
     {
-        $govde = $this->get(route('hizli-erisim', ['pencere' => 'olmayan']))->assertOk()->getContent();
+        $govde = $this->get(route('quick-access', ['window' => 'olmayan']))->assertOk()->getContent();
 
-        $this->assertMatchesRegularExpression('/id="pencere-giris"[^>]*hidden/', $govde);
+        $this->assertMatchesRegularExpression('/id="window-login"[^>]*hidden/', $govde);
     }
 
     /**
@@ -67,17 +67,17 @@ class WindowTest extends TestCase
     #[Test]
     public function dogrulama_hatasinda_pencere_acik_geri_gelir(): void
     {
-        $yanit = $this->from(route('hizli-erisim', ['pencere' => 'kayit']))
-            ->post(route('kayit'), ['name' => '', 'email' => 'gecersiz', 'password' => 'kisa']);
+        $yanit = $this->from(route('quick-access', ['window' => 'register']))
+            ->post(route('register'), ['name' => '', 'email' => 'gecersiz', 'password' => 'kisa']);
 
-        $yanit->assertRedirect(route('hizli-erisim', ['pencere' => 'kayit']));
+        $yanit->assertRedirect(route('quick-access', ['window' => 'register']));
 
         $govde = $this->followingRedirects()
-            ->from(route('hizli-erisim', ['pencere' => 'kayit']))
-            ->post(route('kayit'), ['name' => '', 'email' => 'gecersiz', 'password' => 'kisa'])
+            ->from(route('quick-access', ['window' => 'register']))
+            ->post(route('register'), ['name' => '', 'email' => 'gecersiz', 'password' => 'kisa'])
             ->getContent();
 
-        $this->assertDoesNotMatchRegularExpression('/id="pencere-kayit"[^>]*hidden/', $govde);
+        $this->assertDoesNotMatchRegularExpression('/id="window-register"[^>]*hidden/', $govde);
     }
 
     /** Oturum açıkken giriş penceresi sayfada HİÇ bulunmaz. */
@@ -85,11 +85,11 @@ class WindowTest extends TestCase
     public function oturum_acikken_pencereler_cizilmez(): void
     {
         $govde = $this->actingAs(User::factory()->create())
-            ->get(route('hizli-erisim', ['pencere' => 'giris']))
+            ->get(route('quick-access', ['window' => 'login']))
             ->assertOk()
             ->getContent();
 
-        $this->assertStringNotContainsString('id="pencere-giris"', $govde);
+        $this->assertStringNotContainsString('id="window-login"', $govde);
         $this->assertStringContainsString('Çıkış', $govde);
     }
 
@@ -102,21 +102,21 @@ class WindowTest extends TestCase
     #[Test]
     public function baslikta_yalnizca_giris_baglantisi_bulunur(): void
     {
-        $govde = $this->get(route('hizli-erisim'))->assertOk()->getContent();
+        $govde = $this->get(route('quick-access'))->assertOk()->getContent();
 
         $baslik = substr($govde, (int) strpos($govde, '<div class="head">'), 1200);
 
-        $this->assertStringContainsString('data-pencere-ac="giris"', $baslik);
-        $this->assertStringNotContainsString('data-pencere-ac="kayit"', $baslik);
+        $this->assertStringContainsString('data-window-open="login"', $baslik);
+        $this->assertStringNotContainsString('data-window-open="register"', $baslik);
 
         /* Kayıt yolu kapanmadı: giriş penceresinin içinden açılıyor. */
-        $this->assertStringContainsString('data-pencere-ac="kayit"', $govde);
+        $this->assertStringContainsString('data-window-open="register"', $govde);
     }
 
     /**
      * KAYDEDİNCE PENCERE KAPANIR.
      *
-     * Pencerenin adresi var (?pencere=duzenle&kayit=...) ve ekran o adreste
+     * Pencerenin adresi var (?window=edit&record=...) ve ekran o adreste
      * pencereyi kendiliğinden açıyor. Kaydeden istek back() ile aynı adrese
      * dönseydi pencere hemen yeniden açılırdı: kullanıcı "kaydet"e bastığında
      * hiçbir şey olmamış gibi görünürdü.
@@ -127,16 +127,16 @@ class WindowTest extends TestCase
         $yonetici = User::factory()->rol('admin')->create(['durum' => Status::Etkin]);
         $hedef = User::factory()->create(['name' => 'Eski Ad']);
 
-        $adres = route('yonetim.kullanicilar', ['pencere' => 'duzenle', 'kayit' => $hedef->uuid]);
+        $adres = route('admin.users', ['window' => 'edit', 'record' => $hedef->uuid]);
 
         $this->actingAs($yonetici)
             ->from($adres)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), [
+            ->put(route('admin.users.update', $hedef), [
                 'name' => 'Yeni Ad',
                 'email' => $hedef->email,
             ])
             /* Pencereyi açan sorgu parçaları adreste KALMAZ. */
-            ->assertRedirect(route('yonetim.kullanicilar'));
+            ->assertRedirect(route('admin.users'));
 
         $this->assertSame('Yeni Ad', $hedef->fresh()->name);
     }
@@ -151,11 +151,11 @@ class WindowTest extends TestCase
         $yonetici = User::factory()->rol('admin')->create(['durum' => Status::Etkin]);
         $hedef = User::factory()->create();
 
-        $adres = route('yonetim.kullanicilar', ['pencere' => 'duzenle', 'kayit' => $hedef->uuid]);
+        $adres = route('admin.users', ['window' => 'edit', 'record' => $hedef->uuid]);
 
         $this->actingAs($yonetici)
             ->from($adres)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), ['name' => '', 'email' => 'gecersiz'])
+            ->put(route('admin.users.update', $hedef), ['name' => '', 'email' => 'gecersiz'])
             ->assertRedirect($adres)
             ->assertSessionHasErrors('email');
     }

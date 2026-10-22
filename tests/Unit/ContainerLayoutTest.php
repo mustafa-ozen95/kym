@@ -52,7 +52,7 @@ class ContainerLayoutTest extends TestCase
 
         $this->assertStringContainsString(': "${DB_HOST:=db}"', $b);
         $this->assertStringContainsString(': "${REDIS_HOST:=redis}"', $b);
-        $this->assertStringContainsString('mariadb_bekle "${VT_BEKLE_CNF}"', $b);
+        $this->assertStringContainsString('mariadb_bekle "${DB_WAIT_CNF}"', $b);
         $this->assertStringContainsString('vt ortam-istemci', $b);
         foreach (['mariadbd', 'mariadb-install-db', 'redis-server', 'openssl req', '--protocol=socket'] as $yok) {
             $this->assertStringNotContainsString($yok, $b, $yok);
@@ -73,7 +73,7 @@ class ContainerLayoutTest extends TestCase
     {
         $c = self::oku('docker-compose.yml');
 
-        foreach (["\n  panel:\n", "\n  db:\n", "\n  redis:\n", 'image: mariadb:', 'replicas: ${VT_KOPYA:-1}', 'expose: ["80"]', 'internal: ${AG_YALITIMI:-false}'] as $var) {
+        foreach (["\n  panel:\n", "\n  db:\n", "\n  redis:\n", 'image: mariadb:', 'replicas: ${DB_REPLICAS:-1}', 'expose: ["80"]', 'internal: ${NETWORK_ISOLATED:-false}'] as $var) {
             $this->assertStringContainsString($var, $c, $var);
         }
         $this->assertStringNotContainsString('env_file', $c);

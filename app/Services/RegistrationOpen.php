@@ -22,10 +22,10 @@ use App\Models\Setting;
  */
 class RegistrationOpen
 {
-    public const AYAR = 'kayit_acik';
+    public const SETTING = 'kayit_acik';
 
     public function acikMi(): bool
     {
-        return Setting::bool(self::AYAR, true);
+        return Setting::bool(self::SETTING, true);
     }
 }

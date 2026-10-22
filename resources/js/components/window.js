@@ -1,7 +1,7 @@
 /**
  * Pencereler.
  *
- * Pencerenin ADRESİ VARDIR: açılınca adres çubuğuna ?pencere=giris yazılır,
+ * Pencerenin ADRESİ VARDIR: açılınca adres çubuğuna ?window=login yazılır,
  * kapanınca silinir. Bu süs değil, gereklilik:
  *
  *  - Doğrulama hatasında sunucu sayfayı AYNI adrese döndürür ve pencere açık
@@ -11,10 +11,10 @@
  *    tarafından açık çizilir. Yani betik olmadan da çalışır.
  */
 
-const ADRES_ANAHTARI = 'pencere';
+const ADRES_ANAHTARI = 'window';
 
 function pencere(ad) {
-    return document.querySelector(`[data-pencere="${ad}"]`);
+    return document.querySelector(`[data-window="${ad}"]`);
 }
 
 function adresYaz(ad) {
@@ -45,7 +45,7 @@ function ac(ad) {
 }
 
 function kapatHepsi() {
-    document.querySelectorAll('[data-pencere]').forEach((kutu) => {
+    document.querySelectorAll('[data-window]').forEach((kutu) => {
         kutu.hidden = true;
     });
 }
@@ -57,15 +57,15 @@ function kapat() {
 
 export function init() {
     document.addEventListener('click', (olay) => {
-        const acan = olay.target.closest('[data-pencere-ac]');
+        const acan = olay.target.closest('[data-window-open]');
 
-        if (acan && ac(acan.dataset.pencereAc)) {
+        if (acan && ac(acan.dataset.windowOpen)) {
             olay.preventDefault();
 
             return;
         }
 
-        if (olay.target.closest('[data-pencere-kapat]')) {
+        if (olay.target.closest('[data-window-close]')) {
             olay.preventDefault();
             kapat();
         }
@@ -81,7 +81,7 @@ export function init() {
      * Sunucu pencereyi açık gönderdiyse adres zaten doğrudur; JS'in yeniden
      * yazmasına gerek yok. Yalnızca odak verilir.
      */
-    document.querySelector('[data-pencere]:not([hidden])')
+    document.querySelector('[data-window]:not([hidden])')
         ?.querySelector('input:not([type=hidden]):not([type=checkbox])')?.focus();
 }
 

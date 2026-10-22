@@ -17,28 +17,28 @@
  */
 .head { --dugme-boy: 31px; }
 
-.head .baglanti,
+.head .link,
 .head .toggle {
     box-sizing: border-box;
     height: var(--dugme-boy);
     align-self: center;
 }
 
-.oturum {
+.session {
     display: inline-flex;
     align-items: center;
     gap: 10px;
 }
 
-.oturum__ad {
+.session__name {
     font-size: 13px;
     color: var(--faint);
 }
 
-.oturum form { display: inline-flex; }
+.session form { display: inline-flex; }
 
 /* Tema düğmesiyle aynı kalıp: aynı zemin, aynı çerçeve, aynı köşe. */
-.baglanti {
+.link {
     display: inline-flex;
     align-items: center;
     padding: 0 12px;
@@ -54,13 +54,13 @@
 }
 
 /* Salon sayfasındaki dönüş bağlantısı: ok ile yazının arası. */
-.baglanti.geri { gap: 6px; }
+.link.geri { gap: 6px; }
 
-.baglanti:hover { color: var(--text); border-color: var(--faint); }
-.baglanti:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.link:hover { color: var(--text); border-color: var(--faint); }
+.link:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
 /* Pencere içindeki ikincil bağlantı düğme gibi durmasın, yazı gibi dursun. */
-.form__eylem .baglanti {
+.form__action .link {
     padding: 0;
     background: none;
     border: 0;
@@ -69,10 +69,10 @@
     color: var(--faint);
 }
 
-.form__eylem .baglanti:hover { color: var(--text); border-bottom-color: var(--faint); }
+.form__action .link:hover { color: var(--text); border-bottom-color: var(--faint); }
 
 /* ── Pencere ── */
-.pencere {
+.window {
     position: fixed;
     inset: 0;
     z-index: 50;
@@ -81,9 +81,9 @@
     padding: 20px;
 }
 
-.pencere[hidden] { display: none; }
+.window[hidden] { display: none; }
 
-.pencere__zemin {
+.window__backdrop {
     position: absolute;
     inset: 0;
     background: rgb(0 0 0 / 45%);
@@ -91,7 +91,7 @@
 }
 
 /* Kutucuklarla aynı gövde: aynı zemin, aynı çerçeve, aynı 6px köşe. */
-.pencere__kutu {
+.window__box {
     position: relative;
     width: min(380px, 100%);
     max-height: calc(100vh - 40px);
@@ -102,7 +102,7 @@
     box-shadow: 0 18px 48px rgb(0 0 0 / 28%);
 }
 
-.pencere__ust {
+.window__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -111,7 +111,7 @@
     border-bottom: 1px solid var(--rule);
 }
 
-.pencere__ust h2 {
+.window__header h2 {
     margin: 0;
     font-size: 14.5px;
     font-weight: 600;
@@ -119,7 +119,7 @@
     color: var(--text);
 }
 
-.pencere__kapat {
+.window__close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -132,14 +132,14 @@
     text-decoration: none;
 }
 
-.pencere__kapat:hover { color: var(--text); background: var(--tile-hi); }
+.window__close:hover { color: var(--text); background: var(--tile-hi); }
 
-.pencere__govde { padding: 16px; }
+.window__body { padding: 16px; }
 
 /* ── Form ── */
 .form { display: grid; gap: 13px; }
 
-.alan { display: grid; gap: 5px; }
+.gate-field { display: grid; gap: 5px; }
 
 /*
  * Etiketler NORMAL yazılır.
@@ -148,12 +148,12 @@
  * bölüm başlıkları (.rowlabel) da normal yazıyor. Büyük harf, küçük bir
  * pencerede sert duruyordu.
  */
-.alan > span {
+.gate-field > span {
     font-size: 12.5px;
     color: var(--dim);
 }
 
-.alan input {
+.gate-field input {
     width: 100%;
     padding: 8px 10px;
     background: var(--bg);
@@ -169,13 +169,13 @@
  * beyaz kalın bir halka koyu temada tek başına ekranı ele geçiriyordu.
  * Görünürlük çerçeve renginin değişmesiyle de sağlanıyor.
  */
-.alan input:focus-visible {
+.gate-field input:focus-visible {
     border-color: var(--faint);
     outline: 2px solid var(--slot);
     outline-offset: -1px;
 }
 
-.onay {
+.confirm {
     display: flex;
     align-items: center;
     gap: 7px;
@@ -183,7 +183,7 @@
     color: var(--faint);
 }
 
-.ipucu {
+.hint {
     margin: 0;
     padding: 9px 11px;
     background: var(--bg);
@@ -193,13 +193,13 @@
     line-height: 1.5;
 }
 
-.hata {
+.error {
     margin: 0;
     color: #e2836b;
     font-size: 12.5px;
 }
 
-.form__eylem {
+.form__action {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -212,7 +212,7 @@
  * Sayfada güçlü tek bir vurgu rengi yok; öne çıkma, çerçeve ve metin
  * kontrastıyla yapılıyor.
  */
-.dugme {
+.button {
     padding: 8px 15px;
     background: var(--tile-hi);
     border: 1px solid var(--edge);
@@ -223,23 +223,23 @@
     cursor: pointer;
 }
 
-.dugme:hover { color: var(--text); border-color: var(--faint); }
-.dugme:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.button:hover { color: var(--text); border-color: var(--faint); }
+.button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
-.dugme--birincil {
+.button--primary {
     border-color: var(--slot);
     color: var(--text);
     font-weight: 500;
 }
 
-.dugme--birincil:hover { border-color: var(--text); }
+.button--primary:hover { border-color: var(--text); }
 
 /* ── Hesap menüsü (Hızlı Erişim) ── */
-.oturum { position: relative; }
+.session { position: relative; }
 
-.oturum__dugme { gap: 6px; }
+.session__button { gap: 6px; }
 
-.oturum__rozet {
+.session__badge {
     display: inline-grid;
     place-items: center;
     width: 18px;
@@ -251,7 +251,7 @@
     line-height: 1;
 }
 
-.oturum__liste {
+.session__list {
     position: absolute;
     top: calc(100% + 6px);
 
@@ -277,9 +277,9 @@
     box-shadow: 0 14px 36px rgb(0 0 0 / 26%);
 }
 
-.oturum__liste[hidden] { display: none; }
+.session__list[hidden] { display: none; }
 
-.oturum__kim {
+.session__who {
     padding: 6px 10px 4px;
     color: var(--faint);
     font-size: 11.5px;
@@ -288,8 +288,8 @@
     overflow-wrap: anywhere;
 }
 
-.oturum__liste a,
-.oturum__liste button {
+.session__list a,
+.session__list button {
     display: block;
     width: 100%;
     padding: 7px 10px;
@@ -304,6 +304,6 @@
     cursor: pointer;
 }
 
-.oturum__liste a:hover,
-.oturum__liste button:hover { background: var(--tile-hi); }
-.oturum__liste button { color: var(--dim); }
+.session__list a:hover,
+.session__list button:hover { background: var(--tile-hi); }
+.session__list button { color: var(--dim); }

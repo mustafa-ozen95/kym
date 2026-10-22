@@ -29,7 +29,7 @@ use Throwable;
  */
 final class ClientOrigins
 {
-    private const ANAHTAR = 'guvenlik:istemci-kokenleri';
+    private const CACHE_KEY = 'guvenlik:istemci-kokenleri';
 
     /**
      * Boşlukla ayrılmış köken listesi (`https://panel-a.ornek.test ...`).
@@ -56,12 +56,12 @@ final class ClientOrigins
 
     public static function unut(): void
     {
-        Cache::forget(self::ANAHTAR);
+        Cache::forget(self::CACHE_KEY);
     }
 
     private static function hesapla(): string
     {
-        return Cache::rememberForever(self::ANAHTAR, static fn (): string => OauthClient::query()
+        return Cache::rememberForever(self::CACHE_KEY, static fn (): string => OauthClient::query()
             ->where('revoked', false)
             ->get()
             ->flatMap(static fn (OauthClient $istemci): array => (array) $istemci->redirect_uris)

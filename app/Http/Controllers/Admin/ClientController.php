@@ -50,12 +50,12 @@ class ClientController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware(['auth', 'can:istemci.gor'], only: ['index', 'kurulumDosyasi']),
+            new Middleware(['auth', 'can:istemci.gor'], only: ['index', 'setupFile']),
             new Middleware(['auth', 'can:istemci.ekle'], only: ['store']),
             new Middleware(['auth', 'can:istemci.duzenle'], only: ['update']),
-            new Middleware(['auth', 'can:istemci.sir'], only: ['sirYenile']),
+            new Middleware(['auth', 'can:istemci.sir'], only: ['regenerateSecret']),
             /* Kalıcı silme de bir sil eylemidir: kapı (can:yonet) tek başına yetmez. */
-            new Middleware(['auth', 'can:istemci.sil'], only: ['destroy', 'kaliciSil']),
+            new Middleware(['auth', 'can:istemci.sil'], only: ['destroy', 'purge']),
         ];
     }
 
@@ -106,7 +106,7 @@ class ClientController extends Controller implements HasMiddleware
              * döndüğü için pencere açık geri gelir ve kullanıcı formunu
              * yeniden açmak zorunda kalmaz.
              */
-            'pencere' => $request->query('pencere') === 'ekle' ? 'ekle' : null,
+            'window' => $request->query('window') === 'add' ? 'add' : null,
         ]);
     }
 
@@ -117,11 +117,11 @@ class ClientController extends Controller implements HasMiddleware
      * indirilenler klasöründe kalır. Sır .env'den okunur; dosya yalnızca
      * yerinin nereye yazılacağını söyler.
      */
-    public function kurulumDosyasi(OauthClient $istemci): Response
+    public function setupFile(OauthClient $client): Response
     {
-        return response($this->kurulum->icerik($istemci))
+        return response($this->kurulum->icerik($client))
             ->header('Content-Type', 'application/octet-stream')
-            ->header('Content-Disposition', 'attachment; filename="'.SetupFile::AD.'"');
+            ->header('Content-Disposition', 'attachment; filename="'.SetupFile::FILE_NAME.'"');
     }
 
     public function store(
@@ -132,7 +132,7 @@ class ClientController extends Controller implements HasMiddleware
     ): RedirectResponse {
         $veri = $request->validated();
 
-        $istemci = $istemciler->createAuthorizationCodeGrantClient($veri['name'], $request->adresler());
+        $client = $istemciler->createAuthorizationCodeGrantClient($veri['name'], $request->adresler());
 
         /*
          * BİLDİRİM SIRRI kayıt anında üretilir.
@@ -144,7 +144,7 @@ class ClientController extends Controller implements HasMiddleware
          * Hiçbir yetki taşımaz: bildirimin gövdesine zaten güvenilmiyor,
          * proje doğruyu merkezden kendi soruyor.
          */
-        $istemci->forceFill(['bildirim_sirri' => Str::random(48)])->save();
+        $client->forceFill(['bildirim_sirri' => Str::random(48)])->save();
 
         $recorder->record('istemci-eklendi', $veri['name'].' istemci olarak kaydedildi', $kullanici);
 
@@ -153,27 +153,27 @@ class ClientController extends Controller implements HasMiddleware
          * kaybolur. Kalıcı olsaydı ekranı açık unutan biri onu paylaşmış olurdu.
          */
         /* Temiz adrese dönülür; yoksa "yeni uygulama bağla" penceresi kaydettikten sonra açık kalırdı. */
-        return redirect()->route('yonetim.istemciler')->with([
+        return redirect()->route('admin.clients')->with([
             'status' => $veri['name'].' bağlandı. Sır aşağıda BİR KEZ görünüyor.',
-            'yeniIstemci' => $istemci->getKey(),
-            'yeniSir' => $istemci->plainSecret,
-            'yeniEnv' => $this->rehber->envBlogu($istemci, $istemci->plainSecret),
+            'yeniIstemci' => $client->getKey(),
+            'yeniSir' => $client->plainSecret,
+            'yeniEnv' => $this->rehber->envBlogu($client, $client->plainSecret),
         ]);
     }
 
     public function update(
         ClientRequest $request,
-        OauthClient $istemci,
+        OauthClient $client,
         ActivityRecorder $recorder,
         #[CurrentUser] $kullanici,
     ): RedirectResponse {
-        $oncekiRoller = $istemci->roller()->orderBy('slug')->pluck('slug')->implode(',') ?: 'herkes';
-        $oncekiOtomatik = (bool) $istemci->otomatik_hesap;
+        $oncekiRoller = $client->roller()->orderBy('slug')->pluck('slug')->implode(',') ?: 'herkes';
+        $oncekiOtomatik = (bool) $client->otomatik_hesap;
 
-        $istemci->forceFill([
+        $client->forceFill([
             'name' => $request->validated('name'),
             'redirect_uris' => $request->adresler(),
-            'otomatik_hesap' => $request->boolean('otomatik_hesap'),
+            'otomatik_hesap' => $request->boolean('auto_account'),
         ])->save();
 
         /*
@@ -182,11 +182,11 @@ class ClientController extends Controller implements HasMiddleware
          * Rol uuid'leriyle gelir, iç kimliğe burada çevrilir. Boş liste
          * kapıyı herkese açar (bkz. OauthClient::erisebilirMi).
          */
-        $istemci->roller()->sync(
-            Role::whereIn('uuid', (array) $request->validated('roller', []))->pluck('id')->all(),
+        $client->roller()->sync(
+            Role::whereIn('uuid', (array) $request->validated('roles', []))->pluck('id')->all(),
         );
 
-        $yeniRoller = $istemci->roller()->orderBy('slug')->pluck('slug')->implode(',') ?: 'herkes';
+        $yeniRoller = $client->roller()->orderBy('slug')->pluck('slug')->implode(',') ?: 'herkes';
 
         /*
          * NE DEĞİŞTİĞİ yazılır: bir uygulamaya hangi rolün ne zaman kimin
@@ -194,18 +194,18 @@ class ClientController extends Controller implements HasMiddleware
          */
         $degisenler = array_filter([
             $oncekiRoller !== $yeniRoller ? "girebilen roller {$oncekiRoller} → {$yeniRoller}" : null,
-            $oncekiOtomatik !== (bool) $istemci->otomatik_hesap
-                ? 'otomatik hesap '.($istemci->otomatik_hesap ? 'açıldı' : 'kapatıldı')
+            $oncekiOtomatik !== (bool) $client->otomatik_hesap
+                ? 'otomatik hesap '.($client->otomatik_hesap ? 'açıldı' : 'kapatıldı')
                 : null,
         ]);
 
         $recorder->record(
             'istemci-guncellendi',
-            $istemci->name.' güncellendi'.($degisenler === [] ? '' : ' · '.implode(', ', $degisenler)),
+            $client->name.' güncellendi'.($degisenler === [] ? '' : ' · '.implode(', ', $degisenler)),
             $kullanici,
         );
 
-        return redirect()->route('yonetim.istemciler')->with('status', $istemci->name.' güncellendi.');
+        return redirect()->route('admin.clients')->with('status', $client->name.' güncellendi.');
     }
 
     /**
@@ -216,8 +216,8 @@ class ClientController extends Controller implements HasMiddleware
      * (merkez ile giriş ikinci yoldur), ama yeni sır projeye yazılana kadar
      * merkez düğmesi çalışmaz.
      */
-    public function sirYenile(
-        OauthClient $istemci,
+    public function regenerateSecret(
+        OauthClient $client,
         ActivityRecorder $recorder,
         #[CurrentUser] $kullanici,
     ): RedirectResponse {
@@ -230,22 +230,22 @@ class ClientController extends Controller implements HasMiddleware
          * dokunulmadan bırakırdı: sır sızdığı için yeniliyorsak, sızıntıyla
          * alınmış jeton ömrü dolana kadar çalışmaya devam ederdi.
          */
-        $istemci->forceFill(['secret' => $yeni])->save();
-        $this->jetonlariDusur($istemci);
+        $client->forceFill(['secret' => $yeni])->save();
+        $this->jetonlariDusur($client);
 
-        $recorder->record('istemci-sir-yenilendi', $istemci->name.' sırrı yenilendi', $kullanici);
+        $recorder->record('istemci-sir-yenilendi', $client->name.' sırrı yenilendi', $kullanici);
 
         return back()->with([
-            'status' => $istemci->name.' sırrı yenilendi. Yeni sırrı projeye yazana kadar merkez ile giriş çalışmaz.',
-            'yeniIstemci' => $istemci->getKey(),
+            'status' => $client->name.' sırrı yenilendi. Yeni sırrı projeye yazana kadar merkez ile giriş çalışmaz.',
+            'yeniIstemci' => $client->getKey(),
             'yeniSir' => $yeni,
-            'yeniEnv' => $this->rehber->envBlogu($istemci, $yeni),
+            'yeniEnv' => $this->rehber->envBlogu($client, $yeni),
         ]);
     }
 
-    public function destroy(OauthClient $istemci, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function destroy(OauthClient $client, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
-        $ad = $istemci->name;
+        $ad = $client->name;
 
         /*
          * SİLİNMEZ, İPTAL EDİLİR.
@@ -255,8 +255,8 @@ class ClientController extends Controller implements HasMiddleware
          * hangi uygulamaya ait olduğunu kaybeder. İptal edilen istemci hiçbir
          * akışı tamamlayamaz; geçmişi ise durur.
          */
-        $istemci->forceFill(['revoked' => true])->save();
-        $this->jetonlariDusur($istemci);
+        $client->forceFill(['revoked' => true])->save();
+        $this->jetonlariDusur($client);
 
         $recorder->record('istemci-iptal', $ad.' bağlantısı kaldırıldı', $kullanici);
 
@@ -275,21 +275,21 @@ class ClientController extends Controller implements HasMiddleware
      * bağ jeton tablolarındadır; onlar önce temizlenir, yoksa silinen
      * istemciye ait satırlar sahipsiz kalırdı.
      */
-    public function kaliciSil(OauthClient $istemci, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function purge(OauthClient $client, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
-        if (! $istemci->revoked) {
+        if (! $client->revoked) {
             return back()->withErrors([
                 'istemci' => 'Önce bağlantıyı kaldırın; kalıcı silme yalnızca kaldırılmış uygulamalar içindir.',
             ]);
         }
 
-        $ad = $istemci->name;
+        $ad = $client->name;
 
-        $this->jetonlariDusur($istemci);
-        $istemci->tokens()->delete();
-        DB::table('oauth_auth_codes')->where('client_id', $istemci->getKey())->delete();
-        DB::table('oauth_device_codes')->where('client_id', $istemci->getKey())->delete();
-        $istemci->delete();
+        $this->jetonlariDusur($client);
+        $client->tokens()->delete();
+        DB::table('oauth_auth_codes')->where('client_id', $client->getKey())->delete();
+        DB::table('oauth_device_codes')->where('client_id', $client->getKey())->delete();
+        $client->delete();
 
         $recorder->record('istemci-silindi', $ad.' kaydı kalıcı olarak silindi', $kullanici);
 
@@ -303,9 +303,9 @@ class ClientController extends Controller implements HasMiddleware
      * dolduğunda etkili olurdu; ikisi de tam olarak acele edilen durumlarda
      * kullanılıyor.
      */
-    private function jetonlariDusur(OauthClient $istemci): void
+    private function jetonlariDusur(OauthClient $client): void
     {
-        $istemci->tokens()->with('refreshToken')->each(function (Token $jeton): void {
+        $client->tokens()->with('refreshToken')->each(function (Token $jeton): void {
             $jeton->refreshToken?->revoke();
             $jeton->revoke();
         });

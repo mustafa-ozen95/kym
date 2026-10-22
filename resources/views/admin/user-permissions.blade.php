@@ -9,7 +9,7 @@
                         <x-ui.badge variant="red">Rolsüz</x-ui.badge>
                     @endif
 
-                    <a href="{{ route('yonetim.kullanicilar') }}" class="btn btn--sm">Kullanıcılar</a>
+                    <a href="{{ route('admin.users') }}" class="btn btn--sm">Kullanıcılar</a>
                 </x-slot:actions>
             </x-ui.page-head>
 
@@ -47,7 +47,7 @@
                 </x-ui.panel>
             @endunless
 
-            <form method="POST" action="{{ route('yonetim.kullanicilar.yetkiler.kaydet', $kullanici) }}"
+            <form method="POST" action="{{ route('admin.users.permissions.update', $kullanici) }}"
                   data-confirm="{{ $kullanici->name }} kullanıcısının yetkileri değişecek."
                   data-confirm-title="Yetkileri kaydet"
                   data-confirm-verify="{{ $kullanici->name }}">
@@ -58,7 +58,7 @@
                     <x-ui.panel :title="$tanim['label']" :subtitle="$tanim['description'] ?? null">
                         @foreach ($tanim['rows'] as $yetenek => $etiket)
 
-                            <div class="grid-row grid-row--static yetki-satir">
+                            <div class="grid-row grid-row--static permission-row">
                                 <span>
                                     {{ $etiket }}
 

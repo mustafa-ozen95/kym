@@ -30,13 +30,13 @@ use Illuminate\Support\Facades\RateLimiter;
  */
 class EmailVerificationController extends Controller
 {
-    public function dogrula(Request $request, string $id, string $hash, ActivityRecorder $recorder): RedirectResponse
+    public function verify(Request $request, string $id, string $hash, ActivityRecorder $recorder): RedirectResponse
     {
         /* Adres uuid taşır (bkz. EmailVerificationNotification::verificationUrl). */
         $kullanici = User::firstWhere('uuid', $id);
 
         if (! $kullanici || ! hash_equals(sha1($kullanici->getEmailForVerification()), $hash)) {
-            return redirect()->route('hizli-erisim')
+            return redirect()->route('quick-access')
                 ->with('error', 'Doğrulama bağlantısı geçersiz. Yeni bir bağlantı isteyin.');
         }
 
@@ -47,7 +47,7 @@ class EmailVerificationController extends Controller
             $recorder->record('eposta-dogrulandi', $kullanici->email.' adresini doğruladı', $kullanici);
         }
 
-        return redirect()->route('hizli-erisim', ['pencere' => 'giris'])
+        return redirect()->route('quick-access', ['window' => 'login'])
             ->with('status', 'E-posta adresiniz doğrulandı.');
     }
 
@@ -58,11 +58,11 @@ class EmailVerificationController extends Controller
      * kimin kayıtlı olduğunu sorgulamanın yoluna dönerdi. Sınır da bu yüzden
      * var — hem sorgulamayı hem posta kutusu doldurmayı pahalı kılar.
      */
-    public function yenidenGonder(Request $request, EmailVerification $dogrulama): RedirectResponse
+    public function resend(Request $request, EmailVerification $dogrulama): RedirectResponse
     {
         $request->validate(['email' => ['required', 'email', 'max:255']]);
 
-        $yanit = redirect()->route('hizli-erisim')
+        $yanit = redirect()->route('quick-access')
             ->with('status', 'Adres kayıtlıysa doğrulama bağlantısı gönderildi.');
 
         if (! $dogrulama->zorunluMu()) {
@@ -71,7 +71,7 @@ class EmailVerificationController extends Controller
 
         $anahtar = 'eposta-dogrulama:'.$request->ip();
 
-        if (RateLimiter::tooManyAttempts($anahtar, (int) config('limits.dogrulama_postasi'))) {
+        if (RateLimiter::tooManyAttempts($anahtar, (int) config('limits.verify_mail'))) {
             return $yanit;
         }
 

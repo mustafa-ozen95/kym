@@ -51,7 +51,7 @@ final class UserManagementTest extends TestCase
     {
         $this->assertTrue(app(RegistrationOpen::class)->acikMi());
 
-        $this->get(route('hizli-erisim'))->assertOk()->assertSee('data-pencere-ac="kayit"', false);
+        $this->get(route('quick-access'))->assertOk()->assertSee('data-window-open="register"', false);
     }
 
     /**
@@ -62,14 +62,14 @@ final class UserManagementTest extends TestCase
      */
     public function test_kayit_kapaliyken_uc_de_kapanir(): void
     {
-        Setting::yaz(RegistrationOpen::AYAR, false);
+        Setting::yaz(RegistrationOpen::SETTING, false);
 
-        $this->get(route('hizli-erisim'))
+        $this->get(route('quick-access'))
             ->assertOk()
-            ->assertDontSee('data-pencere-ac="kayit"', false)
+            ->assertDontSee('data-window-open="register"', false)
             ->assertSee('sistem yöneticinize başvurun');
 
-        $this->post(route('kayit'), $this->form())->assertNotFound();
+        $this->post(route('register'), $this->form())->assertNotFound();
 
         $this->assertDatabaseMissing('users', ['email' => 'yeni@ornek.test']);
     }
@@ -85,7 +85,7 @@ final class UserManagementTest extends TestCase
     public function test_yoneticinin_actigi_hesap_etkin_dogar(): void
     {
         $this->actingAs($this->rolde('admin'))
-            ->post(route('yonetim.kullanicilar.ekle'), $this->form())
+            ->post(route('admin.users.store'), $this->form())
             ->assertRedirect();
 
         $yeni = User::firstWhere('email', 'yeni@ornek.test');
@@ -96,9 +96,9 @@ final class UserManagementTest extends TestCase
 
     public function test_yoneticinin_actigi_hesap_giris_yapabilir(): void
     {
-        $this->actingAs($this->rolde('admin'))->post(route('yonetim.kullanicilar.ekle'), $this->form());
+        $this->actingAs($this->rolde('admin'))->post(route('admin.users.store'), $this->form());
 
-        $this->post(route('giris'), ['email' => 'yeni@ornek.test', 'password' => 'cok-gizli-1616']);
+        $this->post(route('login'), ['email' => 'yeni@ornek.test', 'password' => 'cok-gizli-1616']);
 
         $this->assertAuthenticated();
     }
@@ -106,7 +106,7 @@ final class UserManagementTest extends TestCase
     public function test_hesap_acmak_ayri_yetki_ister(): void
     {
         $this->actingAs($this->rolde('network'))
-            ->post(route('yonetim.kullanicilar.ekle'), $this->form())
+            ->post(route('admin.users.store'), $this->form())
             ->assertForbidden();
     }
 
@@ -117,7 +117,7 @@ final class UserManagementTest extends TestCase
         $hedef = $this->rolde('muhasebe');
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), [
+            ->put(route('admin.users.update', $hedef), [
                 'name' => 'Yeni Ad',
                 'email' => 'yeniadres@ornek.test',
             ])
@@ -145,7 +145,7 @@ final class UserManagementTest extends TestCase
         $eski = $hedef->password;
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), [
+            ->put(route('admin.users.update', $hedef), [
                 'name' => 'Yeni Ad',
                 'email' => $hedef->email,
                 'password' => '',
@@ -159,7 +159,7 @@ final class UserManagementTest extends TestCase
         $hedef = $this->rolde('muhasebe');
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), [
+            ->put(route('admin.users.update', $hedef), [
                 'name' => $hedef->name,
                 'email' => $hedef->email,
                 'password' => 'yeni-parola-1616',
@@ -186,24 +186,24 @@ final class UserManagementTest extends TestCase
         $sorumlu = $this->rolde('muhasebe');
 
         UserPermission::create([
-            'user_id' => $sorumlu->id, 'yetenek' => 'kullanici.gor', 'etki' => UserPermission::IZIN,
+            'user_id' => $sorumlu->id, 'yetenek' => 'kullanici.gor', 'etki' => UserPermission::ALLOW,
         ]);
         UserPermission::create([
-            'user_id' => $sorumlu->id, 'yetenek' => 'kullanici.onayla', 'etki' => UserPermission::IZIN,
+            'user_id' => $sorumlu->id, 'yetenek' => 'kullanici.onayla', 'etki' => UserPermission::ALLOW,
         ]);
 
         $hedef = $this->rolde('muhasebe');
 
         /* Durum değişikliği geçer. */
         $this->actingAs($sorumlu)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), ['durum' => Status::Askida->value])
+            ->put(route('admin.users.update', $hedef), ['status' => Status::Askida->value])
             ->assertRedirect();
 
         $this->assertSame(Status::Askida, $hedef->fresh()->durum);
 
         /* Ad değişikliği REDDEDİLİR. */
         $this->actingAs($sorumlu)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), ['name' => 'Sızma'])
+            ->put(route('admin.users.update', $hedef), ['name' => 'Sızma'])
             ->assertForbidden();
 
         $this->assertNotSame('Sızma', $hedef->fresh()->name);
@@ -215,16 +215,16 @@ final class UserManagementTest extends TestCase
         $sorumlu = $this->rolde('muhasebe');
 
         UserPermission::create([
-            'user_id' => $sorumlu->id, 'yetenek' => 'kullanici.duzenle', 'etki' => UserPermission::IZIN,
+            'user_id' => $sorumlu->id, 'yetenek' => 'kullanici.duzenle', 'etki' => UserPermission::ALLOW,
         ]);
 
         $hedef = $this->rolde('muhasebe');
 
         $this->actingAs($sorumlu)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), [
+            ->put(route('admin.users.update', $hedef), [
                 'name' => 'Yeni Ad',
                 'email' => $hedef->email,
-                'rol' => Role::firstWhere('is_admin', true)->uuid,
+                'role' => Role::firstWhere('is_admin', true)->uuid,
             ])
             ->assertForbidden();
 
@@ -242,10 +242,10 @@ final class UserManagementTest extends TestCase
         $yonetici = $this->rolde('admin');
 
         $this->actingAs($yonetici)
-            ->put(route('yonetim.kullanicilar.guncelle', $yonetici), [
+            ->put(route('admin.users.update', $yonetici), [
                 'name' => 'Kendi Yeni Adim',
                 'email' => $yonetici->email,
-                'durum' => Status::Askida->value,
+                'status' => Status::Askida->value,
             ])
             ->assertRedirect();
 
@@ -262,7 +262,7 @@ final class UserManagementTest extends TestCase
         $hedef = $this->rolde('muhasebe');
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), [
+            ->put(route('admin.users.update', $hedef), [
                 'name' => $hedef->name,
                 'email' => $var->email,
             ])

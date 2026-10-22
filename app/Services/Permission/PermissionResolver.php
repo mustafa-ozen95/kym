@@ -53,7 +53,7 @@ class PermissionResolver
      */
     private function yalnizcaYonetici(): bool
     {
-        return (bool) config('permissions.yonetim_yalnizca_yonetici', true);
+        return (bool) config('permissions.admin_only_management', true);
     }
 
     /**
@@ -65,7 +65,7 @@ class PermissionResolver
      */
     public static function yetkiDagitilabilirMi(): bool
     {
-        return ! (bool) config('permissions.yonetim_yalnizca_yonetici', true);
+        return ! (bool) config('permissions.admin_only_management', true);
     }
 
     /** @var array<int, array{izin: list<string>, red: list<string>, sablon: list<string>, yonetici: bool}> */
@@ -162,8 +162,8 @@ class PermissionResolver
         return $this->onbellek[$anahtar] = [
             'yonetici' => (bool) $kullanici->rol?->is_admin,
             'sablon' => $this->sozluk->suz($kullanici->rol?->yetenekler() ?? []),
-            'izin' => $this->sozluk->suz($satirlar->where('etki', UserPermission::IZIN)->pluck('yetenek')),
-            'red' => $this->sozluk->suz($satirlar->where('etki', UserPermission::RED)->pluck('yetenek')),
+            'izin' => $this->sozluk->suz($satirlar->where('etki', UserPermission::ALLOW)->pluck('yetenek')),
+            'red' => $this->sozluk->suz($satirlar->where('etki', UserPermission::DENY)->pluck('yetenek')),
         ];
     }
 }

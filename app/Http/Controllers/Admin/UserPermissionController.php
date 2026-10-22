@@ -89,7 +89,7 @@ class UserPermissionController extends Controller implements HasMiddleware
         $veri = $request->validate([
             'yetkiler' => ['array'],
             /* Boş = "rolden gelsin": satır hiç yazılmaz. */
-            'yetkiler.*' => ['nullable', 'string', 'in:'.UserPermission::IZIN.','.UserPermission::RED],
+            'yetkiler.*' => ['nullable', 'string', 'in:'.UserPermission::ALLOW.','.UserPermission::DENY],
         ]);
 
         /*
@@ -132,7 +132,7 @@ class UserPermissionController extends Controller implements HasMiddleware
             $kullanici,
         );
 
-        return redirect()->route('yonetim.kullanicilar.yetkiler', $user)
+        return redirect()->route('admin.users.permissions', $user)
             ->with('status', $user->name.' için yetkiler güncellendi.');
     }
 }

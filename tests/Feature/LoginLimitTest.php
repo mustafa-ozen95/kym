@@ -15,8 +15,8 @@ use Tests\TestCase;
  * Giriş ucundaki istek sınırı — sıfır "sınır yok" demektir.
  *
  * SIFIRIN TUZAĞI: sınır rotaya doğrudan yazılıyordu
- * (`'throttle:'.config('limits.giris').',1'`). Orada sıfır, sınırı kaldırmak
- * yerine "dakikada sıfır istek" anlamına geliyordu: `LIMIT_GIRIS=0` verip
+ * (`'throttle:'.config('limits.login').',1'`). Orada sıfır, sınırı kaldırmak
+ * yerine "dakikada sıfır istek" anlamına geliyordu: `LIMIT_LOGIN=0` verip
  * sınırı kapattığını sanan kişi giriş ucunu HERKESE kapatırdı ve sebebi
  * ayarın kendisinde görünmezdi. Karar artık RequestLimit'nde ve sıfırda ara
  * katman hiç eklenmiyor.
@@ -36,24 +36,24 @@ class LoginLimitTest extends TestCase
     #[Test]
     public function sifir_sinirda_ara_katman_uretilmez(): void
     {
-        config(['limits.giris' => 0]);
+        config(['limits.login' => 0]);
 
-        $this->assertSame([], RequestLimit::rotaIcin('giris'));
+        $this->assertSame([], RequestLimit::forRoute('login'));
     }
 
     /** Eksi bir sınırın anlamı yok; o da "sınır yok" sayılır. */
     #[Test]
     public function eksi_sinir_da_sinirsiz_sayilir(): void
     {
-        config(['limits.giris' => -3]);
+        config(['limits.login' => -3]);
 
-        $this->assertSame([], RequestLimit::rotaIcin('giris'));
+        $this->assertSame([], RequestLimit::forRoute('login'));
     }
 
     #[Test]
     public function sifir_sinirla_yanlis_parola_art_arda_denenebilir(): void
     {
-        config(['limits.giris' => 0]);
+        config(['limits.login' => 0]);
 
         User::factory()->create([
             'email' => 'kisi@ornek.test',
@@ -61,7 +61,7 @@ class LoginLimitTest extends TestCase
         ]);
 
         for ($i = 0; $i < 15; $i++) {
-            $yanit = $this->post(route('giris'), [
+            $yanit = $this->post(route('login'), [
                 'email' => 'kisi@ornek.test',
                 'password' => 'yanlis',
             ]);
@@ -74,9 +74,9 @@ class LoginLimitTest extends TestCase
     #[Test]
     public function sinir_verilince_ara_katman_eklenir(): void
     {
-        config(['limits.giris' => 7]);
+        config(['limits.login' => 7]);
 
-        $sinirlar = RequestLimit::rotaIcin('giris');
+        $sinirlar = RequestLimit::forRoute('login');
 
         $this->assertSame(['throttle:7,1'], $sinirlar);
     }
@@ -84,7 +84,7 @@ class LoginLimitTest extends TestCase
     /**
      * ASIL TUZAK BUYDU.
      *
-     * Kilit ile istek sınırı aynı ayarı (`limits.giris`) okuyordu. Sıfır
+     * Kilit ile istek sınırı aynı ayarı (`limits.login`) okuyordu. Sıfır
      * verildiğinde rotadaki sınır kalkıyor ama kilit KALKMIYOR:
      * `tooManyAttempts($k, 0)` sayacı sıfıra eşit olduğu anda dolu sayar, yani
      * İLK yanlış paroladan sonra kilitlerdi. Sınırı kapatmak isteyen kişi onu
@@ -100,14 +100,14 @@ class LoginLimitTest extends TestCase
             'password' => Hash::make('dogru-parola-1234'),
         ]);
 
-        $this->post(route('giris'), ['email' => 'kisi2@ornek.test', 'password' => 'yanlis'])
+        $this->post(route('login'), ['email' => 'kisi2@ornek.test', 'password' => 'yanlis'])
             ->assertSessionHasErrors('email');
 
         $hata = (string) session('errors')?->first('email');
         $this->assertStringNotContainsString('Çok fazla deneme', $hata);
 
         /* Doğru parola hâlâ geçer. */
-        $this->post(route('giris'), ['email' => 'kisi2@ornek.test', 'password' => 'dogru-parola-1234']);
+        $this->post(route('login'), ['email' => 'kisi2@ornek.test', 'password' => 'dogru-parola-1234']);
         $this->assertAuthenticated();
     }
 }

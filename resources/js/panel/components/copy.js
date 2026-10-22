@@ -10,7 +10,7 @@ import { on } from '../lib/dom.js';
  * o durumda metin seçilir ve kullanıcı kendi kopyalar.
  */
 async function kopyala(dugme) {
-    const kaynak = document.querySelector(dugme.dataset.kopyala);
+    const kaynak = document.querySelector(dugme.dataset.copy);
 
     if (!kaynak) {
         return;
@@ -33,7 +33,7 @@ async function kopyala(dugme) {
 }
 
 export function init() {
-    on('click', '[data-kopyala]', (event, dugme) => {
+    on('click', '[data-copy]', (event, dugme) => {
         kopyala(dugme).catch(() => {});
     });
 }

@@ -6,9 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @auth
         {{-- Ekran kilidi (bkz. session-lock.js): hareketsiz sekme bu süre sonunda oturumu kapatır. --}}
-        <meta name="oturum-suresi" content="{{ (int) config('session.lifetime') }}">
-        <meta name="oturum-cikis" content="{{ route('cikis') }}">
-        <meta name="oturum-giris" content="{{ route('hizli-erisim') }}">
+        <meta name="session-timeout" content="{{ (int) config('session.lifetime') }}">
+        <meta name="session-logout" content="{{ route('logout') }}">
+        <meta name="session-login" content="{{ route('quick-access') }}">
     @endauth
     <title>Hızlı Erişim</title>
 
@@ -28,7 +28,7 @@
         değerle basılır; modül betikleri ertelense de sayfa bir kare bile
         yanlış temada çizilmez.
     --}}
-    <meta name="tema-alan" content="{{ config('theme.cerez_alani') }}">
+    <meta name="theme-domain" content="{{ config('theme.cookie_domain') }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -37,7 +37,7 @@
 <div class="head">
     {{-- Salonun kendi sayfasındayken ana sayfaya dönüş; ana sayfada çizilmez. --}}
     @if ($anaSayfa)
-        <a class="baglanti geri" href="{{ $anaSayfa }}">
+        <a class="link back" href="{{ $anaSayfa }}">
             <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
                 <path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.7"
                       stroke-linecap="round" stroke-linejoin="round" />
@@ -55,26 +55,26 @@
             Hesap menüsü: çıkış tek başına dışarıda durmuyor, hesap işleriyle
             birlikte kimlik göstergesinin altında.
         --}}
-        <span class="oturum" data-menu>
-            <button type="button" class="baglanti oturum__dugme" data-menu-ac
+        <span class="session" data-menu>
+            <button type="button" class="link session__button" data-menu-open
                     aria-haspopup="true" aria-expanded="false" aria-label="Hesap menüsü">
-                <span class="oturum__rozet" aria-hidden="true">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
+                <span class="session__badge" aria-hidden="true">{{ mb_substr(auth()->user()->name, 0, 1) }}</span>
                 <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
                     <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.7"
                           stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </button>
 
-            <span class="oturum__liste" data-menu-liste hidden>
-                <span class="oturum__kim">{{ auth()->user()->name }}</span>
+            <span class="session__list" data-menu-list hidden>
+                <span class="session__who">{{ auth()->user()->name }}</span>
 
                 {{-- Yönetim de menünün içinde: başlıkta tek bir kimlik göstergesi kalsın. --}}
                 @if ($yonetimAdresi)
                     <a href="{{ $yonetimAdresi }}">Yönetim</a>
                 @endif
 
-                <a href="{{ route('hesap.profil') }}">Hesabım</a>
-                <form method="POST" action="{{ route('cikis') }}">
+                <a href="{{ route('account.profile') }}">Hesabım</a>
+                <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit">Çıkış</button>
                 </form>
@@ -88,9 +88,9 @@
             açılıyor; ikisini yan yana koymak başlığı kalabalıklaştırıyor ve
             günlük kullanımda basılan düğme zaten giriş.
         --}}
-        <span class="oturum">
-            <a class="baglanti" href="{{ route('hizli-erisim', ['pencere' => 'giris']) }}"
-               data-pencere-ac="giris">Giriş</a>
+        <span class="session">
+            <a class="link" href="{{ route('quick-access', ['window' => 'login']) }}"
+               data-window-open="login">Giriş</a>
         </span>
     @endauth
 
@@ -128,8 +128,8 @@
     Çizim betiğinde sabit bir dizi tutulmaz; bir sistem eklemek kod
     düzenlemek demek olmasın. Veri buradan geçer, çizim ona bakar.
 --}}
-<script type="application/json" id="sistem-verisi">@json($sistemler)</script>
-<script type="application/json" id="grup-verisi">@json($gruplar)</script>
+<script type="application/json" id="system-data">@json($sistemler)</script>
+<script type="application/json" id="group-data">@json($gruplar)</script>
 
 </body>
 </html>

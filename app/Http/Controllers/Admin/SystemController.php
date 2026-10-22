@@ -35,7 +35,7 @@ class SystemController extends Controller implements HasMiddleware
             new Middleware(['auth', 'can:sistem.gor'], only: ['index']),
             new Middleware(['auth', 'can:sistem.ekle'], only: ['store']),
             /* Sıralama bir düzenlemedir (GroupController::sirala da grup.duzenle ister). */
-            new Middleware(['auth', 'can:sistem.duzenle'], only: ['update', 'sirala']),
+            new Middleware(['auth', 'can:sistem.duzenle'], only: ['update', 'reorder']),
             new Middleware(['auth', 'can:sistem.sil'], only: ['destroy']),
         ];
     }
@@ -55,11 +55,11 @@ class SystemController extends Controller implements HasMiddleware
         $salonlar = Group::sirali()->get();
         $sistemler = System::query()->sirali()->get();
 
-        $duzenlenen = $request->filled('kayit')
-            ? System::where('uuid', $request->query('kayit'))->first()
+        $duzenlenen = $request->filled('record')
+            ? System::where('uuid', $request->query('record'))->first()
             : null;
 
-        $pencere = $request->query('pencere');
+        $window = $request->query('window');
 
         return view('admin.systems', [
             'salonlar' => $salonlar,
@@ -72,40 +72,40 @@ class SystemController extends Controller implements HasMiddleware
              * kendi değerleriyle, ekleme boş açılır. Blade bunları kendi
              * hesaplıyordu.
              */
-            'pencereAcik' => $pencere === 'ekle' || ($pencere === 'duzenle' && $duzenlenen !== null),
-            'pencereHedefi' => $duzenlenen
-                ? route('yonetim.sistemler.guncelle', $duzenlenen)
-                : route('yonetim.sistemler.ekle'),
+            'windowOpen' => $window === 'add' || ($window === 'edit' && $duzenlenen !== null),
+            'windowTarget' => $duzenlenen
+                ? route('admin.systems.update', $duzenlenen)
+                : route('admin.systems.store'),
             ...$this->secenekler(),
         ]);
     }
 
     public function store(SystemRequest $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
-        $sistem = System::create($request->kayit());
+        $system = System::create($request->kayit());
 
-        $recorder->record('sistem-eklendi', $sistem->ad.' kutucuğu eklendi', $kullanici);
+        $recorder->record('sistem-eklendi', $system->ad.' kutucuğu eklendi', $kullanici);
 
-        return redirect()->route('yonetim.sistemler')->with('status', $sistem->ad.' eklendi.');
+        return redirect()->route('admin.systems')->with('status', $system->ad.' eklendi.');
     }
 
-    public function update(SystemRequest $request, System $sistem, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function update(SystemRequest $request, System $system, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
-        $sistem->update($request->kayit());
+        $system->update($request->kayit());
 
-        $recorder->record('sistem-guncellendi', $sistem->ad.' kutucuğu güncellendi', $kullanici);
+        $recorder->record('sistem-guncellendi', $system->ad.' kutucuğu güncellendi', $kullanici);
 
-        return redirect()->route('yonetim.sistemler')->with('status', $sistem->ad.' güncellendi.');
+        return redirect()->route('admin.systems')->with('status', $system->ad.' güncellendi.');
     }
 
-    public function destroy(System $sistem, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function destroy(System $system, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
-        $ad = $sistem->ad;
-        $sistem->delete();
+        $ad = $system->ad;
+        $system->delete();
 
         $recorder->record('sistem-silindi', $ad.' kutucuğu silindi', $kullanici);
 
-        return redirect()->route('yonetim.sistemler')->with('status', $ad.' silindi.');
+        return redirect()->route('admin.systems')->with('status', $ad.' silindi.');
     }
 
     /**
@@ -119,27 +119,27 @@ class SystemController extends Controller implements HasMiddleware
      * gövdeye elle satır ekleyen biri, göremediği bir salonun dizilimini
      * bozamamalı.
      */
-    public function sirala(Request $request, Group $grup, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function reorder(Request $request, Group $group, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         $veri = $request->validate([
-            'sira' => ['required', 'array'],
-            'sira.*' => ['string'],
+            'order' => ['required', 'array'],
+            'order.*' => ['string'],
         ]);
 
-        $kutucuklar = System::where('grup', $grup->anahtar)->pluck('id', 'uuid');
+        $kutucuklar = System::where('grup', $group->anahtar)->pluck('id', 'uuid');
         $numara = 1;
 
         DB::transaction(function () use ($veri, $kutucuklar, &$numara): void {
-            foreach ($veri['sira'] as $uuid) {
+            foreach ($veri['order'] as $uuid) {
                 if ($kutucuklar->has($uuid)) {
                     System::whereKey($kutucuklar[$uuid])->update(['sira' => $numara++]);
                 }
             }
         });
 
-        $recorder->record('sistem-siralandi', $grup->ad.' salonundaki kutucuklar yeniden sıralandı', $kullanici);
+        $recorder->record('sistem-siralandi', $group->ad.' salonundaki kutucuklar yeniden sıralandı', $kullanici);
 
-        return back()->with('status', $grup->ad.' salonunun sırası güncellendi.');
+        return back()->with('status', $group->ad.' salonunun sırası güncellendi.');
     }
 
     /** @return array<string, array<string, string>> */
@@ -147,7 +147,7 @@ class SystemController extends Controller implements HasMiddleware
     {
         return [
             'gruplar' => Group::secenekler(),
-            'seritler' => config('system.seritler'),
+            'seritler' => config('system.lanes'),
         ];
     }
 }

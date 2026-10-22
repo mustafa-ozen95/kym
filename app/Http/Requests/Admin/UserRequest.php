@@ -49,8 +49,8 @@ class UserRequest extends FormRequest
                 PasswordRule::kural(),
             ],
 
-            'durum' => ['sometimes', Rule::enum(Status::class)],
-            'rol' => ['nullable', 'string', Rule::exists('roller', 'uuid')],
+            'status' => ['sometimes', Rule::enum(Status::class)],
+            'role' => ['nullable', 'string', Rule::exists('roller', 'uuid')],
         ];
     }
 
@@ -59,7 +59,7 @@ class UserRequest extends FormRequest
     {
         return [
             'name' => 'ad', 'email' => 'e-posta', 'password' => 'parola',
-            'durum' => 'durum', 'rol' => 'rol',
+            'status' => 'durum', 'role' => 'rol',
         ];
     }
 }

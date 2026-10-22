@@ -6,7 +6,7 @@
  */
 
 /* Kutucuğun rengi: kaydı tanımanın en hızlı yolu. */
-.renk-noktasi {
+.color-dot {
     display: inline-block;
     width: 9px;
     height: 9px;
@@ -30,14 +30,14 @@
 }
 
 /* ── İkinci adım ── */
-.iki-adim {
+.two-step {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-6, 24px);
     align-items: flex-start;
 }
 
-.iki-adim__kare {
+.two-step__square {
     padding: 10px;
     background: #fff;
     border: 1px solid var(--color-line);
@@ -45,9 +45,9 @@
     line-height: 0;
 }
 
-.iki-adim__metin { flex: 1 1 16rem; min-width: 0; }
+.two-step__text { flex: 1 1 16rem; min-width: 0; }
 
-.anahtar {
+.setup-key {
     margin: 4px 0 14px;
     font-size: 1.05rem;
     letter-spacing: .08em;
@@ -60,7 +60,7 @@
  * Düğme doğrudan girdinin altına yapışıyordu; ikisi tek bir blok gibi
  * görünüyor ve tıklanacak yer belirsizleşiyordu.
  */
-.form-dar {
+.form-narrow {
     display: grid;
     gap: var(--space-4, 16px);
     justify-items: start;
@@ -69,7 +69,7 @@
 }
 
 /* Kurtarma kodları: bir kez görünür, okunaklı olmalı. */
-.kurtarma {
+.recovery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
     gap: 8px;
@@ -78,7 +78,7 @@
     list-style: none;
 }
 
-.kurtarma li {
+.recovery li {
     padding: 8px 10px;
     background: var(--color-column-alt);
     border: 1px solid var(--color-line);

@@ -15,9 +15,9 @@ declare(strict_types=1);
 */
 
 return [
-    'jeton_dakika' => (int) env('KIMLIK_JETON_DAKIKA', 10),
-    'yenileme_gun' => (int) env('KIMLIK_YENILEME_GUN', 1),
+    'token_minutes' => (int) env('IDENTITY_TOKEN_MINUTES', 10),
+    'refresh_days' => (int) env('IDENTITY_REFRESH_DAYS', 1),
 
     /* Yayıncı adı: doğrulayıcı uygulamalarda ve onay ekranında görünür. */
-    'yayinci' => env('KIMLIK_YAYINCI', 'Kimlik Yönetim Merkezi'),
+    'issuer' => env('IDENTITY_ISSUER', 'Kimlik Yönetim Merkezi'),
 ];

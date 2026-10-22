@@ -20,13 +20,13 @@ use Illuminate\Support\Facades\Route;
 class SettingSections
 {
     /** @var list<array{label: string, route: string, yetki: string}> */
-    private const BOLUMLER = [
-        ['label' => 'Genel', 'route' => 'yonetim.ayarlar', 'yetki' => 'ayar.gor'],
-        ['label' => 'Roller', 'route' => 'yonetim.roller', 'yetki' => 'rol.gor'],
-        ['label' => 'Denetim kaydı', 'route' => 'yonetim.kayitlar', 'yetki' => 'kayit.gor'],
-        ['label' => 'Sertifika', 'route' => 'yonetim.sertifika', 'yetki' => 'ayar.gor'],
-        ['label' => 'Veritabanı', 'route' => 'yonetim.veritabani', 'yetki' => 'ayar.veritabani'],
-        ['label' => 'Güncelleme', 'route' => 'yonetim.guncelleme', 'yetki' => 'ayar.guncelleme'],
+    private const SECTIONS = [
+        ['label' => 'Genel', 'route' => 'admin.settings', 'yetki' => 'ayar.gor'],
+        ['label' => 'Roller', 'route' => 'admin.roles', 'yetki' => 'rol.gor'],
+        ['label' => 'Denetim kaydı', 'route' => 'admin.logs', 'yetki' => 'kayit.gor'],
+        ['label' => 'Sertifika', 'route' => 'admin.certificate', 'yetki' => 'ayar.gor'],
+        ['label' => 'Veritabanı', 'route' => 'admin.database', 'yetki' => 'ayar.veritabani'],
+        ['label' => 'Güncelleme', 'route' => 'admin.update', 'yetki' => 'ayar.guncelleme'],
     ];
 
     /**
@@ -38,7 +38,7 @@ class SettingSections
 
         $liste = [];
 
-        foreach (self::BOLUMLER as $bolum) {
+        foreach (self::SECTIONS as $bolum) {
             if (! Gate::allows($bolum['yetki'])) {
                 continue;
             }

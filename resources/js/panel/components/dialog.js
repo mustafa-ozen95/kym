@@ -52,7 +52,7 @@ function close(box) {
 /**
  * Pencereyi açan adres parçalarını siler.
  *
- * Pencerenin ADRESİ var (?pencere=duzenle&kayit=...) ve bu bilinçli: betik
+ * Pencerenin ADRESİ var (?window=edit&record=...) ve bu bilinçli: betik
  * yüklenmese de düzenleme açılabilsin diye. Ama pencere kapandıktan sonra o
  * adres yalan söylüyordu — sayfa yenilenince pencere yeniden açılıyor,
  * paylaşılan bağlantı kapalı olması gereken bir formu açıyordu.
@@ -63,12 +63,12 @@ function close(box) {
 function adresiTemizle() {
     const adres = new URL(window.location.href);
 
-    if (!adres.searchParams.has('pencere') && !adres.searchParams.has('kayit')) {
+    if (!adres.searchParams.has('window') && !adres.searchParams.has('record')) {
         return;
     }
 
-    adres.searchParams.delete('pencere');
-    adres.searchParams.delete('kayit');
+    adres.searchParams.delete('window');
+    adres.searchParams.delete('record');
 
     window.history.replaceState(window.history.state, '', adres.pathname + adres.search);
 }
@@ -110,11 +110,11 @@ export function init() {
  * Sunucudan AÇIK gelen pencereyi gösterir.
  *
  * Ayrı bir yöntem, çünkü sayfa geçişleri tarayıcıyı yenilemiyor: gövde
- * değiştiğinde `init` yeniden çalışmıyor ve `?pencere=duzenle` ile gelen
+ * değiştiğinde `init` yeniden çalışmıyor ve `?window=edit` ile gelen
  * pencere gizli kalıyordu — bağlantıya tıklanıyor, hiçbir şey olmuyordu.
  */
 export function acikGeleniAc() {
-    $('[data-modal-acik]')?.removeAttribute('hidden');
+    $('[data-modal-opened]')?.removeAttribute('hidden');
 
     /*
      * DOĞRULAMA HATASI OLAN PENCERE KENDİLİĞİNDEN AÇILIR.
@@ -124,7 +124,7 @@ export function acikGeleniAc() {
      * gönderiliyor, sayfa yenileniyor, pencere kapanıyor ve ekranda "bir şey
      * olmadı" izlenimi kalıyor — oysa hata oradaydı, görünmüyordu.
      *
-     * YUKARIDAKİ `data-modal-acik` YETMİYOR: onu her form ayrı ayrı
+     * YUKARIDAKİ `data-modal-opened` YETMİYOR: onu her form ayrı ayrı
      * işaretlemek zorunda ve işaret genelde "adreste hangi pencere yazıyor"
      * bilgisine bağlanmış durumda, hataya değil. İşaretlemeyi unutan ya da
      * yönlendirmede adresi koruyamayan her form sessizce bu duruma düşüyordu.

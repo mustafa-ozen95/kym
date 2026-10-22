@@ -6,7 +6,7 @@
  * tıklanınca anlaşılır. Arka planda çalışan bir yoklama da sunucudaki
  * oturumu canlı tutabilir.
  *
- * Süre SUNUCUDAN gelir (<meta name="oturum-suresi">, dakika): panel
+ * Süre SUNUCUDAN gelir (<meta name="session-timeout">, dakika): panel
  * ayarından değişirse kilit de ona uyar, burada ikinci bir sayı tutulmaz.
  * Etiket yalnızca oturum açıkken basılır; giriş ekranında kilit çalışmaz.
  *
@@ -86,9 +86,9 @@ export function init() {
         return;
     }
 
-    const dakika = Number(document.querySelector('meta[name="oturum-suresi"]')?.content);
-    const cikis = document.querySelector('meta[name="oturum-cikis"]')?.content;
-    const giris = document.querySelector('meta[name="oturum-giris"]')?.content;
+    const dakika = Number(document.querySelector('meta[name="session-timeout"]')?.content);
+    const cikis = document.querySelector('meta[name="session-logout"]')?.content;
+    const giris = document.querySelector('meta[name="session-login"]')?.content;
 
     if (!Number.isFinite(dakika) || dakika <= 0 || !cikis || !giris) {
         return;

@@ -16,7 +16,7 @@
  * açık/koyu temasını kendiliğinden izlesin. Yalnızca vurgu rengi (limon) ve
  * ölçüler panelden gelir — giriş ekranını panellerde aynı yapan şey odur.
  */
-.pencere__govde {
+.window__body {
     --color-sunken: var(--bg);
     --color-line: var(--edge);
     --color-line-strong: var(--rule);
@@ -52,26 +52,26 @@
  * Açık temada limon zemin üzerinde koyu metin okunuyor ama vurgu fazla
  * parlak kalıyor; panelde de aynı sebeple koyulaştırılmış bir ton kullanılır.
  */
-:root[data-theme='light'] .pencere__govde {
+:root[data-theme='light'] .window__body {
     --color-accent: #6f9611;
     --color-accent-hover: #5d7f0e;
     --color-accent-on: #ffffff;
 }
 
 /* Pencere başlığının altındaki tanıtım satırı (.gate__lead karşılığı). */
-.pencere__lead {
+.window__lead {
     margin: 0 0 var(--space-5);
     color: var(--color-text-muted);
     font-size: var(--text-md);
 }
 
-.pencere__govde .field {
+.window__body .field {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
 }
 
-.pencere__govde .field + .field {
+.window__body .field + .field {
     margin-top: var(--space-4);
 }
 
@@ -79,7 +79,7 @@
  * Etiketler BÜYÜK HARF ve harf aralıklı: panelin alan etiketi böyle;
  * giriş ekranı panellerde aynı görünür.
  */
-.pencere__govde .field__label {
+.window__body .field__label {
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
     letter-spacing: 0.06em;
@@ -87,7 +87,7 @@
     color: var(--color-text-muted);
 }
 
-.pencere__govde .input {
+.window__body .input {
     width: 100%;
     height: 30px;
     padding: 0 var(--space-3);
@@ -100,21 +100,21 @@
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.pencere__govde .input--mono {
+.window__body .input--mono {
     font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
 }
 
-.pencere__govde .input:focus {
+.window__body .input:focus {
     outline: 0;
     border-color: var(--color-accent);
     box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
-.pencere__govde .input[aria-invalid='true'] {
+.window__body .input[aria-invalid='true'] {
     border-color: var(--color-red-fg);
 }
 
-.pencere__govde .checkbox {
+.window__body .checkbox {
     display: inline-flex;
     align-items: center;
     gap: var(--space-3);
@@ -123,14 +123,14 @@
     cursor: pointer;
 }
 
-.pencere__govde .checkbox input {
+.window__body .checkbox input {
     width: 14px;
     height: 14px;
     accent-color: var(--color-accent);
     cursor: pointer;
 }
 
-.pencere__govde .form-actions {
+.window__body .form-actions {
     display: flex;
     gap: var(--space-3);
     margin-top: var(--space-5);
@@ -138,7 +138,7 @@
     border-top: 1px solid var(--color-line);
 }
 
-.pencere__govde .btn {
+.window__body .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -159,28 +159,28 @@
     transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.pencere__govde .btn:hover:not(:disabled) {
+.window__body .btn:hover:not(:disabled) {
     background: var(--color-hover);
 }
 
-.pencere__govde .btn--primary {
+.window__body .btn--primary {
     background: var(--color-accent);
     border-color: var(--color-accent);
     color: var(--color-accent-on);
     font-weight: var(--weight-semibold);
 }
 
-.pencere__govde .btn--primary:hover:not(:disabled) {
+.window__body .btn--primary:hover:not(:disabled) {
     background: var(--color-accent-hover);
     border-color: var(--color-accent-hover);
 }
 
-.pencere__govde .btn--block {
+.window__body .btn--block {
     width: 100%;
 }
 
 /* Uyarı kutusu: .alert--danger ile aynı ölçüde. */
-.pencere__uyari {
+.window__warning {
     margin: 0 0 var(--space-5);
     padding: var(--space-3) var(--space-4);
     background: rgb(226 131 107 / 13%);
@@ -191,7 +191,7 @@
 }
 
 /* Formun altındaki açıklama (.gate__foot karşılığı). */
-.pencere__foot {
+.window__footer {
     margin: var(--space-5) 0 0;
     padding-top: var(--space-4);
     border-top: 1px solid var(--color-line);
@@ -199,7 +199,7 @@
     color: var(--color-text-muted);
 }
 
-.pencere__foot a {
+.window__footer a {
     color: var(--color-text-secondary);
 }
 
@@ -209,15 +209,15 @@
  * Karşılananları da gösteren bir liste yer kaplardı. Kural metinleri
  * etiketin yanındaki "?" iminde.
  */
-.pencere__govde .parola-eksik {
+.window__body .password-missing {
     margin: var(--space-3) 0 0;
     font-size: var(--text-sm);
     color: var(--color-red-fg);
 }
 
-.pencere__govde .parola-eksik[hidden] { display: none; }
+.window__body .password-missing[hidden] { display: none; }
 
-.pencere__govde .ipucu-imi {
+.window__body .hint-mark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -233,8 +233,8 @@
     cursor: help;
 }
 
-.pencere__govde .ipucu-imi:hover,
-.pencere__govde .ipucu-imi:focus-visible {
+.window__body .hint-mark:hover,
+.window__body .hint-mark:focus-visible {
     border-color: var(--color-accent);
     color: var(--color-text);
     outline: none;
@@ -251,10 +251,10 @@
  * DEĞİL: o, parmakla büyütmeyi de öldürür; eşiği geçmek yeter.
  */
 @media (max-width: 720px), (pointer: coarse) {
-    .pencere__govde .input,
-    .pencere__govde input:not([type='checkbox']):not([type='radio']),
-    .pencere__govde select,
-    .pencere__govde textarea {
+    .window__body .input,
+    .window__body input:not([type='checkbox']):not([type='radio']),
+    .window__body select,
+    .window__body textarea {
         height: 36px;
         font-size: 1rem;
     }

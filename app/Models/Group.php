@@ -25,13 +25,13 @@ class Group extends Model
     protected $table = 'gruplar';
 
     /** Kutucuklarla AYNI üç düzey; kural da aynı yerden gelir. */
-    public const KAYNAK = 'grup-erisim';
+    public const RESOURCE = 'grup-erisim';
 
     protected $fillable = ['anahtar', 'ad', 'not', 'sira', 'ayri_sayfa', 'gorunurluk'];
 
     protected $casts = ['sira' => 'integer', 'ayri_sayfa' => 'boolean'];
 
-    protected $attributes = ['gorunurluk' => System::HERKES];
+    protected $attributes = ['gorunurluk' => System::EVERYONE];
 
     public function uniqueIds(): array
     {
@@ -69,7 +69,7 @@ class Group extends Model
     /** Bu salonu açmak için gereken yetki. */
     public function yetenek(): string
     {
-        return self::KAYNAK.'.'.$this->anahtar;
+        return self::RESOURCE.'.'.$this->anahtar;
     }
 
     /**
@@ -82,8 +82,8 @@ class Group extends Model
     public function gorebilirMi(?User $kullanici): bool
     {
         return match ($this->gorunurluk) {
-            System::GIRISLI => $kullanici !== null,
-            System::YETKILI => $kullanici !== null
+            System::LOGGED_IN => $kullanici !== null,
+            System::AUTHORIZED => $kullanici !== null
                 && app(PermissionResolver::class)->yapabilirMi($kullanici, $this->yetenek()),
             default => true,
         };

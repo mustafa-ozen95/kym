@@ -33,7 +33,7 @@ const OLAY = 'kimlik:sayfa';
  * biçemiyle çizilirdi. Bu yüzden yalnızca panel yolları devralınır; dışarı
  * çıkan her bağlantı tarayıcının normal gezinmesine bırakılır.
  */
-const ALAN = ['/yonetim', '/hesap'];
+const ALAN = ['/admin', '/account'];
 
 function panelYolu(adres) {
     return ALAN.some((onek) => adres.pathname === onek || adres.pathname.startsWith(onek + '/'));
@@ -54,7 +54,7 @@ function devralinir(baglanti) {
         && ! href.startsWith('#')
         && ! baglanti.target
         && ! baglanti.hasAttribute('download')
-        && baglanti.dataset.tamYenile === undefined
+        && baglanti.dataset.fullReload === undefined
         && ayniKoken(new URL(baglanti.href, window.location.href))
         && panelYolu(new URL(baglanti.href, window.location.href));
 }
@@ -92,7 +92,7 @@ async function git(adres, gecmis = 'ekle') {
     istek?.abort();
     istek = new AbortController();
 
-    document.body.dataset.gecis = '';
+    document.body.dataset.transition = '';
 
     try {
         const yanit = await fetch(adres, {
@@ -118,7 +118,7 @@ async function git(adres, gecmis = 'ekle') {
             window.location.href = adres;
         }
     } finally {
-        delete document.body.dataset.gecis;
+        delete document.body.dataset.transition;
     }
 }
 

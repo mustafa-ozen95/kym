@@ -30,19 +30,19 @@ class System extends Model
     protected $table = 'sistemler';
 
     /** Oturum gerekmez; bugünkü davranış ve varsayılan. */
-    public const HERKES = 'herkes';
+    public const EVERYONE = 'herkes';
 
     /** Giriş yapmış her hesap görür. */
-    public const GIRISLI = 'girisli';
+    public const LOGGED_IN = 'girisli';
 
     /** Yalnızca bu kutucuğun yetkisi olanlar görür. */
-    public const YETKILI = 'yetkili';
+    public const AUTHORIZED = 'yetkili';
 
     /** @var list<string> */
-    public const GORUNURLUKLER = [self::HERKES, self::GIRISLI, self::YETKILI];
+    public const VISIBILITIES = [self::EVERYONE, self::LOGGED_IN, self::AUTHORIZED];
 
     /** Kutucuk yetkilerinin kaynak adı: "sistem-erisim.<anahtar>". */
-    public const KAYNAK = 'sistem-erisim';
+    public const RESOURCE = 'sistem-erisim';
 
     protected $fillable = [
         'ad', 'aciklama', 'adres', 'kod', 'anahtar', 'renk',
@@ -57,7 +57,7 @@ class System extends Model
 
     /** Yeni kutucuk bugünkü davranışla doğar: herkese açık. */
     protected $attributes = [
-        'gorunurluk' => self::HERKES,
+        'gorunurluk' => self::EVERYONE,
     ];
 
     /**
@@ -132,7 +132,7 @@ class System extends Model
     /** Bu kutucuğu açmak için gereken yetki. */
     public function yetenek(): string
     {
-        return self::KAYNAK.'.'.$this->anahtar;
+        return self::RESOURCE.'.'.$this->anahtar;
     }
 
     /**
@@ -145,7 +145,7 @@ class System extends Model
     public function gorebilirMi(?User $kullanici): bool
     {
         return match ($this->gorunurluk) {
-            self::GIRISLI => $kullanici !== null,
+            self::LOGGED_IN => $kullanici !== null,
 
             /*
              * Yetki Gate'e KAYDEDİLMEZ, doğrudan çözümleyiciye sorulur.
@@ -154,7 +154,7 @@ class System extends Model
              * uygulama her açılışta kutucuk tablosunu okumak zorunda kalırdı —
              * göç sırasında tablo henüz yokken de.
              */
-            self::YETKILI => $kullanici !== null
+            self::AUTHORIZED => $kullanici !== null
                 && app(PermissionResolver::class)->yapabilirMi($kullanici, $this->yetenek()),
 
             default => true,
@@ -179,11 +179,11 @@ class System extends Model
     public function scopeGorunur(Builder $query, ?User $kullanici): Builder
     {
         return $query->etkin()->where(function (Builder $q) use ($kullanici): void {
-            $q->where('gorunurluk', self::HERKES);
+            $q->where('gorunurluk', self::EVERYONE);
 
             if ($kullanici !== null) {
-                $q->orWhere('gorunurluk', self::GIRISLI)
-                    ->orWhere('gorunurluk', self::YETKILI);
+                $q->orWhere('gorunurluk', self::LOGGED_IN)
+                    ->orWhere('gorunurluk', self::AUTHORIZED);
             }
         });
     }

@@ -59,7 +59,7 @@ class NotifyIdentityChangeJob implements ShouldQueue
          * turuyla öğrenir (bkz. NotifiesClients).
          */
         $this->istemcilereBildir(
-            '/api/kimlik/tazele',
+            '/api/identity/refresh',
             ['subject' => $this->subject],
             $this->subject,
             fn (OauthClient $istemci): bool => ! $this->kapsamli

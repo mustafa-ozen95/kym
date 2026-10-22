@@ -31,7 +31,7 @@ return new class extends Migration
     {
         Schema::table('sistemler', function (Blueprint $table): void {
             $table->string('anahtar', 60)->nullable()->unique()->after('kod');
-            $table->string('gorunurluk', 20)->default(System::HERKES)->after('etkin');
+            $table->string('gorunurluk', 20)->default(System::EVERYONE)->after('etkin');
             $table->index(['gorunurluk']);
         });
 

@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\RateLimiter;
 class LoginController extends Controller
 {
     /** Oturumda bekleyen kullanıcının anahtarı: parola geçti, ikinci adım kaldı. */
-    public const BEKLEYEN = 'iki_adim_bekleyen';
+    public const PENDING = 'iki_adim_bekleyen';
 
     public function store(LoginRequest $request, ActivityRecorder $recorder): RedirectResponse
     {
@@ -43,9 +43,9 @@ class LoginController extends Controller
         if ($kullanici->ikiAdimliMi()) {
             Auth::guard('web')->logout();
 
-            $request->session()->put(self::BEKLEYEN, $kullanici->getKey());
+            $request->session()->put(self::PENDING, $kullanici->getKey());
 
-            return redirect()->route('hizli-erisim', ['pencere' => 'dogrulama']);
+            return redirect()->route('quick-access', ['window' => 'verify']);
         }
 
         return $this->tamamla($request, $kullanici, $recorder);
@@ -57,31 +57,31 @@ class LoginController extends Controller
      * Bu uç oturum AÇMADAN çağrılır; hangi kullanıcı olduğunu oturumda
      * bekleyen kimlik söyler.
      */
-    public function dogrula(Request $request, TwoStep $ikiAdim, ActivityRecorder $recorder): RedirectResponse
+    public function verify(Request $request, TwoStep $ikiAdim, ActivityRecorder $recorder): RedirectResponse
     {
-        $request->validate(['kod' => ['required', 'string', 'max:40']]);
+        $request->validate(['code' => ['required', 'string', 'max:40']]);
 
-        $kullanici = User::find($request->session()->get(self::BEKLEYEN));
+        $kullanici = User::find($request->session()->get(self::PENDING));
 
         if (! $kullanici) {
-            return redirect()->route('hizli-erisim', ['pencere' => 'giris'])
-                ->withErrors(['kod' => 'Doğrulama süresi doldu; baştan giriş yapın.']);
+            return redirect()->route('quick-access', ['window' => 'login'])
+                ->withErrors(['code' => 'Doğrulama süresi doldu; baştan giriş yapın.']);
         }
 
         if (! $this->kodSinirlaVeSay($request, $kullanici)) {
-            return back()->withErrors(['kod' => 'Çok fazla deneme yapıldı. Biraz sonra tekrar deneyin.']);
+            return back()->withErrors(['code' => 'Çok fazla deneme yapıldı. Biraz sonra tekrar deneyin.']);
         }
 
-        if (! $ikiAdim->dogrula($kullanici, (string) $request->string('kod'))) {
+        if (! $ikiAdim->dogrula($kullanici, (string) $request->string('code'))) {
             $recorder->record('iki-adim-hata', $kullanici->email.' için kod doğrulanamadı', $kullanici);
 
-            return back()->withErrors(['kod' => 'Kod doğrulanamadı.']);
+            return back()->withErrors(['code' => 'Kod doğrulanamadı.']);
         }
 
         RateLimiter::clear($this->kodAnahtari($kullanici));
         /* Hatırlama çerezi yok: hareketsizlik süresi gerçekten süre olsun. */
         Auth::guard('web')->login($kullanici, remember: false);
-        $request->session()->forget(self::BEKLEYEN);
+        $request->session()->forget(self::PENDING);
 
         return $this->tamamla($request, $kullanici, $recorder);
     }
@@ -93,7 +93,7 @@ class LoginController extends Controller
 
         $recorder->record('giris', $kullanici->email.' giriş yaptı', $kullanici);
 
-        return redirect()->intended(route('hizli-erisim'));
+        return redirect()->intended(route('quick-access'));
     }
 
     /**
@@ -106,7 +106,7 @@ class LoginController extends Controller
     {
         $anahtar = $this->kodAnahtari($kullanici);
 
-        if (RateLimiter::tooManyAttempts($anahtar, (int) config('limits.iki_adim'))) {
+        if (RateLimiter::tooManyAttempts($anahtar, (int) config('limits.two_step'))) {
             return false;
         }
 
@@ -136,6 +136,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('hizli-erisim');
+        return redirect()->route('quick-access');
     }
 }

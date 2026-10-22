@@ -13,10 +13,10 @@
                     <strong>{{ $toplamYonetici }}</strong> yöneticiden <strong>{{ $hazirYonetici }}</strong> tanesinin,
                     toplam <strong>{{ $toplamKullanici }}</strong> hesaptan <strong>{{ $hazirKullanici }}</strong> tanesinin
                     ikinci adımı kurulu. Kimin hazır olduğunu
-                    <a href="{{ route('yonetim.kullanicilar') }}">Kullanıcılar</a> ekranından görebilirsiniz.
+                    <a href="{{ route('admin.users') }}">Kullanıcılar</a> ekranından görebilirsiniz.
                 </p>
 
-                <form method="POST" action="{{ route('yonetim.ayarlar.kaydet') }}" class="form-dar">
+                <form method="POST" action="{{ route('admin.settings.update') }}" class="form-narrow">
                     @csrf
                     @method('PUT')
 
@@ -32,10 +32,10 @@
                         kaydırır; anlar UTC saklanır, ekranda buna çevrilir.
                     --}}
                     <div class="field">
-                        <label class="field__label" for="saat-dilimi">Saat dilimi</label>
-                        <select class="input" id="saat-dilimi" name="saat_dilimi" required>
+                        <label class="field__label" for="timezone">Saat dilimi</label>
+                        <select class="input" id="timezone" name="timezone" required>
                             @foreach ($saatDilimleri as $deger => $etiket)
-                                <option value="{{ $deger }}" @selected(old('saat_dilimi', $saatDilimi) === $deger)>{{ $etiket }}</option>
+                                <option value="{{ $deger }}" @selected(old('timezone', $saatDilimi) === $deger)>{{ $etiket }}</option>
                             @endforeach
                         </select>
                         <p class="text-sm text-muted">
@@ -45,7 +45,7 @@
                     </div>
 
                     <label class="checkbox">
-                        <input type="checkbox" name="kayit_acik" value="1" @checked($kayitAcik)>
+                        <input type="checkbox" name="registration_open" value="1" @checked($kayitAcik)>
                         <span>
                             Kendi kendine kayıt açık
                             <span class="text-sm text-muted">(hesap yine onay bekler)</span>
@@ -54,12 +54,12 @@
 
                     {{-- İki ayrı eşik: yönetici hesabı bütün sistemlerin anahtarını dağıtıyor. --}}
                     <label class="checkbox">
-                        <input type="checkbox" name="iki_adim_zorunlu" value="1" @checked($yoneticiZorunlu)>
+                        <input type="checkbox" name="two_step_required_admins" value="1" @checked($yoneticiZorunlu)>
                         <span>Yöneticiler için ikinci adım zorunlu <span class="text-sm text-muted">(yönetim ekranlarında)</span></span>
                     </label>
 
                     <label class="checkbox">
-                        <input type="checkbox" name="iki_adim_zorunlu_kullanici" value="1" @checked($kullaniciZorunlu)>
+                        <input type="checkbox" name="two_step_required_users" value="1" @checked($kullaniciZorunlu)>
                         <span>Tüm kullanıcılar için ikinci adım zorunlu <span class="text-sm text-muted">(girişten sonra hemen istenir)</span></span>
                     </label>
 
@@ -70,8 +70,8 @@
                         oluyor. Açıkken kefalet yerini kullanıcının tıkladığı
                         bağlantıya bırakır.
                     --}}
-                    <label @class(['checkbox', 'checkbox--kilitli' => $epostaKilitli])>
-                        <input type="checkbox" name="eposta_dogrulama_zorunlu" value="1"
+                    <label @class(['checkbox', 'checkbox--locked' => $epostaKilitli])>
+                        <input type="checkbox" name="email_verification_required" value="1"
                                @checked($epostaZorunlu) @disabled($epostaKilitli)>
                         <span>
                             E-posta doğrulama zorunlu
@@ -103,14 +103,14 @@
                     <p class="text-sm text-muted">Bu ayarlarla henüz başarılı bir gönderim yapılmadı.</p>
                 @endif
 
-                <form method="POST" action="{{ route('yonetim.ayarlar.posta') }}" class="form-dar">
+                <form method="POST" action="{{ route('admin.settings.mail') }}" class="form-narrow">
                     @csrf
                     @method('PUT')
 
                     <div class="field">
-                        <label class="field__label" for="sunucu">Sunucu adresi</label>
-                        <input class="input input--mono" id="sunucu" name="sunucu" type="text"
-                               value="{{ old('sunucu', $posta['sunucu']) }}" required
+                        <label class="field__label" for="server">Sunucu adresi</label>
+                        <input class="input input--mono" id="server" name="server" type="text"
+                               value="{{ old('server', $posta['server']) }}" required
                                placeholder="posta.ornek.test">
                     </div>
 
@@ -121,18 +121,18 @@
                     </div>
 
                     <div class="field">
-                        <label class="field__label" for="sifreleme">Şifreleme</label>
-                        <select class="input" id="sifreleme" name="sifreleme" required>
-                            <option value="tls" @selected(old('sifreleme', $posta['sifreleme']) === 'tls')>STARTTLS (587)</option>
-                            <option value="ssl" @selected(old('sifreleme', $posta['sifreleme']) === 'ssl')>SSL/TLS (465)</option>
-                            <option value="yok" @selected(old('sifreleme', $posta['sifreleme']) === 'yok')>Yok (25)</option>
+                        <label class="field__label" for="encryption">Şifreleme</label>
+                        <select class="input" id="encryption" name="encryption" required>
+                            <option value="tls" @selected(old('encryption', $posta['encryption']) === 'tls')>STARTTLS (587)</option>
+                            <option value="ssl" @selected(old('encryption', $posta['encryption']) === 'ssl')>SSL/TLS (465)</option>
+                            <option value="yok" @selected(old('encryption', $posta['encryption']) === 'yok')>Yok (25)</option>
                         </select>
                     </div>
 
                     <div class="field">
-                        <label class="field__label" for="kullanici">Kullanıcı adı</label>
-                        <input class="input input--mono" id="kullanici" name="kullanici" type="text"
-                               value="{{ old('kullanici', $posta['kullanici']) }}" autocomplete="off">
+                        <label class="field__label" for="user">Kullanıcı adı</label>
+                        <input class="input input--mono" id="user" name="username" type="text"
+                               value="{{ old('username', $posta['username']) }}" autocomplete="off">
                     </div>
 
                     {{--
@@ -141,22 +141,22 @@
                         biri her kaydedişte parolayı sıfırlamasın.
                     --}}
                     <div class="field">
-                        <label class="field__label" for="parola">Parola</label>
-                        <input class="input" id="parola" name="parola" type="password" autocomplete="new-password"
-                               placeholder="{{ $posta['parola_var'] ? 'Kayıtlı — değiştirmek için yazın' : 'Gerekiyorsa yazın' }}">
+                        <label class="field__label" for="password">Parola</label>
+                        <input class="input" id="password" name="password" type="password" autocomplete="new-password"
+                               placeholder="{{ $posta['password_set'] ? 'Kayıtlı — değiştirmek için yazın' : 'Gerekiyorsa yazın' }}">
                     </div>
 
                     <div class="field">
-                        <label class="field__label" for="gonderen">Gönderen adresi</label>
-                        <input class="input input--mono" id="gonderen" name="gonderen" type="email"
-                               value="{{ old('gonderen', $posta['gonderen']) }}" required
+                        <label class="field__label" for="sender">Gönderen adresi</label>
+                        <input class="input input--mono" id="sender" name="sender" type="email"
+                               value="{{ old('sender', $posta['sender']) }}" required
                                placeholder="kimlik@ornek.test">
                     </div>
 
                     <div class="field">
-                        <label class="field__label" for="gonderen_ad">Gönderen adı</label>
-                        <input class="input" id="gonderen_ad" name="gonderen_ad" type="text"
-                               value="{{ old('gonderen_ad', $posta['gonderen_ad'] ?? config('app.name')) }}" required>
+                        <label class="field__label" for="sender_name">Gönderen adı</label>
+                        <input class="input" id="sender_name" name="sender_name" type="text"
+                               value="{{ old('sender_name', $posta['sender_name'] ?? config('app.name')) }}" required>
                     </div>
 
                     <button type="submit" class="btn btn--primary btn--sm">Kaydet</button>
@@ -166,7 +166,7 @@
                     Deneme iletisi HER ZAMAN isteği yapanın kendi adresine
                     gider; bu uç başkasına posta göndermenin yolu olmamalı.
                 --}}
-                <form method="POST" action="{{ route('yonetim.ayarlar.posta.deneme') }}" class="form-dar">
+                <form method="POST" action="{{ route('admin.settings.mail.test') }}" class="form-narrow">
                     @csrf
                     <p class="text-sm text-muted">
                         Deneme iletisi kendi adresinize gönderilir: <strong>{{ $denemeAdresi }}</strong>

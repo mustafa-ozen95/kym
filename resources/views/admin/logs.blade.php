@@ -10,7 +10,7 @@
                             kurulumda birkaç saniye sürebilir. Bu yüzden elle
                             başlatılır, her sayfa açılışında değil.
                         --}}
-                        <form method="POST" action="{{ route('yonetim.kayitlar.dogrula') }}">
+                        <form method="POST" action="{{ route('admin.logs.verify') }}">
                             @csrf
                             <button type="submit" class="btn btn--sm">Zinciri doğrula</button>
                         </form>
@@ -23,12 +23,12 @@
             <x-ui.flash />
 
             <x-ui.panel title="Kayıtlar" subtitle="En yeni satır üstte. Kayıt silinmez ve düzenlenmez.">
-                <form method="GET" action="{{ route('yonetim.kayitlar') }}" class="row row--wrap">
-                    <x-form.select name="eylem"
+                <form method="GET" action="{{ route('admin.logs') }}" class="row row--wrap">
+                    <x-form.select name="action"
                                    :options="['' => 'Tüm eylemler'] + array_combine($eylemler, $eylemler)"
                                    :selected="$secilenEylem" />
 
-                    <x-form.input name="ara" :value="$arama" placeholder="Özet ya da kişi adı" />
+                    <x-form.input name="search" :value="$arama" placeholder="Özet ya da kişi adı" />
 
                     <button type="submit" class="btn btn--sm">Süz</button>
                 </form>

@@ -18,14 +18,14 @@ use Illuminate\Support\Facades\Cache;
 class CertificateStatus
 {
     /** Bu günden azı kaldıysa uyarı basılır. */
-    public const ESIK = 21;
+    public const THRESHOLD = 21;
 
-    private const ONBELLEK = 'sertifika-durumu';
+    private const CACHE_KEY = 'sertifika-durumu';
 
     /** @return array{veren: string, bitis: string, kalan_gun: int, ic_ca: bool}|null */
     public static function oku(): ?array
     {
-        return Cache::remember(self::ONBELLEK, now()->addMinutes(30), static function (): ?array {
+        return Cache::remember(self::CACHE_KEY, now()->addMinutes(30), static function (): ?array {
             /*
              * storage/app ALTINDA DEĞİL: açılış betiği o dizinde `chown -R`
              * yapıyor ve salt okunur bağlanmış bir dosya bunu reddediyor;
@@ -55,6 +55,6 @@ class CertificateStatus
 
         return $d !== null
             && ($d['ic_ca'] ?? false) === false
-            && (int) $d['kalan_gun'] < self::ESIK;
+            && (int) $d['kalan_gun'] < self::THRESHOLD;
     }
 }

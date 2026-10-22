@@ -37,12 +37,12 @@ class UnauthorizedAccessTest extends TestCase
      * @var array<string, string> rota adı => neden serbest
      */
     private const SERBEST = [
-        'hesap.profil' => 'Kendi hesabı: herkes kendi adını ve e-postasını görür.',
-        'hesap.iki-adim' => 'Kendi ikinci adımını herkes kurabilmeli.',
-        'hizli-erisim' => 'Karşılama ve giriş penceresi.',
-        'salon' => 'Paylaşılan kutucuk salonu; kendi anahtarıyla açılır.',
-        'kapi' => 'Kapı ucu.',
-        'kimlik.kesif' => 'OAuth keşif belgesi; kamuya açıktır.',
+        'account.profile' => 'Kendi hesabı: herkes kendi adını ve e-postasını görür.',
+        'account.two-step' => 'Kendi ikinci adımını herkes kurabilmeli.',
+        'quick-access' => 'Karşılama ve giriş penceresi.',
+        'group' => 'Paylaşılan kutucuk salonu; kendi anahtarıyla açılır.',
+        'gate' => 'Kapı ucu.',
+        'identity.discovery' => 'OAuth keşif belgesi; kamuya açıktır.',
     ];
 
     #[Test]

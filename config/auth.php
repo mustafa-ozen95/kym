@@ -133,7 +133,7 @@ return [
     | Art arda kaç YANLIŞ PAROLADAN sonra giriş bir süre kilitlenir.
     | 0 = KİLİT YOK. Sayaç e-posta+IP başına tutulur.
     |
-    | `limits.giris` ile KARIŞTIRMAYIN: o, rotada dakikada kaç İSTEK kabul
+    | `limits.login` ile KARIŞTIRMAYIN: o, rotada dakikada kaç İSTEK kabul
     | edildiğini söyler. Aynı anahtarı okusalardı kilit ayardan
     | kapatılamazdı (sıfır, kilidi kaldırmak yerine ilk yanlış paroladan
     | sonra kilitlerdi).

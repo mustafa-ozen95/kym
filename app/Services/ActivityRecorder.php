@@ -43,17 +43,17 @@ use Illuminate\Support\Facades\DB;
  * alanları + saklı özeti) imzalı olarak ayarlar tablosuna yazılır; verify()
  * mühürlü ve DEĞİŞMEMİŞ satırı kabul eder, yürüyüşe saklı özetiyle devam
  * eder. Mühürden sonra değişen mühürlü satır ya da yeni bir kırık yine
- * kırık görünür. Mühür satırları DEĞİŞTİRMEZ (bkz. kimlik:zincir-muhurle).
+ * kırık görünür. Mühür satırları DEĞİŞTİRMEZ (bkz. identity:chain-seal).
  */
 class ActivityRecorder
 {
     public function __construct(private Request $request) {}
 
     /** ayarlar tablosundaki çapa satırının anahtarı. */
-    public const CAPA = 'denetim_zincir_capasi';
+    public const ANCHOR = 'denetim_zincir_capasi';
 
     /** ayarlar tablosundaki bilinen-eski-kırık mührünün anahtarı. */
-    public const MUHUR = 'denetim_zincir_muhru';
+    public const SEAL = 'denetim_zincir_muhru';
 
     public function record(string $eylem, string $ozet, ?User $actor = null): ActivityLog
     {
@@ -197,7 +197,7 @@ class ActivityRecorder
         $govde = json_encode(['not' => $not, 'tarih' => now()->toIso8601String(), 'izler' => $izler], JSON_UNESCAPED_UNICODE);
 
         DB::table('ayarlar')->updateOrInsert(
-            ['anahtar' => self::MUHUR],
+            ['anahtar' => self::SEAL],
             ['deger' => json_encode(['govde' => $govde, 'mac' => $this->muhurImzasi($govde)]), 'updated_at' => now()],
         );
 
@@ -221,7 +221,7 @@ class ActivityRecorder
     /** @return array<int, string> kimlik => parmak izi; imzasız/bozuk mühür boş sayılır. */
     private function muhuruOku(): array
     {
-        $veri = json_decode((string) DB::table('ayarlar')->where('anahtar', self::MUHUR)->value('deger'), true);
+        $veri = json_decode((string) DB::table('ayarlar')->where('anahtar', self::SEAL)->value('deger'), true);
 
         if (! is_array($veri) || ! is_string($veri['govde'] ?? null) || ! hash_equals($this->muhurImzasi($veri['govde']), (string) ($veri['mac'] ?? ''))) {
             return [];
@@ -235,7 +235,7 @@ class ActivityRecorder
     /** Zincir imza anahtarı: APP_KEY'den ayrı, boşsa APP_KEY (bkz. config/audit.php). */
     private function zincirAnahtari(): string
     {
-        return (string) config('audit.zincir_anahtari');
+        return (string) config('audit.chain_key');
     }
 
     /** Çapanın imzası: uç özet ve sayı birlikte, zincir anahtarıyla. */
@@ -247,7 +247,7 @@ class ActivityRecorder
     /** @return array{head: ?string, n: int, gecerli: bool}|null */
     private function capayiOku(bool $kilitle = false): ?array
     {
-        $sorgu = DB::table('ayarlar')->where('anahtar', self::CAPA);
+        $sorgu = DB::table('ayarlar')->where('anahtar', self::ANCHOR);
 
         if ($kilitle) {
             $sorgu->lockForUpdate();
@@ -277,7 +277,7 @@ class ActivityRecorder
     private function capayiYaz(?string $head, int $n): void
     {
         DB::table('ayarlar')->updateOrInsert(
-            ['anahtar' => self::CAPA],
+            ['anahtar' => self::ANCHOR],
             [
                 'deger' => json_encode(['head' => $head, 'n' => $n, 'mac' => $this->capaImzasi($head, $n)]),
                 'updated_at' => now(),
@@ -297,7 +297,7 @@ class ActivityRecorder
     private function capayiKilitle(): array
     {
         DB::table('ayarlar')->insertOrIgnore([
-            'anahtar' => self::CAPA, 'deger' => null, 'created_at' => now(), 'updated_at' => now(),
+            'anahtar' => self::ANCHOR, 'deger' => null, 'created_at' => now(), 'updated_at' => now(),
         ]);
 
         $capa = $this->capayiOku(kilitle: true);

@@ -5,8 +5,8 @@
                             subtitle="Merkez ile giriş yapabilen projeler. Yeni bir siteyi bağlamanın tek yeri burasıdır.">
                 @if ($ekleyebilir)
                     <x-slot:actions>
-                        <a href="{{ route('yonetim.istemciler', ['pencere' => 'ekle']) }}"
-                           class="btn btn--primary btn--sm" data-modal-open="istemci-ekle">Yeni uygulama</a>
+                        <a href="{{ route('admin.clients', ['window' => 'add']) }}"
+                           class="btn btn--primary btn--sm" data-modal-open="client-add">Yeni uygulama</a>
                     </x-slot:actions>
                 @endif
             </x-ui.page-head>
@@ -27,7 +27,7 @@
                         sonra <span class="mono">php artisan config:cache</span> çalıştırın.
                     </p>
 
-                    <pre class="kod" data-kopyala>{{ session('yeniEnv') }}</pre>
+                    <pre class="code" data-copy>{{ session('yeniEnv') }}</pre>
                 </x-ui.panel>
             @endif
 
@@ -42,9 +42,9 @@
                 tarayıcının kendi davranışıdır.
             --}}
             @forelse ($istemciler as $istemci)
-                <details class="katlanir">
-                    <summary class="katlanir__baslik">
-                        <span class="katlanir__ad">{{ $istemci->name }}</span>
+                <details class="collapsible">
+                    <summary class="collapsible__title">
+                        <span class="collapsible__name">{{ $istemci->name }}</span>
 
                         @if ($istemci->revoked)
                             <x-ui.badge variant="red">Kaldırıldı</x-ui.badge>
@@ -52,10 +52,10 @@
                             <x-ui.badge variant="green">Etkin</x-ui.badge>
                         @endif
 
-                        <span class="katlanir__ek mono text-sm text-muted">{{ $istemci->getKey() }}</span>
+                        <span class="collapsible__extra mono text-sm text-muted">{{ $istemci->getKey() }}</span>
                     </summary>
 
-                    <div class="katlanir__govde">
+                    <div class="collapsible__body">
                         <p class="text-sm text-muted">
                             @if ($istemci->revoked)
                                 Bağlantı kaldırıldı; bu uygulama artık merkez ile giriş yapamaz.
@@ -65,7 +65,7 @@
                         </p>
 
                         @if ($duzenleyebilir && ! $istemci->revoked)
-                            <form method="POST" action="{{ route('yonetim.istemciler.guncelle', $istemci) }}">
+                            <form method="POST" action="{{ route('admin.clients.update', $istemci) }}">
                                 @csrf
                                 @method('PUT')
 
@@ -79,10 +79,10 @@
                                     yalnızca birebir eşleşeni kabul eder ve kodun başka
                                     bir yere gönderilmesini engelleyen asıl koruma budur.
                                 --}}
-                                <x-form.field name="adresler" label="Dönüş adresleri"
-                                              hint="Her satıra bir adres. Projedeki KIMLIK_DONUS ile birebir aynı olmalı."
+                                <x-form.field name="addresses" label="Dönüş adresleri"
+                                              hint="Her satıra bir adres. Projedeki IDENTITY_REDIRECT_URI ile birebir aynı olmalı."
                                               :id="'adres-' . $istemci->getKey()">
-                                    <x-form.textarea name="adresler" :id="'adres-' . $istemci->getKey()"
+                                    <x-form.textarea name="addresses" :id="'adres-' . $istemci->getKey()"
                                                      class="input--mono" :value="$istemci->redirect_uris" />
                                 </x-form.field>
 
@@ -99,13 +99,13 @@
                                     eklemek bilinçli bir adımdır, boş liste kazara
                                     kimseyi dışarıda bırakmaz.
                                 --}}
-                                <x-form.field name="roller" label="Girebilen roller"
+                                <x-form.field name="roles" label="Girebilen roller"
                                               hint="Hiçbiri işaretli değilse merkezdeki herkes girebilir. İçeride kimin neyi yapabileceğine uygulamanın kendisi karar verir."
                                               :id="'roller-' . $istemci->getKey()">
-                                    <div class="secim-listesi">
+                                    <div class="choice-list">
                                         @foreach ($roller as $rol)
                                             <label class="checkbox">
-                                                <input type="checkbox" name="roller[]" value="{{ $rol->uuid }}"
+                                                <input type="checkbox" name="roles[]" value="{{ $rol->uuid }}"
                                                        @checked($istemci->roller->contains('uuid', $rol->uuid))>
                                                 <span>{{ $rol->label }} <span class="text-muted mono">{{ $rol->slug }}</span></span>
                                             </label>
@@ -122,7 +122,7 @@
                                 <div class="field">
                                     <span class="field__label">Hesap açma</span>
                                     <label class="checkbox">
-                                        <input type="checkbox" name="otomatik_hesap" value="1"
+                                        <input type="checkbox" name="auto_account" value="1"
                                                @checked($istemci->otomatik_hesap)>
                                         <span>Girebilen roller için hesap kendiliğinden açılsın</span>
                                     </label>
@@ -138,9 +138,9 @@
                             </form>
                         @endif
 
-                        <details class="yetki katlanir__ic">
-                            <summary class="yetki__baslik">Bu uygulamanın .env bloğu</summary>
-                            <pre class="kod">{{ $envBloklari[$istemci->getKey()] }}</pre>
+                        <details class="permission collapsible__inner">
+                            <summary class="permission__title">Bu uygulamanın .env bloğu</summary>
+                            <pre class="code">{{ $envBloklari[$istemci->getKey()] }}</pre>
                         </details>
 
                         {{--
@@ -149,8 +149,8 @@
                             yazmamak, "bizim dosyamız yoksa bağlanamazsın"
                             izlenimi verirdi.
                         --}}
-                        <details class="yetki katlanir__ic">
-                            <summary class="yetki__baslik">Başka bir dille bağlanmak (Node, Python, Go…)</summary>
+                        <details class="permission collapsible__inner">
+                            <summary class="permission__title">Başka bir dille bağlanmak (Node, Python, Go…)</summary>
 
                             <p class="text-sm text-muted">
                                 Kendi dilinizin OIDC kütüphanesine yalnızca keşif adresini, kimliği ve sırrı
@@ -178,12 +178,12 @@
                                 yöneticinin tek çıkışı sırrı yenilemek olurdu.
                             --}}
                             <p class="text-sm text-muted">
-                                Bildirim sırrı — projenin <span class="mono">KIMLIK_BILDIRIM_SIR</span> alanına:
+                                Bildirim sırrı — projenin <span class="mono">IDENTITY_NOTIFY_SECRET</span> alanına:
                             </p>
                             <p class="mono text-sm">{{ $istemci->getAttributes()['bildirim_sirri'] ?: '— (kayıt eski; sırrı yenileyin)' }}</p>
 
                             <p class="text-sm text-muted">Node.js örneği:</p>
-                            <pre class="kod">{{ $nodeOrnekleri[$istemci->getKey()] }}</pre>
+                            <pre class="code">{{ $nodeOrnekleri[$istemci->getKey()] }}</pre>
                         </details>
 
                         @if (! $istemci->revoked)
@@ -195,7 +195,7 @@
                                     denetimine girebilir ve indirilenler
                                     klasöründe kalır.
                                 --}}
-                                <a href="{{ route('yonetim.istemciler.kurulum', $istemci) }}"
+                                <a href="{{ route('admin.clients.setup', $istemci) }}"
                                    class="btn btn--sm btn--primary">Kurulum dosyasını indir</a>
 
                                 @if ($sirYenileyebilir)
@@ -203,7 +203,7 @@
                                         Sır yenilemek girişi O AN durdurur ve verilmiş
                                         jetonları düşürür; onaysız yapılmamalı.
                                     --}}
-                                    <form method="POST" action="{{ route('yonetim.istemciler.sir', $istemci) }}"
+                                    <form method="POST" action="{{ route('admin.clients.secret', $istemci) }}"
                                           data-confirm="{{ $istemci->name }} sırrı yenilenecek. Yeni sır projeye yazılana kadar merkez ile giriş çalışmayacak ve verilmiş jetonlar düşecek."
                                           data-confirm-title="Sırrı yenile">
                                         @csrf
@@ -213,7 +213,7 @@
                                 @endif
 
                                 @if ($silebilir)
-                                    <x-ui.delete-form :action="route('yonetim.istemciler.kaldir', $istemci)"
+                                    <x-ui.delete-form :action="route('admin.clients.revoke', $istemci)"
                                                       :confirm="$istemci->name . ' bağlantısı kaldırılacak ve jetonları düşecek. Kayıt silinmez; geçmiş denetim satırları sahipsiz kalmasın diye iptal edilir.'"
                                                       :verify="$istemci->name"
                                                       title="Bağlantıyı kaldır"
@@ -231,7 +231,7 @@
                         --}}
                         @if ($istemci->revoked && $silebilir)
                             <div class="form-actions">
-                                <x-ui.delete-form :action="route('yonetim.istemciler.kalici-sil', $istemci)"
+                                <x-ui.delete-form :action="route('admin.clients.purge', $istemci)"
                                                   :confirm="$istemci->name . ' kaydı KALICI olarak silinecek. Jetonları ve yetkilendirme kodları da silinir. Denetim kaydındaki satırlar adı metin olarak taşıdığı için korunur. Bu işlem geri alınamaz.'"
                                                   :verify="$istemci->name"
                                                   title="Kaydı kalıcı olarak sil"
@@ -255,7 +255,7 @@
             <x-ui.panel title="Laravel projesinde yapılacaklar"
                         subtitle="Üç adım. Başka dildeki projeler için her uygulamanın altındaki protokol bölümüne bakın.">
                 @foreach ($adimlar as $adim)
-                    <div class="adim">
+                    <div class="step">
                         <h4>{{ $loop->iteration }}. {{ $adim['baslik'] }}</h4>
                         <p class="text-sm text-muted">{{ $adim['aciklama'] }}</p>
                     </div>

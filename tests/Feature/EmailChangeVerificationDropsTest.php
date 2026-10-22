@@ -50,7 +50,7 @@ class EmailChangeVerificationDropsTest extends TestCase
         $kullanici = $this->kullanici();
 
         $this->actingAs($kullanici)
-            ->put(route('hesap.profil.kaydet'), ['name' => 'Deneme Kişi', 'email' => 'baskasi@ornek.test'])
+            ->put(route('account.profile.update'), ['name' => 'Deneme Kişi', 'email' => 'baskasi@ornek.test'])
             ->assertSessionHas('status');
 
         $this->assertNull(
@@ -68,10 +68,10 @@ class EmailChangeVerificationDropsTest extends TestCase
         $kullanici = $this->kullanici();
 
         $this->actingAs($kullanici)
-            ->put(route('hesap.profil.kaydet'), ['name' => 'Deneme Kişi', 'email' => 'baskasi@ornek.test']);
+            ->put(route('account.profile.update'), ['name' => 'Deneme Kişi', 'email' => 'baskasi@ornek.test']);
 
         $this->actingAs($kullanici->fresh(), 'api')
-            ->getJson(route('kimlik.kullanici'))
+            ->getJson(route('identity.userinfo'))
             ->assertOk()
             ->assertJsonPath('email', 'baskasi@ornek.test')
             ->assertJsonPath('email_verified', false);
@@ -88,7 +88,7 @@ class EmailChangeVerificationDropsTest extends TestCase
         $kullanici = $this->kullanici();
 
         $this->actingAs($kullanici)
-            ->put(route('hesap.profil.kaydet'), ['name' => 'Yeni Ad', 'email' => 'kisi@ornek.test'])
+            ->put(route('account.profile.update'), ['name' => 'Yeni Ad', 'email' => 'kisi@ornek.test'])
             ->assertSessionHas('status');
 
         $kullanici->refresh();

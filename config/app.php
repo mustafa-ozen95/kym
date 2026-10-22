@@ -156,7 +156,7 @@ return [
     | yapısını kurar.
     */
 
-    'ornek_veri' => filter_var(env('ORNEK_VERI', true), FILTER_VALIDATE_BOOLEAN),
+    'sample_data' => filter_var(env('SAMPLE_DATA', true), FILTER_VALIDATE_BOOLEAN),
 
     'admin_name' => env('ADMIN_NAME', 'Sistem Yöneticisi'),
 

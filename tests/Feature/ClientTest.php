@@ -35,7 +35,7 @@ final class ClientTest extends TestCase
         /** @var OauthClient $istemci */
         $istemci = app(ClientRepository::class)->createAuthorizationCodeGrantClient(
             $ad,
-            ['https://deneme.ornek.test/giris/merkez/geri'],
+            ['https://deneme.ornek.test/login/center/callback'],
         );
 
         return $istemci;
@@ -44,9 +44,9 @@ final class ClientTest extends TestCase
     public function test_yonetici_yeni_uygulama_baglar(): void
     {
         $this->actingAs($this->rolde('admin'))
-            ->post(route('yonetim.istemciler.ekle'), [
+            ->post(route('admin.clients.store'), [
                 'name' => 'Yeni Panel',
-                'adresler' => 'https://yeni.ornek.test/giris/merkez/geri',
+                'addresses' => 'https://yeni.ornek.test/login/center/callback',
             ])
             ->assertRedirect();
 
@@ -62,18 +62,18 @@ final class ClientTest extends TestCase
     public function test_sir_bir_kez_env_blogu_ile_gosterilir(): void
     {
         $yanit = $this->actingAs($this->rolde('admin'))
-            ->post(route('yonetim.istemciler.ekle'), [
+            ->post(route('admin.clients.store'), [
                 'name' => 'Yeni Panel',
-                'adresler' => 'https://yeni.ornek.test/giris/merkez/geri',
+                'addresses' => 'https://yeni.ornek.test/login/center/callback',
             ]);
 
         $yanit->assertSessionHas('yeniSir');
 
         $env = session('yeniEnv');
 
-        $this->assertStringContainsString('KIMLIK_ISTEMCI='.session('yeniIstemci'), $env);
-        $this->assertStringContainsString('KIMLIK_ISTEMCI_SIR='.session('yeniSir'), $env);
-        $this->assertStringContainsString('KIMLIK_DONUS=https://yeni.ornek.test/giris/merkez/geri', $env);
+        $this->assertStringContainsString('IDENTITY_CLIENT_ID='.session('yeniIstemci'), $env);
+        $this->assertStringContainsString('IDENTITY_CLIENT_SECRET='.session('yeniSir'), $env);
+        $this->assertStringContainsString('IDENTITY_REDIRECT_URI=https://yeni.ornek.test/login/center/callback', $env);
     }
 
     /**
@@ -87,7 +87,7 @@ final class ClientTest extends TestCase
         $istemci = $this->istemci();
 
         $this->actingAs($this->rolde('admin'))
-            ->get(route('yonetim.istemciler'))
+            ->get(route('admin.clients'))
             ->assertOk()
             ->assertSee($istemci->name)
             ->assertDontSee($istemci->secret);
@@ -102,11 +102,11 @@ final class ClientTest extends TestCase
     public function test_sifresiz_adres_kabul_edilmez(): void
     {
         $this->actingAs($this->rolde('admin'))
-            ->post(route('yonetim.istemciler.ekle'), [
+            ->post(route('admin.clients.store'), [
                 'name' => 'Yeni Panel',
-                'adresler' => 'http://yeni.ornek.test/giris/merkez/geri',
+                'addresses' => 'http://yeni.ornek.test/login/center/callback',
             ])
-            ->assertSessionHasErrors('adresler');
+            ->assertSessionHasErrors('addresses');
 
         $this->assertDatabaseMissing('oauth_clients', ['name' => 'Yeni Panel']);
     }
@@ -114,25 +114,25 @@ final class ClientTest extends TestCase
     public function test_bicimsiz_adres_kabul_edilmez(): void
     {
         $this->actingAs($this->rolde('admin'))
-            ->post(route('yonetim.istemciler.ekle'), ['name' => 'Yeni Panel', 'adresler' => 'yeni.ornek.test'])
-            ->assertSessionHasErrors('adresler');
+            ->post(route('admin.clients.store'), ['name' => 'Yeni Panel', 'addresses' => 'yeni.ornek.test'])
+            ->assertSessionHasErrors('addresses');
     }
 
     /** Birden çok adres satır satır girilir; boş satırlar atılır. */
     public function test_birden_cok_adres_satir_satir_girilir(): void
     {
         $this->actingAs($this->rolde('admin'))
-            ->post(route('yonetim.istemciler.ekle'), [
+            ->post(route('admin.clients.store'), [
                 'name' => 'Çok Adresli',
-                'adresler' => "https://a.ornek.test/giris/merkez/geri\n\nhttps://b.ornek.test/giris/merkez/geri\n",
+                'addresses' => "https://a.ornek.test/login/center/callback\n\nhttps://b.ornek.test/login/center/callback\n",
             ])
             ->assertRedirect();
 
         $istemci = OauthClient::firstWhere('name', 'Çok Adresli');
 
         $this->assertSame([
-            'https://a.ornek.test/giris/merkez/geri',
-            'https://b.ornek.test/giris/merkez/geri',
+            'https://a.ornek.test/login/center/callback',
+            'https://b.ornek.test/login/center/callback',
         ], (array) $istemci->redirect_uris);
     }
 
@@ -156,7 +156,7 @@ final class ClientTest extends TestCase
         ]);
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.istemciler.sir', $istemci))
+            ->put(route('admin.clients.secret', $istemci))
             ->assertRedirect()
             ->assertSessionHas('yeniSir');
 
@@ -175,7 +175,7 @@ final class ClientTest extends TestCase
         $istemci = $this->istemci();
 
         $this->actingAs($this->rolde('admin'))
-            ->delete(route('yonetim.istemciler.kaldir', $istemci))
+            ->delete(route('admin.clients.revoke', $istemci))
             ->assertRedirect();
 
         $this->assertModelExists($istemci);
@@ -187,14 +187,14 @@ final class ClientTest extends TestCase
         $istemci = $this->istemci();
 
         $this->actingAs($this->rolde('admin'))
-            ->put(route('yonetim.istemciler.guncelle', $istemci), [
+            ->put(route('admin.clients.update', $istemci), [
                 'name' => 'Yeni Ad',
-                'adresler' => 'https://baska.ornek.test/giris/merkez/geri',
+                'addresses' => 'https://baska.ornek.test/login/center/callback',
             ])
             ->assertRedirect();
 
         $this->assertSame('Yeni Ad', $istemci->fresh()->name);
-        $this->assertSame(['https://baska.ornek.test/giris/merkez/geri'], (array) $istemci->fresh()->redirect_uris);
+        $this->assertSame(['https://baska.ornek.test/login/center/callback'], (array) $istemci->fresh()->redirect_uris);
     }
 
     /* ── Yetki ── */
@@ -209,11 +209,11 @@ final class ClientTest extends TestCase
     {
         $editor = $this->rolde('network');
 
-        $this->actingAs($editor)->get(route('yonetim.istemciler'))->assertForbidden();
+        $this->actingAs($editor)->get(route('admin.clients'))->assertForbidden();
 
         $this->actingAs($editor)
-            ->post(route('yonetim.istemciler.ekle'), [
-                'name' => 'Sızma', 'adresler' => 'https://sizma.example.test/geri',
+            ->post(route('admin.clients.store'), [
+                'name' => 'Sızma', 'addresses' => 'https://sizma.example.test/geri',
             ])
             ->assertForbidden();
 
@@ -237,13 +237,13 @@ final class ClientTest extends TestCase
         ]);
 
         $this->actingAs($sorumlu)
-            ->put(route('yonetim.istemciler.guncelle', $istemci), [
-                'name' => 'Yeni Ad', 'adresler' => 'https://deneme.ornek.test/giris/merkez/geri',
+            ->put(route('admin.clients.update', $istemci), [
+                'name' => 'Yeni Ad', 'addresses' => 'https://deneme.ornek.test/login/center/callback',
             ])
             ->assertRedirect();
 
         $this->actingAs($sorumlu)
-            ->put(route('yonetim.istemciler.sir', $istemci))
+            ->put(route('admin.clients.secret', $istemci))
             ->assertForbidden();
     }
 
@@ -254,12 +254,12 @@ final class ClientTest extends TestCase
         $this->yetkiDagitimiAc();
 
         $this->actingAs($this->rolde('admin'))
-            ->get(route('yonetim.istemciler'))
+            ->get(route('admin.clients'))
             ->assertOk()
             ->assertSee('Uygulamalar');
 
         $this->actingAs($this->rolde('network'))
-            ->get(route('yonetim.sistemler'))
+            ->get(route('admin.systems'))
             ->assertOk()
             ->assertDontSee('>Uygulamalar<', false);
     }
@@ -270,11 +270,11 @@ final class ClientTest extends TestCase
         $this->istemci();
 
         $this->actingAs($this->rolde('admin'))
-            ->get(route('yonetim.istemciler'))
+            ->get(route('admin.clients'))
             ->assertOk()
             ->assertSee('Laravel projesinde yapılacaklar')
-            ->assertSee('KimlikMerkezi.php')
-            ->assertSee(route('kimlik.kesif'));
+            ->assertSee('IdentityCenter.php')
+            ->assertSee(route('identity.discovery'));
     }
 
     /**
@@ -288,7 +288,7 @@ final class ClientTest extends TestCase
         $istemci = $this->istemci();
 
         $this->actingAs($this->rolde('admin'))
-            ->get(route('yonetim.istemciler'))
+            ->get(route('admin.clients'))
             ->assertOk()
             ->assertSee('Başka bir dille bağlanmak')
             ->assertSee('code_challenge_method')
@@ -308,16 +308,16 @@ final class ClientTest extends TestCase
         $istemci = $this->istemci();
 
         $yanit = $this->actingAs($this->rolde('admin'))
-            ->get(route('yonetim.istemciler.kurulum', $istemci));
+            ->get(route('admin.clients.setup', $istemci));
 
         $yanit->assertOk()
-            ->assertHeader('Content-Disposition', 'attachment; filename="KimlikMerkezi.php"');
+            ->assertHeader('Content-Disposition', 'attachment; filename="IdentityCenter.php"');
 
         $icerik = $yanit->getContent();
 
-        $this->assertStringContainsString('class KimlikMerkezi extends ServiceProvider', $icerik);
+        $this->assertStringContainsString('class IdentityCenter extends ServiceProvider', $icerik);
         $this->assertStringContainsString($istemci->getKey(), $icerik);
-        $this->assertStringContainsString('https://deneme.ornek.test/giris/merkez/geri', $icerik);
+        $this->assertStringContainsString('https://deneme.ornek.test/login/center/callback', $icerik);
         $this->assertStringNotContainsString($istemci->secret, $icerik);
     }
 
@@ -338,7 +338,7 @@ final class ClientTest extends TestCase
     public function test_kurulum_dosyasi_yetki_ister(): void
     {
         $this->actingAs($this->rolde('network'))
-            ->get(route('yonetim.istemciler.kurulum', $this->istemci()))
+            ->get(route('admin.clients.setup', $this->istemci()))
             ->assertForbidden();
     }
 }

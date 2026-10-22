@@ -18,11 +18,11 @@ use DateTimeZone;
  */
 class TimeZone
 {
-    public const AYAR = 'saat_dilimi';
+    public const SETTING = 'saat_dilimi';
 
     public static function secili(): string
     {
-        $deger = Setting::metin(self::AYAR);
+        $deger = Setting::metin(self::SETTING);
 
         return $deger !== null && $deger !== '' ? $deger : (string) config('app.timezone', 'UTC');
     }

@@ -8,11 +8,11 @@ import { on } from '../lib/dom.js';
  * anlamıyordu.
  */
 function liste() {
-    return document.querySelector('[data-menu-liste]');
+    return document.querySelector('[data-menu-list]');
 }
 
 function dugme() {
-    return document.querySelector('[data-menu-ac]');
+    return document.querySelector('[data-menu-open]');
 }
 
 function kapat() {
@@ -25,7 +25,7 @@ function kapat() {
 }
 
 export function init() {
-    on('click', '[data-menu-ac]', (olay, tetik) => {
+    on('click', '[data-menu-open]', (olay, tetik) => {
         olay.preventDefault();
 
         const kutu = liste();

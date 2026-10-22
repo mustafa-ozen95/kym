@@ -33,7 +33,7 @@ final class EmailVerificationTest extends TestCase
 
     private function zorunluYap(): void
     {
-        Setting::yaz(EmailVerification::AYAR, true);
+        Setting::yaz(EmailVerification::SETTING, true);
     }
 
     private function kayit(array $ustune = []): array
@@ -58,7 +58,7 @@ final class EmailVerificationTest extends TestCase
     {
         Notification::fake();
 
-        $this->post(route('kayit'), $this->kayit())->assertRedirect();
+        $this->post(route('register'), $this->kayit())->assertRedirect();
 
         Notification::assertNothingSent();
     }
@@ -74,9 +74,9 @@ final class EmailVerificationTest extends TestCase
         $bekleyen = User::factory()->create(['durum' => Status::Beklemede, 'email_verified_at' => null]);
 
         $this->actingAs(User::factory()->yonetici()->create(['durum' => Status::Etkin]))
-            ->put(route('yonetim.kullanicilar.guncelle', $bekleyen), [
-                'durum' => Status::Etkin->value,
-                'rol' => Role::firstWhere('slug', 'muhasebe')->uuid,
+            ->put(route('admin.users.update', $bekleyen), [
+                'status' => Status::Etkin->value,
+                'role' => Role::firstWhere('slug', 'muhasebe')->uuid,
             ]);
 
         $this->assertNotNull($bekleyen->fresh()->email_verified_at);
@@ -91,7 +91,7 @@ final class EmailVerificationTest extends TestCase
             'email_verified_at' => null,
         ]);
 
-        $this->post(route('giris'), ['email' => 'ali@ornek.test', 'password' => 'cok-gizli-1616']);
+        $this->post(route('login'), ['email' => 'ali@ornek.test', 'password' => 'cok-gizli-1616']);
 
         $this->assertAuthenticated();
     }
@@ -103,7 +103,7 @@ final class EmailVerificationTest extends TestCase
         Notification::fake();
         $this->zorunluYap();
 
-        $this->post(route('kayit'), $this->kayit())->assertRedirect();
+        $this->post(route('register'), $this->kayit())->assertRedirect();
 
         Notification::assertSentTo(User::firstWhere('email', 'ali@ornek.test'), EmailVerificationNotification::class);
     }
@@ -120,9 +120,9 @@ final class EmailVerificationTest extends TestCase
         $bekleyen = User::factory()->create(['durum' => Status::Beklemede, 'email_verified_at' => null]);
 
         $this->actingAs(User::factory()->yonetici()->create(['durum' => Status::Etkin]))
-            ->put(route('yonetim.kullanicilar.guncelle', $bekleyen), [
-                'durum' => Status::Etkin->value,
-                'rol' => Role::firstWhere('slug', 'muhasebe')->uuid,
+            ->put(route('admin.users.update', $bekleyen), [
+                'status' => Status::Etkin->value,
+                'role' => Role::firstWhere('slug', 'muhasebe')->uuid,
             ]);
 
         $this->assertNull($bekleyen->fresh()->email_verified_at);
@@ -139,7 +139,7 @@ final class EmailVerificationTest extends TestCase
             'email_verified_at' => null,
         ]);
 
-        $this->post(route('giris'), ['email' => 'ali@ornek.test', 'password' => 'cok-gizli-1616'])
+        $this->post(route('login'), ['email' => 'ali@ornek.test', 'password' => 'cok-gizli-1616'])
             ->assertSessionHasErrors('email');
 
         $this->assertGuest();
@@ -171,7 +171,7 @@ final class EmailVerificationTest extends TestCase
     {
         $kullanici = User::factory()->create(['email_verified_at' => null]);
 
-        $this->get('/eposta/dogrula/'.$kullanici->getRouteKey().'/'.sha1($kullanici->email))
+        $this->get('/email/verify/'.$kullanici->getRouteKey().'/'.sha1($kullanici->email))
             ->assertForbidden();
 
         $this->assertNull($kullanici->fresh()->email_verified_at);
@@ -207,10 +207,10 @@ final class EmailVerificationTest extends TestCase
         Notification::fake();
         $this->zorunluYap();
 
-        $var = $this->post(route('dogrulama.gonder'), ['email' => 'yok@ornek.test']);
+        $var = $this->post(route('verification.resend'), ['email' => 'yok@ornek.test']);
 
         User::factory()->create(['email' => 'ali@ornek.test', 'email_verified_at' => null]);
-        $yok = $this->post(route('dogrulama.gonder'), ['email' => 'ali@ornek.test']);
+        $yok = $this->post(route('verification.resend'), ['email' => 'ali@ornek.test']);
 
         $this->assertSame($var->getStatusCode(), $yok->getStatusCode());
         $this->assertSame(session()->get('status'), 'Adres kayıtlıysa doğrulama bağlantısı gönderildi.');

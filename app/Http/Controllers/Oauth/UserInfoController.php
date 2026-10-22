@@ -63,8 +63,8 @@ class UserInfoController extends Controller implements HasMiddleware
             );
 
             return response()->json([
-                'kod' => 'rol_yetkisiz',
-                'hata' => 'Bu uygulamaya erişim yetkiniz yok.',
+                'code' => 'role_forbidden',
+                'error' => 'Bu uygulamaya erişim yetkiniz yok.',
             ], 403);
         }
 
@@ -97,8 +97,8 @@ class UserInfoController extends Controller implements HasMiddleware
              * değişebilir, slug yerleşik rollerde değişmez ve projelerdeki
              * karşılığıyla birebir aynı.
              */
-            'rol' => $kullanici->rol?->slug,
-            'rol_adi' => $kullanici->rol?->label,
+            'role' => $kullanici->rol?->slug,
+            'role_name' => $kullanici->rol?->label,
 
             /*
              * HESAP KENDİLİĞİNDEN AÇILABİLİR Mİ?
@@ -109,7 +109,7 @@ class UserInfoController extends Controller implements HasMiddleware
              * bir uygulamada belli bir rol için açılması istenirken bir
              * başkasında kimse için istenmeyebilir.
              */
-            'hesap_acilabilir' => $istemci?->hesapAcilabilirMi($kullanici) ?? false,
+            'can_create_account' => $istemci?->hesapAcilabilirMi($kullanici) ?? false,
         ]);
     }
 

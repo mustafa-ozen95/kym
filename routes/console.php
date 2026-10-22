@@ -17,4 +17,4 @@ Artisan::command('inspire', function () {
  *
  * Zamanlayıcı konteynerde supervisord altında koşar (program:zamanlayici).
  */
-Schedule::command('guncelleme:denetle')->dailyAt('06:50');
+Schedule::command('update:check')->dailyAt('06:50');

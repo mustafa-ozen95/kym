@@ -26,25 +26,25 @@ use Throwable;
  */
 class MailSettings
 {
-    public const SUNUCU = 'posta.sunucu';
+    public const SERVER = 'posta.sunucu';
 
     public const PORT = 'posta.port';
 
-    public const SIFRELEME = 'posta.sifreleme';
+    public const ENCRYPTION = 'posta.sifreleme';
 
-    public const KULLANICI = 'posta.kullanici';
+    public const USERNAME = 'posta.kullanici';
 
-    public const PAROLA = 'posta.parola';
+    public const PASSWORD = 'posta.parola';
 
-    public const GONDEREN = 'posta.gonderen';
+    public const SENDER = 'posta.gonderen';
 
-    public const GONDEREN_AD = 'posta.gonderen_ad';
+    public const SENDER_NAME = 'posta.gonderen_ad';
 
     /** Deneme postası başarıyla gittiğinde damgalanır. */
-    public const SINANDI = 'posta.sinandi';
+    public const TESTED = 'posta.sinandi';
 
     /** @var list<string> */
-    public const SIFRELEME_SECENEKLERI = ['tls', 'ssl', 'yok'];
+    public const ENCRYPTION_OPTIONS = ['tls', 'ssl', 'yok'];
 
     /**
      * Ekranda gösterilecek değerler. Parola YOK.
@@ -56,14 +56,14 @@ class MailSettings
         $ayarlar = Setting::hepsi();
 
         return [
-            'sunucu' => $ayarlar[self::SUNUCU] ?? null,
+            'server' => $ayarlar[self::SERVER] ?? null,
             'port' => $ayarlar[self::PORT] ?? null,
-            'sifreleme' => $ayarlar[self::SIFRELEME] ?? 'tls',
-            'kullanici' => $ayarlar[self::KULLANICI] ?? null,
-            'gonderen' => $ayarlar[self::GONDEREN] ?? null,
-            'gonderen_ad' => $ayarlar[self::GONDEREN_AD] ?? null,
-            'parola_var' => filled($ayarlar[self::PAROLA] ?? null),
-            'sinandi' => $ayarlar[self::SINANDI] ?? null,
+            'encryption' => $ayarlar[self::ENCRYPTION] ?? 'tls',
+            'username' => $ayarlar[self::USERNAME] ?? null,
+            'sender' => $ayarlar[self::SENDER] ?? null,
+            'sender_name' => $ayarlar[self::SENDER_NAME] ?? null,
+            'password_set' => filled($ayarlar[self::PASSWORD] ?? null),
+            'sinandi' => $ayarlar[self::TESTED] ?? null,
         ];
     }
 
@@ -83,20 +83,20 @@ class MailSettings
          * yazabilir.
          */
         $onceki = Setting::hepsi();
-        $hedefDegisti = $this->hedef($onceki[self::SUNUCU] ?? null) !== $this->hedef($veri['sunucu'] ?? null)
+        $hedefDegisti = $this->hedef($onceki[self::SERVER] ?? null) !== $this->hedef($veri['server'] ?? null)
             || $this->hedef($onceki[self::PORT] ?? null) !== $this->hedef($veri['port'] ?? null)
-            || $this->hedef($onceki[self::KULLANICI] ?? null) !== $this->hedef($veri['kullanici'] ?? null);
+            || $this->hedef($onceki[self::USERNAME] ?? null) !== $this->hedef($veri['username'] ?? null);
 
-        if ($hedefDegisti && ! filled($veri['parola'] ?? null)) {
-            Setting::yaz(self::PAROLA, '');
+        if ($hedefDegisti && ! filled($veri['password'] ?? null)) {
+            Setting::yaz(self::PASSWORD, '');
         }
 
-        Setting::yaz(self::SUNUCU, (string) $veri['sunucu']);
+        Setting::yaz(self::SERVER, (string) $veri['server']);
         Setting::yaz(self::PORT, (string) $veri['port']);
-        Setting::yaz(self::SIFRELEME, (string) $veri['sifreleme']);
-        Setting::yaz(self::KULLANICI, (string) ($veri['kullanici'] ?? ''));
-        Setting::yaz(self::GONDEREN, (string) $veri['gonderen']);
-        Setting::yaz(self::GONDEREN_AD, (string) $veri['gonderen_ad']);
+        Setting::yaz(self::ENCRYPTION, (string) $veri['encryption']);
+        Setting::yaz(self::USERNAME, (string) ($veri['username'] ?? ''));
+        Setting::yaz(self::SENDER, (string) $veri['sender']);
+        Setting::yaz(self::SENDER_NAME, (string) $veri['sender_name']);
 
         /*
          * Boş parola "sil" demek DEĞİL.
@@ -104,12 +104,12 @@ class MailSettings
          * Ekranda parola hiç görünmediği için, başka bir alanı düzeltmek
          * isteyen biri her kaydedişte parolayı sıfırlardı.
          */
-        if (filled($veri['parola'] ?? null)) {
-            Setting::yaz(self::PAROLA, Crypt::encryptString((string) $veri['parola']));
+        if (filled($veri['password'] ?? null)) {
+            Setting::yaz(self::PASSWORD, Crypt::encryptString((string) $veri['password']));
         }
 
         /* Ayar değişti: eski denemenin sonucu artık bir şey kanıtlamıyor. */
-        Setting::yaz(self::SINANDI, '');
+        Setting::yaz(self::TESTED, '');
     }
 
     /** Hedef karşılaştırması için: boşluk ve büyük/küçük harf farkı hedef değişimi sayılmaz. */
@@ -123,7 +123,7 @@ class MailSettings
     {
         $ayarlar = $this->goster();
 
-        return filled($ayarlar['sunucu']) && filled($ayarlar['port']) && filled($ayarlar['gonderen']);
+        return filled($ayarlar['server']) && filled($ayarlar['port']) && filled($ayarlar['sender']);
     }
 
     /** Deneme postası gerçekten gitti mi? */
@@ -147,13 +147,13 @@ class MailSettings
 
         config([
             'mail.default' => 'smtp',
-            'mail.mailers.smtp.host' => $ayarlar['sunucu'],
+            'mail.mailers.smtp.host' => $ayarlar['server'],
             'mail.mailers.smtp.port' => (int) $ayarlar['port'],
-            'mail.mailers.smtp.scheme' => $ayarlar['sifreleme'] === 'ssl' ? 'smtps' : 'smtp',
-            'mail.mailers.smtp.username' => $ayarlar['kullanici'] ?: null,
+            'mail.mailers.smtp.scheme' => $ayarlar['encryption'] === 'ssl' ? 'smtps' : 'smtp',
+            'mail.mailers.smtp.username' => $ayarlar['username'] ?: null,
             'mail.mailers.smtp.password' => $this->parola(),
-            'mail.from.address' => $ayarlar['gonderen'],
-            'mail.from.name' => $ayarlar['gonderen_ad'] ?: config('app.name'),
+            'mail.from.address' => $ayarlar['sender'],
+            'mail.from.name' => $ayarlar['sender_name'] ?: config('app.name'),
         ]);
     }
 
@@ -172,19 +172,19 @@ class MailSettings
         try {
             Mail::to($alici)->send(new TestMessage);
         } catch (Throwable $e) {
-            Setting::yaz(self::SINANDI, '');
+            Setting::yaz(self::TESTED, '');
 
             return [false, $this->insanca($e)];
         }
 
-        Setting::yaz(self::SINANDI, now()->toDateTimeString());
+        Setting::yaz(self::TESTED, now()->toDateTimeString());
 
         return [true, 'Deneme iletisi '.$alici.' adresine gönderildi.'];
     }
 
     private function parola(): ?string
     {
-        $sifreli = Setting::hepsi()[self::PAROLA] ?? null;
+        $sifreli = Setting::hepsi()[self::PASSWORD] ?? null;
 
         if (blank($sifreli)) {
             return null;

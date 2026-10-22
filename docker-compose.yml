@@ -16,10 +16,10 @@
 #  (MariaDB), redis (önbellek, oturum, kuyruk; kalıcılık kapalı).
 #
 #  Dışarıdaki ya da platformun yönettiği bir veritabanı: DB_HOST ve
-#  kimlik bilgilerini verin, VT_KOPYA=0 ile db servisi hiç kalkmaz.
+#  kimlik bilgilerini verin, DB_REPLICAS=0 ile db servisi hiç kalkmaz.
 #
-#  Adlar: konteyner ve hacimler ONEK ile başlar (varsayılan kym). Aynı
-#  sunucuda ikinci kurulum ONEK'i değiştirir.
+#  Adlar: konteyner ve hacimler STACK_PREFIX ile başlar (varsayılan kym). Aynı
+#  sunucuda ikinci kurulum STACK_PREFIX'i değiştirir.
 # =============================================================================
 
 services:
@@ -27,8 +27,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    image: ${ONEK:-kym}:yerel
-    container_name: ${ONEK:-kym}
+    image: ${STACK_PREFIX:-kym}:local
+    container_name: ${STACK_PREFIX:-kym}
     restart: unless-stopped
     # Kuyruk işçisi kapanırken elindeki işi bitirmek için 130 sn bekler
     # (supervisord.conf → isci, stopwaitsecs); süre ondan uzun olmalı.
@@ -54,13 +54,13 @@ services:
       - REDIS_HOST
       - REDIS_PORT
       - REDIS_PASSWORD
-      - KIMLIK_JETON_DAKIKA
-      - KIMLIK_YENILEME_GUN
-      - KIMLIK_YAYINCI
-      - DENETIM_ZINCIR_ANAHTARI
-      - TEMA_ALANI
-      - GUNCELLEME_JETONU
-      - ORNEK_VERI
+      - IDENTITY_TOKEN_MINUTES
+      - IDENTITY_REFRESH_DAYS
+      - IDENTITY_ISSUER
+      - AUDIT_KEY
+      - THEME_COOKIE_DOMAIN
+      - UPDATE_TOKEN
+      - SAMPLE_DATA
       - ADMIN_NAME
       - ADMIN_EMAIL
       - ADMIN_PASSWORD
@@ -94,11 +94,11 @@ services:
 
   db:
     image: mariadb:11.4
-    container_name: ${ONEK:-kym}-db
+    container_name: ${STACK_PREFIX:-kym}-db
     restart: unless-stopped
     # 0: dışarıdaki ya da platformun veritabanı kullanılıyor (DB_HOST).
     deploy:
-      replicas: ${VT_KOPYA:-1}
+      replicas: ${DB_REPLICAS:-1}
     # Docker'ın varsayılan 10 saniyesi InnoDB boşaltmasına yetmeyebilir ve
     # veritabanı kirli kapanır.
     stop_grace_period: 5m
@@ -120,7 +120,7 @@ services:
 
   redis:
     image: redis:7.4-alpine
-    container_name: ${ONEK:-kym}-redis
+    container_name: ${STACK_PREFIX:-kym}-redis
     restart: unless-stopped
     # Kalıcılık KAPALI: burada yalnız önbellek, oturum ve kuyruk durur.
     command: ["redis-server", "--save", "", "--appendonly", "no"]
@@ -135,12 +135,12 @@ networks:
     # Ağ yalıtımı: true iken konteynerler bağlı panellere, posta sunucusuna ve
     # dışarıya bağlanamaz (taşıma ya da deneme kurulumunda canlıya dokunmamak
     # için). Port yayınları da o zaman dışarıdan erişilmez.
-    internal: ${AG_YALITIMI:-false}
+    internal: ${NETWORK_ISOLATED:-false}
 
 volumes:
   storage:
-    name: ${ONEK:-kym}_storage
+    name: ${STACK_PREFIX:-kym}_storage
   logs:
-    name: ${ONEK:-kym}_logs
+    name: ${STACK_PREFIX:-kym}_logs
   database:
-    name: ${ONEK:-kym}_database
+    name: ${STACK_PREFIX:-kym}_database

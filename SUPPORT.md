@@ -12,8 +12,8 @@
 | --- | --- |
 | `/.well-known/openid-configuration` | Keşif belgesi — başka dildeki projeler yalnızca bunu bilir |
 | `/oauth/authorize` · `/oauth/token` | Standart uçlar |
-| `/oauth/kullanici` | `sub` (uuid), ad, e-posta, doğrulanmış mı, rol |
-| `/api/kimlik-durumu` | Arka kanal: bağlı projeler durumu sorar |
+| `/oauth/userinfo` | `sub` (uuid), ad, e-posta, doğrulanmış mı, rol |
+| `/api/identity-status` | Arka kanal: bağlı projeler durumu sorar |
 
 Jeton ömrü **10 dakika**, yenileme jetonu 1 gün. `id_token` **üretilmez** ve
 keşif belgesi bunu açıkça söyler.
@@ -26,7 +26,7 @@ devralıp almamakta serbesttir.
 
 | Dil / çatı | Ne ölçüde |
 | --- | --- |
-| **Laravel** | Tek dosya üretilir (`app/KimlikMerkezi.php`): rotalar, giriş düğmesi, PKCE akışı ve hesap eşleştirme birlikte gelir |
+| **Laravel** | Tek dosya üretilir (`app/IdentityCenter.php`): rotalar, giriş düğmesi, PKCE akışı ve hesap eşleştirme birlikte gelir |
 | **Diğer diller** | Ekranda ham protokol ve çalışan bir Node.js örneği |
 
 Keşif belgesini okuyabilen her istemci bağlanabilir; panelin Laravel olması
@@ -49,8 +49,8 @@ eşitlemede projedekini ezer. Tek doğruluk kaynağı merkezdir.
 | **Çekme** — proje sorar | Düzenli aralıkla (projenin ayarı) | En fazla bir tur |
 | **Bildirim** — merkez söyler | Rol ya da durum değişir değişmez | Saniyeler |
 
-Bildirim `POST {proje kökü}/api/kimlik/tazele` adresine gider, gövdesi
-`{"subject": "..."}` ve başlığı `X-Kimlik-Imza: HMAC-SHA256(subject, bildirim
+Bildirim `POST {proje kökü}/api/identity/refresh` adresine gider, gövdesi
+`{"subject": "..."}` ve başlığı `X-Identity-Signature: HMAC-SHA256(subject, bildirim
 sırrı)`. Bildirim sırrı her istemci için ayrı üretilir ve İstemciler ekranında
 yazar.
 
@@ -78,7 +78,7 @@ açılabilir; kendi ikinci adımı kurulu olmayan yönetici zorunluluğu açamaz
 Görünürlük üç düzeyde: `herkes`, `girisli`, `yetkili`. Süzme **veritabanında**
 yapılır — "hepsini getir sonra ekranda gizle" güvenlik değildir.
 
-`/kapi/{anahtar}` ucu nginx'in `auth_request` yönergesi içindir: oturum yoksa
+`/gate/{anahtar}` ucu nginx'in `auth_request` yönergesi içindir: oturum yoksa
 401, yetki yoksa 403, varsa 200 ve kimlik başlıkları. Böylece kimlik doğrulaması
 olmayan herhangi bir web uygulaması merkezin arkasına alınabilir.
 
@@ -100,7 +100,7 @@ işareti **silinir**. Değiştirmeseydik şu olurdu: burada onaylanmış herhang
 bir kullanıcı adresini bir meslektaşının adresiyle değiştirir, adresin
 kendisine ait olduğunu hiç kanıtlamadığı hâlde iddia `true` gitmeye devam
 eder ve bağlı projede o adrese karşılık gelen, henüz hiçbir kimliğe
-bağlanmamış hesap onun olurdu. Kurulumdan sonra `kimlik:yonetici-ekle` ile
+bağlanmamış hesap onun olurdu. Kurulumdan sonra `admin:add` ile
 açılan hesap tam olarak böyledir — ilk SSO girişine kadar bağsız durur.
 
 İşaret geri konurken bir insan devrededir: yönetici hesabı onaylar (varsayılan
@@ -140,9 +140,9 @@ ikisi de varsayılan olarak kapalıdır ve `.env` ile açılır:
 
 | Ayar | Ne sayar | Varsayılan |
 |---|---|---|
-| `LIMIT_GIRIS` | Giriş ucuna dakikada kaç istek | 0 (kapalı) |
+| `LIMIT_LOGIN` | Giriş ucuna dakikada kaç istek | 0 (kapalı) |
 | `LOGIN_MAX_ATTEMPTS` | Art arda kaç yanlış parola (e-posta+IP başına) | 0 (kapalı) |
-| `LIMIT_IKI_ADIM` | İkinci adım kodu denemesi | 5 — **kapatılmadı** |
+| `LIMIT_TWO_STEP` | İkinci adım kodu denemesi | 5 — **kapatılmadı** |
 
 Sıfır "kapalı" demektir, "sıfır deneme hakkı" değil: `tooManyAttempts($k, 0)`
 sayaç sıfıra eşit olduğu anda dolu sayar ve **ilk yanlış paroladan sonra**

@@ -57,7 +57,7 @@ return new class extends Migration
         // Örnek salonlar yalnızca örnek veri açıkken yazılır. Konteyner
         // kurulumunda kapalıdır: yeni bir kuruluma başkasının salonlarını
         // yazmak yanlış olurdu.
-        if (! config('app.ornek_veri')) {
+        if (! config('app.sample_data')) {
             return;
         }
 

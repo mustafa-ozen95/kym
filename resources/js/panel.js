@@ -38,7 +38,7 @@ function herCizimde() {
      *
      * `dialog.init` yalnızca bir kez çalışıyor (olayları document üzerinde
      * dinliyor); açık gelen pencereyi de orada göstermek, sayfa geçişinden
-     * sonra gelen `?pencere=duzenle` adresinin hiçbir şey yapmaması demekti.
+     * sonra gelen `?window=edit` adresinin hiçbir şey yapmaması demekti.
      */
     dialog.acikGeleniAc();
 }

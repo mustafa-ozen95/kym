@@ -1,6 +1,6 @@
 {{-- Pencerenin açık gelip gelmeyeceği ve form hedefi controller'dan gelir. --}}
-<x-ui.modal id="sistem-ekle" :title="$duzenlenen ? $duzenlenen->ad : 'Yeni kutucuk'" wide :open="$pencereAcik">
-    <form method="POST" action="{{ $pencereHedefi }}">
+<x-ui.modal id="system-add" :title="$duzenlenen ? $duzenlenen->ad : 'Yeni kutucuk'" wide :open="$windowOpen">
+    <form method="POST" action="{{ $windowTarget }}">
         @csrf
         @if ($duzenlenen) @method('PUT') @endif
 

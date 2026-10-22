@@ -35,7 +35,7 @@ class GroupController extends Controller implements HasMiddleware
         return [
             new Middleware(['auth', 'can:grup.gor'], only: ['index']),
             new Middleware(['auth', 'can:grup.ekle'], only: ['store']),
-            new Middleware(['auth', 'can:grup.duzenle'], only: ['update', 'sirala']),
+            new Middleware(['auth', 'can:grup.duzenle'], only: ['update', 'reorder']),
             new Middleware(['auth', 'can:grup.sil'], only: ['destroy']),
         ];
     }
@@ -50,23 +50,23 @@ class GroupController extends Controller implements HasMiddleware
             'silebilir' => $kullanici->can('grup.sil'),
 
             /* Pencerenin ADRESİ vardır; doğrulama hatasında açık geri gelir. */
-            'pencere' => $request->query('pencere') === 'ekle' ? 'ekle' : null,
-            'duzenlenen' => $request->query('kayit')
-                ? Group::firstWhere('uuid', $request->query('kayit'))
+            'window' => $request->query('window') === 'add' ? 'add' : null,
+            'duzenlenen' => $request->query('record')
+                ? Group::firstWhere('uuid', $request->query('record'))
                 : null,
         ]);
     }
 
     public function store(GroupRequest $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
-        $grup = Group::create($request->validated());
+        $group = Group::create($request->validated());
 
-        $recorder->record('grup-eklendi', $grup->ad.' salonu açıldı', $kullanici);
+        $recorder->record('grup-eklendi', $group->ad.' salonu açıldı', $kullanici);
 
-        return redirect()->route('yonetim.gruplar')->with('status', $grup->ad.' salonu açıldı.');
+        return redirect()->route('admin.groups')->with('status', $group->ad.' salonu açıldı.');
     }
 
-    public function update(GroupRequest $request, Group $grup, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function update(GroupRequest $request, Group $group, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         $veri = $request->validated();
 
@@ -77,15 +77,15 @@ class GroupController extends Controller implements HasMiddleware
          * güncellemek, içindeki her kutucuğu sahipsiz bırakır ve hepsi
          * sayfadan düşerdi.
          */
-        if (($veri['anahtar'] ?? $grup->anahtar) !== $grup->anahtar) {
-            System::where('grup', $grup->anahtar)->update(['grup' => $veri['anahtar']]);
+        if (($veri['anahtar'] ?? $group->anahtar) !== $group->anahtar) {
+            System::where('grup', $group->anahtar)->update(['grup' => $veri['anahtar']]);
         }
 
-        $grup->update($veri);
+        $group->update($veri);
 
-        $recorder->record('grup-guncellendi', $grup->ad.' salonu güncellendi', $kullanici);
+        $recorder->record('grup-guncellendi', $group->ad.' salonu güncellendi', $kullanici);
 
-        return redirect()->route('yonetim.gruplar')->with('status', $grup->ad.' salonu güncellendi.');
+        return redirect()->route('admin.groups')->with('status', $group->ad.' salonu güncellendi.');
     }
 
     /**
@@ -94,18 +94,18 @@ class GroupController extends Controller implements HasMiddleware
      * Sayfadaki bölüm dizilimi bu sıraya bakıyor; sayı kutusuna elle yazmak
      * sırayı değiştirmenin dolambaçlı yoluydu.
      */
-    public function sirala(Request $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function reorder(Request $request, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         $veri = $request->validate([
-            'sira' => ['required', 'array'],
-            'sira.*' => ['string'],
+            'order' => ['required', 'array'],
+            'order.*' => ['string'],
         ]);
 
         $salonlar = Group::pluck('id', 'uuid');
         $numara = 1;
 
         DB::transaction(function () use ($veri, $salonlar, &$numara): void {
-            foreach ($veri['sira'] as $uuid) {
+            foreach ($veri['order'] as $uuid) {
                 if ($salonlar->has($uuid)) {
                     Group::whereKey($salonlar[$uuid])->update(['sira' => $numara++]);
                 }
@@ -117,7 +117,7 @@ class GroupController extends Controller implements HasMiddleware
         return back()->with('status', 'Salon sırası güncellendi.');
     }
 
-    public function destroy(Group $grup, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function destroy(Group $group, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         /*
          * Kutucuğu olan salon silinmez.
@@ -125,15 +125,15 @@ class GroupController extends Controller implements HasMiddleware
          * Silinseydi içindeki kutucuklar var olmayan bir salona bakar ve
          * sayfadan sessizce düşerdi — kimse silindiklerini söylemeden.
          */
-        if ($grup->sistemler()->exists()) {
+        if ($group->sistemler()->exists()) {
             return back()->with('error', 'Bu salonda kutucuklar var; önce onları başka bir salona taşıyın.');
         }
 
-        $ad = $grup->ad;
-        $grup->delete();
+        $ad = $group->ad;
+        $group->delete();
 
         $recorder->record('grup-silindi', $ad.' salonu silindi', $kullanici);
 
-        return redirect()->route('yonetim.gruplar')->with('status', $ad.' salonu silindi.');
+        return redirect()->route('admin.groups')->with('status', $ad.' salonu silindi.');
     }
 }

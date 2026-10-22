@@ -24,9 +24,9 @@ use Throwable;
 class RemoteDatabase
 {
     /** Laravel'in desteklediği en eski sürümler. */
-    private const EN_ESKI = ['MariaDB' => '10.3', 'MySQL' => '5.7'];
+    private const MINIMUM = ['MariaDB' => '10.3', 'MySQL' => '5.7'];
 
-    private const SINAMA_TABLOLARI = ['dc_baglanti_sinamasi_b', 'dc_baglanti_sinamasi_a'];
+    private const TEST_TABLES = ['dc_baglanti_sinamasi_b', 'dc_baglanti_sinamasi_a'];
 
     public function __construct(private ConnectionFile $dosya) {}
 
@@ -177,12 +177,12 @@ class RemoteDatabase
     {
         $tur = stripos($surum, 'mariadb') !== false ? 'MariaDB' : 'MySQL';
         preg_match('/^\d+\.\d+(\.\d+)?/', $surum, $m);
-        $yeterli = isset($m[0]) && version_compare($m[0], self::EN_ESKI[$tur], '>=');
+        $yeterli = isset($m[0]) && version_compare($m[0], self::MINIMUM[$tur], '>=');
 
         return $this->madde(
             'Sürüm',
             $yeterli,
-            $tur.' '.$surum.($yeterli ? '' : ' — en az '.$tur.' '.self::EN_ESKI[$tur].' gerekir.'),
+            $tur.' '.$surum.($yeterli ? '' : ' — en az '.$tur.' '.self::MINIMUM[$tur].' gerekir.'),
         );
     }
 
@@ -194,7 +194,7 @@ class RemoteDatabase
      */
     private function yetkiMaddesi(PDO $pdo): array
     {
-        [$b, $a] = self::SINAMA_TABLOLARI;
+        [$b, $a] = self::TEST_TABLES;
         $adim = 'tablo açma';
 
         try {
@@ -216,7 +216,7 @@ class RemoteDatabase
             $adim = 'tablo kaldırma';
             $pdo->exec("DROP TABLE `$b`, `$a`");
         } catch (Throwable $e) {
-            foreach (self::SINAMA_TABLOLARI as $t) {
+            foreach (self::TEST_TABLES as $t) {
                 try {
                     $pdo->exec("DROP TABLE IF EXISTS `$t`");
                 } catch (Throwable) {

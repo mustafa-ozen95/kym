@@ -20,13 +20,13 @@ use Illuminate\Http\Response;
  * nginx tarafında:
  *
  *   location / {
- *       auth_request /kapi;
+ *       auth_request /gate;
  *       error_page 401 = @girise;
  *   }
  *
- *   location = /kapi {
+ *   location = /gate {
  *       internal;
- *       proxy_pass https://kimlik.ornek.test/kapi/<anahtar>;
+ *       proxy_pass https://kimlik.ornek.test/gate/<anahtar>;
  *       proxy_pass_request_body off;
  *       proxy_set_header Content-Length "";
  *   }

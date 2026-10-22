@@ -18,7 +18,7 @@ use Throwable;
 /**
  * Güncelleme kontrolü: çalışan sürüm ve GitHub'daki son başarılı derleme.
  *
- * Yalnızca BAKAR. Kontrol her sabah kendiliğinden yapılır (guncelleme:denetle);
+ * Yalnızca BAKAR. Kontrol her sabah kendiliğinden yapılır (update:check);
  * düğme aynı kontrolü hemen yapar. Güncellemenin kendisi sunucudan yapılır.
  *
  * Yetkilendirme: ekranı görmek de kontrol etmek de `ayar.guncelleme` ister.
@@ -26,7 +26,7 @@ use Throwable;
 class UpdateController extends Controller implements HasMiddleware
 {
     /** @var array<string, array{etiket: string, renk: string}> */
-    private const DURUMLAR = [
+    private const STATES = [
         'guncel' => ['etiket' => 'güncel', 'renk' => 'green'],
         'yeni' => ['etiket' => 'yeni sürüm var', 'renk' => 'blue'],
         'ileride' => ['etiket' => 'son derlemeden ileride', 'renk' => 'yellow'],
@@ -71,11 +71,11 @@ class UpdateController extends Controller implements HasMiddleware
                 // Panel güncellendiyse eski sonuç bu sürümü anlatmıyor.
                 'eski' => ($son['calisan'] ?? null) !== $calisan,
             ],
-            'durum' => $son === null ? null : self::DURUMLAR[$son['durum']],
+            'durum' => $son === null ? null : self::STATES[$son['durum']],
         ]);
     }
 
-    public function denetle(Request $istek): RedirectResponse
+    public function check(Request $istek): RedirectResponse
     {
         $sonuc = $this->denetim->denetle((string) $istek->user()->name);
 

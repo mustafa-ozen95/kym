@@ -24,7 +24,7 @@ final class RegistrationNotificationTest extends TestCase
 
     public function test_kayit_sonrasi_bildirim_sayfada_gorunur(): void
     {
-        $yanit = $this->post(route('kayit'), [
+        $yanit = $this->post(route('register'), [
             'name' => 'Yeni Kişi',
             'email' => 'yeni@ornek.test',
             'password' => 'cok-gizli-1616',
@@ -35,7 +35,7 @@ final class RegistrationNotificationTest extends TestCase
 
         /* Asıl sınanan: mesajın SAYFAYA çıkması. */
         $govde = $this->followingRedirects()
-            ->post(route('kayit'), [
+            ->post(route('register'), [
                 'name' => 'İkinci Kişi',
                 'email' => 'ikinci@ornek.test',
                 'password' => 'cok-gizli-1616',
@@ -55,7 +55,7 @@ final class RegistrationNotificationTest extends TestCase
     public function test_hata_bildirimi_de_gorunur(): void
     {
         $govde = $this->withSession(['error' => 'Doğrulama bağlantısı geçersiz.'])
-            ->get(route('hizli-erisim'))
+            ->get(route('quick-access'))
             ->assertOk()
             ->getContent();
 
@@ -68,7 +68,7 @@ final class RegistrationNotificationTest extends TestCase
     /** Bildirim yokken kutu boş gelir; betik boş metinde hiçbir şey göstermez. */
     public function test_bildirim_yoksa_kutu_bos(): void
     {
-        $govde = $this->get(route('hizli-erisim'))->assertOk()->getContent();
+        $govde = $this->get(route('quick-access'))->assertOk()->getContent();
 
         $kutu = str($govde)->after('class="toast-host"')->before('>')->toString();
 
@@ -85,7 +85,7 @@ final class RegistrationNotificationTest extends TestCase
     {
         $this->actingAs(User::factory()->yonetici()->ikiAdimli()->create())
             ->withSession(['status' => 'Ayarlar kaydedildi.'])
-            ->get(route('yonetim.sistemler'))
+            ->get(route('admin.systems'))
             ->assertOk()
             ->assertSee('data-flash="Ayarlar kaydedildi."', escape: false);
     }

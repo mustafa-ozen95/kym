@@ -5,12 +5,12 @@
     asıl işi "hangi uygulamalar bağlı" sorusunu yanıtlamak. Sürekli açık bir
     form, listeyi aşağı itip ekranı kalabalıklaştırıyordu.
 
-    Pencerenin ADRESİ vardır (?pencere=ekle): doğrulama hatasında sunucu onu
+    Pencerenin ADRESİ vardır (?window=add): doğrulama hatasında sunucu onu
     açık basar ve kullanıcı formunu geri açmak için tıklamak zorunda kalmaz.
     Betik yüklenmese de çalışır.
 --}}
-<x-ui.modal id="istemci-ekle" title="Yeni uygulama bağla" :open="$pencere === 'ekle' || $errors->any()">
-    <form method="POST" action="{{ route('yonetim.istemciler.ekle') }}">
+<x-ui.modal id="client-add" title="Yeni uygulama bağla" :open="$window === 'add' || $errors->any()">
+    <form method="POST" action="{{ route('admin.clients.store') }}">
         @csrf
 
         <div class="modal__body">
@@ -28,9 +28,9 @@
                 birebir eşleşeni kabul eder ve kodun başka bir yere
                 gönderilmesini engelleyen asıl koruma budur.
             --}}
-            <x-form.field name="adresler" label="Dönüş adresleri"
-                          hint="Her satıra bir adres; https zorunlu. Örnek: https://ornek.ornek.test/giris/merkez/geri">
-                <x-form.textarea name="adresler" class="input--mono" />
+            <x-form.field name="addresses" label="Dönüş adresleri"
+                          hint="Her satıra bir adres; https zorunlu. Örnek: https://ornek.ornek.test/login/center/callback">
+                <x-form.textarea name="addresses" class="input--mono" />
             </x-form.field>
         </div>
 

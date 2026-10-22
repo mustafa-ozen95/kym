@@ -81,10 +81,10 @@ final class ClientRoleGateTest extends TestCase
         $muhasebeci = $this->kullanici('muhasebe');
         $teknik = $this->kullanici('teknik');
 
-        $yanit = $this->postJson(route('api.kimlik-durumu'), [
+        $yanit = $this->postJson(route('api.identity-status'), [
             'client_id' => $istemci->getKey(),
             'client_secret' => $sir,
-            'kimlikler' => [$muhasebeci->uuid, $teknik->uuid],
+            'identities' => [$muhasebeci->uuid, $teknik->uuid],
         ])->assertOk();
 
         /*
@@ -92,8 +92,8 @@ final class ClientRoleGateTest extends TestCase
          * Tek bir "etkin mi" yanıtı dönseydi, girmemesi gereken rol o panelde
          * de açık kalırdı.
          */
-        $yanit->assertJsonPath("kimlikler.{$muhasebeci->uuid}.girebilir", true);
-        $yanit->assertJsonPath("kimlikler.{$teknik->uuid}.girebilir", false);
+        $yanit->assertJsonPath("identities.{$muhasebeci->uuid}.can_enter", true);
+        $yanit->assertJsonPath("identities.{$teknik->uuid}.can_enter", false);
     }
 
     #[Test]

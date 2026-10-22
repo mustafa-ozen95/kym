@@ -25,18 +25,18 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class TwoStepRequired
 {
-    public const YONETICI = 'iki_adim_zorunlu';
+    public const ADMIN = 'iki_adim_zorunlu';
 
-    public const KULLANICI = 'iki_adim_zorunlu_kullanici';
+    public const USER = 'iki_adim_zorunlu_kullanici';
 
     /** Zorunluluk bu yolları kapatmaz; yoksa kullanıcı kurulumu yapamaz. */
-    private const MUAF = ['hesap/iki-adim', 'hesap/iki-adim/*', 'cikis'];
+    private const EXEMPT = ['account/two-step', 'account/two-step/*', 'logout'];
 
     public function handle(Request $request, Closure $next): Response
     {
         $kullanici = $request->user();
 
-        if (! $kullanici || $kullanici->ikiAdimliMi() || $request->is(...self::MUAF)) {
+        if (! $kullanici || $kullanici->ikiAdimliMi() || $request->is(...self::EXEMPT)) {
             return $next($request);
         }
 
@@ -44,13 +44,13 @@ class TwoStepRequired
             return $next($request);
         }
 
-        return redirect()->route('hesap.iki-adim')
+        return redirect()->route('account.two-step')
             ->with('status', 'İkinci adım zorunlu tutuluyor. Devam etmek için lütfen kurun.');
     }
 
     private function zorunluMu(Request $request, $kullanici): bool
     {
-        if (Setting::bool(self::KULLANICI)) {
+        if (Setting::bool(self::USER)) {
             return true;
         }
 
@@ -63,8 +63,8 @@ class TwoStepRequired
          * geçer; kural yalnızca is_admin'e bakarsa o kişi tek adımla
          * yönetim ekranlarında kalırdı. Kapıyla aynı soru sorulur.
          */
-        return Setting::bool(self::YONETICI)
-            && $request->is('yonetim*')
+        return Setting::bool(self::ADMIN)
+            && $request->is('admin*')
             && ($kullanici->yonetici() || Gate::forUser($kullanici)->allows('yonet'));
     }
 }

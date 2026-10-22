@@ -126,12 +126,12 @@
  * açılamadığını görmek, hiç görmemekten iyidir — altındaki açıklama nedenini
  * söylüyor.
  */
-.checkbox--kilitli {
+.checkbox--locked {
     opacity: 0.55;
     cursor: default;
 }
 
-.checkbox--kilitli input {
+.checkbox--locked input {
     cursor: default;
 }
 
@@ -344,14 +344,14 @@
  * hangi kutucuğun neye ait olduğu okunur. Tek uzun liste hâlinde, kaynak
  * adları kaybolup her şey aynı yığına dönüşüyordu.
  */
-.yetki__izgara {
+.permission__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
     gap: var(--space-5);
     margin: var(--space-5) 0;
 }
 
-.yetki__kaynak {
+.permission__resource {
     display: grid;
     gap: var(--space-3);
     align-content: start;
@@ -361,18 +361,18 @@
     border-radius: var(--radius);
 }
 
-.yetki__kaynak h4 {
+.permission__resource h4 {
     margin: 0;
     font-size: var(--text-md);
     font-weight: var(--weight-semibold);
 }
 
-.yetki__kaynak p {
+.permission__resource p {
     margin: 0;
 }
 
 /* Kişisel istisna satırı: etiket solda, seçim sağda. */
-.yetki__satir {
+.permission__row {
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
@@ -380,23 +380,23 @@
     font-size: var(--text-md);
 }
 
-.yetki__baslik {
+.permission__title {
     cursor: pointer;
     list-style: none;
     font-size: var(--text-md);
     color: var(--color-text-secondary);
 }
 
-.yetki__baslik::-webkit-details-marker {
+.permission__title::-webkit-details-marker {
     display: none;
 }
 
-.yetki__baslik::before {
+.permission__title::before {
     content: '▸ ';
     color: var(--color-text-muted);
 }
 
-.yetki[open] > .yetki__baslik::before {
+.permission[open] > .permission__title::before {
     content: '▾ ';
 }
 
@@ -407,7 +407,7 @@
  * ve satır kaydırma yanlış kopyalamaya yol açıyordu. Uzun satır kaydırılmaz,
  * blok yatay kayar.
  */
-.kod {
+.code {
     margin: var(--space-4) 0 0;
     padding: var(--space-4);
     overflow-x: auto;
@@ -423,17 +423,17 @@
 }
 
 /* Entegrasyon adımı. */
-.adim + .adim {
+.step + .step {
     margin-top: var(--space-5);
 }
 
-.adim h4 {
+.step h4 {
     margin: 0 0 var(--space-2);
     font-size: var(--text-md);
     font-weight: var(--weight-semibold);
 }
 
-.adim p {
+.step p {
     margin: 0;
 }
 
@@ -447,17 +447,17 @@
  * dursun. İki ekranda da aynı sınıf: ayrı yazılsalardı biri değişince
  * diğeri sessizce ayrışırdı.
  */
-.katlanir {
+.collapsible {
     background: var(--color-surface);
     border: 1px solid var(--color-line);
     border-radius: var(--radius-lg);
 }
 
-.katlanir + .katlanir {
+.collapsible + .collapsible {
     margin-top: var(--space-4);
 }
 
-.katlanir__baslik {
+.collapsible__title {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -467,12 +467,12 @@
     list-style: none;
 }
 
-.katlanir__baslik::-webkit-details-marker {
+.collapsible__title::-webkit-details-marker {
     display: none;
 }
 
 /* Oku kendimiz çiziyoruz: tarayıcının üçgeni her platformda farklı boyda. */
-.katlanir__baslik::before {
+.collapsible__title::before {
     content: '';
     flex-shrink: 0;
     width: 0;
@@ -483,11 +483,11 @@
     transition: transform var(--transition-fast);
 }
 
-.katlanir[open] > .katlanir__baslik::before {
+.collapsible[open] > .collapsible__title::before {
     transform: rotate(90deg);
 }
 
-.katlanir__ad {
+.collapsible__name {
     font-weight: var(--weight-semibold);
 }
 
@@ -497,20 +497,20 @@
  * Düz METİN: blok düzeni ya da alt boşluk verilirse başlığı büyütüp yazıyı
  * yukarı iter, ad ile açıklama aynı hizada durmaz.
  */
-.katlanir__ek {
+.collapsible__extra {
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
-.katlanir__govde {
+.collapsible__body {
     padding: var(--space-4);
     border-top: 1px solid var(--color-line);
 }
 
 /* .env bloğu, üstündeki "Kaydet" düğmesine yapışmasın. */
-.katlanir__ic {
+.collapsible__inner {
     margin-top: var(--space-5);
 }
 
@@ -519,7 +519,7 @@
  * rolleri). Tek tek `field` kullanmak her satıra kendi boşluğunu verip
  * listeyi dağıtıyordu.
  */
-.secim-listesi {
+.choice-list {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);

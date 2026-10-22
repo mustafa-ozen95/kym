@@ -23,11 +23,11 @@ use Illuminate\Support\Facades\Route;
 | Sıralı birincil anahtar geçmez: kimlikler uuid ile sorulur.
 */
 
-Route::post('kimlik-durumu', IdentityStatusController::class)
+Route::post('identity-status', IdentityStatusController::class)
     ->middleware('throttle:120,1')
-    ->name('api.kimlik-durumu');
+    ->name('api.identity-status');
 
 /* Ortak çıkış: bağlı uygulama "bu kişi bende çıktı" der (bkz. App\Services\SharedLogout). */
-Route::post('oturum-kapandi', SessionClosedController::class)
+Route::post('session-closed', SessionClosedController::class)
     ->middleware('throttle:60,1')
-    ->name('api.oturum-kapandi');
+    ->name('api.session-closed');

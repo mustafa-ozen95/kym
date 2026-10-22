@@ -27,7 +27,7 @@ final class StatusOnlyAdminTest extends TestCase
 
     public function test_kayit_olan_beklemede_dogar(): void
     {
-        $this->post(route('kayit'), [
+        $this->post(route('register'), [
             'name' => 'Deneme Kişi',
             'email' => 'deneme@ornek.test',
             'password' => 'parola-12345',
@@ -40,12 +40,12 @@ final class StatusOnlyAdminTest extends TestCase
     /** Gövdeye elle yazılan durum KAYDA ULAŞMAZ. */
     public function test_kayit_govdesine_yazilan_durum_islemez(): void
     {
-        $this->post(route('kayit'), [
+        $this->post(route('register'), [
             'name' => 'Kurnaz Kişi',
             'email' => 'kurnaz@ornek.test',
             'password' => 'parola-12345',
             'password_confirmation' => 'parola-12345',
-            'durum' => 'etkin',
+            'status' => 'etkin',
         ]);
 
         $this->assertSame(Status::Beklemede, User::whereEmail('kurnaz@ornek.test')->firstOrFail()->durum);
@@ -56,10 +56,10 @@ final class StatusOnlyAdminTest extends TestCase
     {
         $kullanici = User::factory()->create(['durum' => Status::Beklemede]);
 
-        $this->actingAs($kullanici)->put(route('hesap.profil.kaydet'), [
+        $this->actingAs($kullanici)->put(route('account.profile.update'), [
             'name' => 'Yeni Ad',
             'email' => $kullanici->email,
-            'durum' => 'etkin',
+            'status' => 'etkin',
         ]);
 
         $this->assertSame(Status::Beklemede, $kullanici->fresh()->durum);

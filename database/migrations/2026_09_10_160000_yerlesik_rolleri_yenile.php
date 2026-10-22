@@ -44,7 +44,7 @@ return new class extends Migration
         ];
 
         // Örnek veri kapalıyken bu roller hiç açılmaz.
-        if (! config('app.ornek_veri')) {
+        if (! config('app.sample_data')) {
             $yeniler = [];
         }
 

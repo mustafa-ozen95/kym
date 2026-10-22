@@ -12,7 +12,7 @@
 # =============================================================================
 set -euo pipefail
 
-UYGULAMA=/uygulama
+APP_ROOT=/uygulama
 PHP=/usr/bin/php
 
 bilgi() { printf '\033[1;34m[kimlik]\033[0m %s\n' "$*"; }
@@ -28,7 +28,7 @@ chown kimlik:kimlik /run/php
 # Çalışma yolları İngilizce adlara geçti: eski hacimdeki adlar açılışta taşınır
 # (dizinler OLUŞTURULMADAN önce; yeni ad varsa dokunulmaz, uyarı yazılır;
 # bkz. dc-paths).
-/usr/local/bin/dc-paths "${UYGULAMA}/storage/app" \
+/usr/local/bin/dc-paths "${APP_ROOT}/storage/app" \
     veritabani=database \
     database/baglanti.json=database/connection.json \
     database/durum.json=database/state.json \
@@ -36,10 +36,10 @@ chown kimlik:kimlik /run/php
     update/durum.json=update/state.json \
     ilk-parola.txt=initial-password.txt
 
-mkdir -p "${UYGULAMA}"/storage/{app,logs} \
-         "${UYGULAMA}"/storage/framework/{cache/data,sessions,views} \
-         "${UYGULAMA}"/bootstrap/cache
-chown -R kimlik:kimlik "${UYGULAMA}"/storage "${UYGULAMA}"/bootstrap/cache
+mkdir -p "${APP_ROOT}"/storage/{app,logs} \
+         "${APP_ROOT}"/storage/framework/{cache/data,sessions,views} \
+         "${APP_ROOT}"/bootstrap/cache
+chown -R kimlik:kimlik "${APP_ROOT}"/storage "${APP_ROOT}"/bootstrap/cache
 
 
 # Sertifika sekmesinin istek dizini: panel istek.json bırakır, sunucudaki ajan
@@ -95,7 +95,7 @@ fi
 # Konteyner kurulumunda ÖRNEK VERİ KAPALI: yerleşik salonlar ve admin dışındaki
 # roller yazılmaz. Yeni bir kuruluma başkasının örnek yapısını yazmak yanlış
 # olurdu; kurulumu yapan kendi salonlarını ve rollerini panelden açar.
-: "${ORNEK_VERI:=false}"
+: "${SAMPLE_DATA:=false}"
 
 : "${ADMIN_NAME:=Sistem Yöneticisi}"
 
@@ -106,26 +106,26 @@ export APP_NAME APP_ENV APP_DEBUG APP_LOCALE APP_TIMEZONE LOG_CHANNEL \
        DB_CONNECTION DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_PASSWORD DB_TIMEZONE \
        CACHE_STORE SESSION_DRIVER QUEUE_CONNECTION FILESYSTEM_DISK \
        REDIS_CLIENT REDIS_HOST REDIS_PORT REDIS_PASSWORD \
-       SESSION_SECURE_COOKIE ADMIN_EMAIL ADMIN_NAME ORNEK_VERI TEMA_ALANI
+       SESSION_SECURE_COOKIE ADMIN_EMAIL ADMIN_NAME SAMPLE_DATA THEME_COOKIE_DOMAIN
 
 # -----------------------------------------------------------------------------
 #  3. APP_KEY
 # -----------------------------------------------------------------------------
 #  İki adım gizli anahtarları (`totp_secret`) ve kurtarma kodları bu anahtarla
 #  şifrelenir. Kaybolursa iki adım kurmuş HERKES panelinden kilitlenir.
-ANAHTAR_DOSYASI="${UYGULAMA}/storage/app/app-key.txt"
+KEY_FILE="${APP_ROOT}/storage/app/app-key.txt"
 
 if [[ -z "${APP_KEY:-}" ]]; then
-    if [[ -s "${ANAHTAR_DOSYASI}" ]]; then
-        APP_KEY="$(cat "${ANAHTAR_DOSYASI}")"
+    if [[ -s "${KEY_FILE}" ]]; then
+        APP_KEY="$(cat "${KEY_FILE}")"
         export APP_KEY
     else
         APP_KEY="base64:$(head -c 32 /dev/urandom | base64)"
         export APP_KEY
 
-        printf '%s' "${APP_KEY}" > "${ANAHTAR_DOSYASI}"
-        chmod 0600 "${ANAHTAR_DOSYASI}"
-        chown kimlik:kimlik "${ANAHTAR_DOSYASI}"
+        printf '%s' "${APP_KEY}" > "${KEY_FILE}"
+        chmod 0600 "${KEY_FILE}"
+        chown kimlik:kimlik "${KEY_FILE}"
 
         # Anahtarın KENDİSİ günlüğe yazılmaz: konteyner günlükleri (docker
         # logs, günlük toplayıcılar) anahtarı okuyabilecek herkesin önüne
@@ -156,13 +156,13 @@ fi
 #  karşılaştırır ve uzak veritabanıyla devam eder. Bir adım tutmazsa taşıma
 #  "basarisiz" yazılır ve panel ortamın veritabanıyla açılır. Kaynağa
 #  yazılmaz: taşıma anındaki hâliyle durur.
-VT_DIZIN="${UYGULAMA}/storage/app/database"
-VT_ASAMA=""
-VT_NEDEN=""
-VT_OZET=""
-declare -A VT_BAG=()
+DB_STATE_DIR="${APP_ROOT}/storage/app/database"
+DB_STAGE=""
+DB_REASON=""
+DB_SUMMARY=""
+declare -A DB_CONN=()
 
-vt() { gosu kimlik env UYGULAMA="${UYGULAMA}" "${PHP}" /usr/local/bin/dc-database "$@"; }
+vt() { gosu kimlik env APP_ROOT="${APP_ROOT}" "${PHP}" /usr/local/bin/dc-database "$@"; }
 
 # Veritabanı bağlantıyı kabul edene kadar bekler (en çok ~3 dk). Seçenek
 # dosyası ilk argüman: parola komut satırına girmez.
@@ -176,24 +176,24 @@ mariadb_bekle() {
 
 vt_ilk_satir() { head -n 1 "$1" 2>/dev/null | cut -c 1-300; }
 
-# Bağlantıyı VT_BAG'e okur. Değerler base64 gelir: parolada tırnak, boşluk ya
+# Bağlantıyı DB_CONN'e okur. Değerler base64 gelir: parolada tırnak, boşluk ya
 # da satır sonu olabilir ve eval'siz taşımanın güvenli yolu bu.
 vt_oku() {
     local satirlar satir
     satirlar="$(vt ortam)" || return 1
     while IFS= read -r satir; do
-        [[ -n "${satir}" ]] && VT_BAG["${satir%%=*}"]="$(printf '%s' "${satir#*=}" | base64 -d)"
+        [[ -n "${satir}" ]] && DB_CONN["${satir%%=*}"]="$(printf '%s' "${satir#*=}" | base64 -d)"
     done <<< "${satirlar}"
-    [[ -n "${VT_BAG[DB_HOST]:-}" && -n "${VT_BAG[DB_DATABASE]:-}" ]]
+    [[ -n "${DB_CONN[DB_HOST]:-}" && -n "${DB_CONN[DB_DATABASE]:-}" ]]
 }
 
 vt_ortama_al() {
     DB_CONNECTION=mysql
-    DB_HOST="${VT_BAG[DB_HOST]}"
-    DB_PORT="${VT_BAG[DB_PORT]}"
-    DB_DATABASE="${VT_BAG[DB_DATABASE]}"
-    DB_USERNAME="${VT_BAG[DB_USERNAME]}"
-    DB_PASSWORD="${VT_BAG[DB_PASSWORD]}"
+    DB_HOST="${DB_CONN[DB_HOST]}"
+    DB_PORT="${DB_CONN[DB_PORT]}"
+    DB_DATABASE="${DB_CONN[DB_DATABASE]}"
+    DB_USERNAME="${DB_CONN[DB_USERNAME]}"
+    DB_PASSWORD="${DB_CONN[DB_PASSWORD]}"
     DB_URL=""
     export DB_CONNECTION DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_PASSWORD DB_URL
 }
@@ -217,7 +217,7 @@ vt_kopyala() {
     local kaynak_cnf=$1 cnf=$2 hata=$3 n kaynak hedef
     # Seçenek dosyası İLK argüman olmak zorunda (mariadb istemcisinin kuralı).
     local -a ic=("--defaults-extra-file=${kaynak_cnf}" --connect-timeout=10 "--database=${DB_DATABASE}")
-    local -a uzak=("--defaults-extra-file=${cnf}" --connect-timeout=10 "--database=${VT_BAG[DB_DATABASE]}")
+    local -a uzak=("--defaults-extra-file=${cnf}" --connect-timeout=10 "--database=${DB_CONN[DB_DATABASE]}")
 
     # Kopya yalnızca tabloları taşır. Görünüm, yordam, tetikleyici ve olay
     # tanımlayan kullanıcıya bağlıdır ve hedefte ayrı yetki ister; bu panelde
@@ -227,14 +227,14 @@ vt_kopyala() {
       + (SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema = DATABASE())
       + (SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema = DATABASE())
       + (SELECT COUNT(*) FROM information_schema.events WHERE event_schema = DATABASE())" 2>"${hata}")" \
-        || { VT_NEDEN="Mevcut veritabanı okunamadı: $(vt_ilk_satir "${hata}")"; return 1; }
+        || { DB_REASON="Mevcut veritabanı okunamadı: $(vt_ilk_satir "${hata}")"; return 1; }
     [[ "${n}" == "0" ]] \
-        || { VT_NEDEN="Mevcut veritabanında görünüm, yordam, tetikleyici ya da zamanlanmış olay var (${n}); bu taşıma onları kopyalamaz."; return 1; }
+        || { DB_REASON="Mevcut veritabanında görünüm, yordam, tetikleyici ya da zamanlanmış olay var (${n}); bu taşıma onları kopyalamaz."; return 1; }
 
     n="$(mariadb "${uzak[@]}" -N -B -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()" 2>"${hata}")" \
-        || { VT_NEDEN="Uzak veritabanına bağlanılamadı: $(vt_ilk_satir "${hata}")"; return 1; }
+        || { DB_REASON="Uzak veritabanına bağlanılamadı: $(vt_ilk_satir "${hata}")"; return 1; }
     [[ "${n}" == "0" ]] \
-        || { VT_NEDEN="Uzak veritabanı boş değil (${n} tablo); üzerine yazılmaz."; return 1; }
+        || { DB_REASON="Uzak veritabanı boş değil (${n} tablo); üzerine yazılmaz."; return 1; }
 
     # --skip-add-locks: hedef kullanıcıdan LOCK TABLES yetkisi istenmesin.
     # --no-tablespaces: kaynak kullanıcıdan PROCESS yetkisi istenmesin.
@@ -242,35 +242,35 @@ vt_kopyala() {
     if ! mariadb-dump "--defaults-extra-file=${kaynak_cnf}" --single-transaction --skip-add-locks --skip-triggers \
             --no-tablespaces --hex-blob --default-character-set=utf8mb4 "${DB_DATABASE}" 2>"${hata}" \
         | mariadb "${uzak[@]}" --default-character-set=utf8mb4 2>>"${hata}"; then
-        VT_NEDEN="Kopya yarıda kaldı: $(vt_ilk_satir "${hata}") Uzak veritabanını boşaltıp yeniden deneyin."
+        DB_REASON="Kopya yarıda kaldı: $(vt_ilk_satir "${hata}") Uzak veritabanını boşaltıp yeniden deneyin."
         return 1
     fi
 
     bilgi "Taşıma: iki tarafta tablo ve satırlar sayılıyor..."
-    kaynak="$(vt_sayim "${ic[@]}")" || { VT_NEDEN="Mevcut veritabanında sayım yapılamadı."; return 1; }
-    hedef="$(vt_sayim "${uzak[@]}" 2>"${hata}")" || { VT_NEDEN="Uzak veritabanında sayım yapılamadı: $(vt_ilk_satir "${hata}")"; return 1; }
+    kaynak="$(vt_sayim "${ic[@]}")" || { DB_REASON="Mevcut veritabanında sayım yapılamadı."; return 1; }
+    hedef="$(vt_sayim "${uzak[@]}" 2>"${hata}")" || { DB_REASON="Uzak veritabanında sayım yapılamadı: $(vt_ilk_satir "${hata}")"; return 1; }
     [[ -n "${kaynak}" && "${kaynak}" == "${hedef}" ]] \
-        || { VT_NEDEN="Kopya tutmadı: iki taraftaki tablo ya da satır sayıları farklı. Uzak veritabanını boşaltıp yeniden deneyin."; return 1; }
+        || { DB_REASON="Kopya tutmadı: iki taraftaki tablo ya da satır sayıları farklı. Uzak veritabanını boşaltıp yeniden deneyin."; return 1; }
 
-    VT_OZET="$(awk '{ n++; s += $2 } END { printf "%d tablo, %d satır kopyalandı; iki tarafta sayılar aynı.", n, s }' <<< "${kaynak}")"
+    DB_SUMMARY="$(awk '{ n++; s += $2 } END { printf "%d tablo, %d satır kopyalandı; iki tarafta sayılar aynı.", n, s }' <<< "${kaynak}")"
 }
 
 vt_tasi() {
     local kaynak_cnf=/run/dc-vt-kaynak.cnf cnf=/run/dc-vt-hedef.cnf hata=/run/dc-vt.hata sonuc=0
 
-    vt_oku || { VT_NEDEN="Bağlantı dosyası okunamadı."; return 1; }
-    if [[ "${VT_BAG[DB_HOST]}" == "${DB_HOST}" && "${VT_BAG[DB_PORT]}" == "${DB_PORT}" && "${VT_BAG[DB_DATABASE]}" == "${DB_DATABASE}" ]]; then
-        VT_NEDEN="Hedef, panelin şu anki veritabanının kendisi (${DB_HOST}:${DB_PORT}/${DB_DATABASE})."
+    vt_oku || { DB_REASON="Bağlantı dosyası okunamadı."; return 1; }
+    if [[ "${DB_CONN[DB_HOST]}" == "${DB_HOST}" && "${DB_CONN[DB_PORT]}" == "${DB_PORT}" && "${DB_CONN[DB_DATABASE]}" == "${DB_DATABASE}" ]]; then
+        DB_REASON="Hedef, panelin şu anki veritabanının kendisi (${DB_HOST}:${DB_PORT}/${DB_DATABASE})."
         return 1
     fi
     ( umask 077; vt ortam-istemci > "${kaynak_cnf}" && vt istemci > "${cnf}" ) \
-        || { rm -f "${kaynak_cnf}" "${cnf}"; VT_NEDEN="Bağlantı dosyası okunamadı."; return 1; }
+        || { rm -f "${kaynak_cnf}" "${cnf}"; DB_REASON="Bağlantı dosyası okunamadı."; return 1; }
 
     bilgi "Taşıma: mevcut veritabanı bekleniyor (${DB_HOST}:${DB_PORT})..."
     if mariadb_bekle "${kaynak_cnf}"; then
         vt_kopyala "${kaynak_cnf}" "${cnf}" "${hata}" || sonuc=1
     else
-        VT_NEDEN="Mevcut veritabanına (${DB_HOST}:${DB_PORT}) bağlanılamadı."
+        DB_REASON="Mevcut veritabanına (${DB_HOST}:${DB_PORT}) bağlanılamadı."
         sonuc=1
     fi
     rm -f "${kaynak_cnf}" "${cnf}" "${hata}"
@@ -279,43 +279,43 @@ vt_tasi() {
 
 # Bu açılış zaten istenen yeniden başlatmadır; kalmış bir istek (konteyner
 # döngü görmeden durdurulduysa) bir kez daha boşuna başlatırdı.
-rm -f "${VT_DIZIN}/restart"
+rm -f "${DB_STATE_DIR}/restart"
 
-if [[ -f "${VT_DIZIN}/state.json" ]]; then
-    VT_ASAMA="$(vt asama)" || hata "Veritabanı ayarı okunamadı (${VT_DIZIN}/state.json)."
+if [[ -f "${DB_STATE_DIR}/state.json" ]]; then
+    DB_STAGE="$(vt asama)" || hata "Veritabanı ayarı okunamadı (${DB_STATE_DIR}/state.json)."
 fi
 
-case "${VT_ASAMA}" in
+case "${DB_STAGE}" in
     tasiniyor|deneniyor)
         # Bir önceki açılış taşımanın ortasında kapandı (elle durdurma, elektrik).
         # Panel uzak veritabanına henüz yazmadı; ortamın veritabanıyla devam
         # etmek veri kaybettirmez.
         uyari "Önceki açılış veritabanı taşımasının ortasında kapanmış; ortamın veritabanıyla devam ediliyor."
         vt yaz basarisiz "Önceki açılış taşımanın ortasında kapandı; panel ortamın veritabanıyla açıldı. Uzak veritabanını boşaltıp yeniden deneyin."
-        VT_ASAMA=basarisiz
+        DB_STAGE=basarisiz
         ;;
     tasinacak)
         bilgi "Veritabanı uzak sunucuya taşınıyor..."
         vt yaz tasiniyor
         if vt_tasi; then
-            vt yaz deneniyor "${VT_OZET}"
-            VT_ASAMA=deneniyor
-            bilgi "Taşıma: ${VT_OZET}"
+            vt yaz deneniyor "${DB_SUMMARY}"
+            DB_STAGE=deneniyor
+            bilgi "Taşıma: ${DB_SUMMARY}"
         else
-            uyari "Taşıma yapılmadı: ${VT_NEDEN:-bilinmeyen sebep}"
-            vt yaz basarisiz "${VT_NEDEN:-Bilinmeyen sebep.}"
-            VT_ASAMA=basarisiz
+            uyari "Taşıma yapılmadı: ${DB_REASON:-bilinmeyen sebep}"
+            vt yaz basarisiz "${DB_REASON:-Bilinmeyen sebep.}"
+            DB_STAGE=basarisiz
         fi
         ;;
 esac
 
-if [[ "${VT_ASAMA}" == "deneniyor" || "${VT_ASAMA}" == "etkin" ]]; then
-    if [[ -z "${VT_BAG[DB_HOST]:-}" ]] && ! vt_oku; then
+if [[ "${DB_STAGE}" == "deneniyor" || "${DB_STAGE}" == "etkin" ]]; then
+    if [[ -z "${DB_CONN[DB_HOST]:-}" ]] && ! vt_oku; then
         # "etkin"de ortamın veritabanına DÖNÜLMEZ: taşıma anında donmuştu.
-        [[ "${VT_ASAMA}" == "etkin" ]] \
+        [[ "${DB_STAGE}" == "etkin" ]] \
             && hata "Panel uzak veritabanında ama bağlantı dosyası okunamıyor (APP_KEY değişmiş ya da dosya silinmiş olabilir). Ortamın veritabanı taşıma anındaki hâliyle duruyor; kendiliğinden ona dönülmez."
         vt yaz basarisiz "Bağlantı dosyası okunamadı."
-        VT_ASAMA=basarisiz
+        DB_STAGE=basarisiz
     else
         vt_ortama_al
         bilgi "Veritabanı: paneldeki ayar (${DB_HOST}:${DB_PORT}/${DB_DATABASE})."
@@ -332,22 +332,22 @@ fi
 #  Bu yüzden anahtarlar HACİMDE durur ve içerikleri ortam değişkeni olarak
 #  geçirilir (config/passport.php → PASSPORT_PRIVATE_KEY). Dosya yolu yerine
 #  içerik geçirilmesinin sebebi: uygulama dizini imajın parçası, hacim değil.
-OAUTH_DIZIN="${UYGULAMA}/storage/app/oauth"
-mkdir -p "${OAUTH_DIZIN}"
+OAUTH_DIR="${APP_ROOT}/storage/app/oauth"
+mkdir -p "${OAUTH_DIR}"
 
-if [[ ! -s "${OAUTH_DIZIN}/oauth-private.key" ]]; then
+if [[ ! -s "${OAUTH_DIR}/oauth-private.key" ]]; then
     bilgi "OAuth imza anahtarları üretiliyor..."
-    openssl genrsa -out "${OAUTH_DIZIN}/oauth-private.key" 4096 2>/dev/null
-    openssl rsa -in "${OAUTH_DIZIN}/oauth-private.key" \
-        -pubout -out "${OAUTH_DIZIN}/oauth-public.key" 2>/dev/null
+    openssl genrsa -out "${OAUTH_DIR}/oauth-private.key" 4096 2>/dev/null
+    openssl rsa -in "${OAUTH_DIR}/oauth-private.key" \
+        -pubout -out "${OAUTH_DIR}/oauth-public.key" 2>/dev/null
 fi
 
-chown -R kimlik:kimlik "${OAUTH_DIZIN}"
-chmod 0600 "${OAUTH_DIZIN}/oauth-private.key"
-chmod 0644 "${OAUTH_DIZIN}/oauth-public.key"
+chown -R kimlik:kimlik "${OAUTH_DIR}"
+chmod 0600 "${OAUTH_DIR}/oauth-private.key"
+chmod 0644 "${OAUTH_DIR}/oauth-public.key"
 
-PASSPORT_PRIVATE_KEY="$(cat "${OAUTH_DIZIN}/oauth-private.key")"
-PASSPORT_PUBLIC_KEY="$(cat "${OAUTH_DIZIN}/oauth-public.key")"
+PASSPORT_PRIVATE_KEY="$(cat "${OAUTH_DIR}/oauth-private.key")"
+PASSPORT_PUBLIC_KEY="$(cat "${OAUTH_DIR}/oauth-public.key")"
 export PASSPORT_PRIVATE_KEY PASSPORT_PUBLIC_KEY
 
 # -----------------------------------------------------------------------------
@@ -360,11 +360,11 @@ export PASSPORT_PRIVATE_KEY PASSPORT_PUBLIC_KEY
 if [[ -z "${DB_PASSWORD:-}" ]]; then
     hata "DB_PASSWORD verilmedi. Veritabanının parolası ortamdan gelir (bkz. .env.example)."
 fi
-VT_BEKLE_CNF=/run/dc-vt-bekle.cnf
-( umask 077; vt ortam-istemci > "${VT_BEKLE_CNF}" ) || hata "Veritabanı bağlantısı hazırlanamadı."
+DB_WAIT_CNF=/run/dc-vt-bekle.cnf
+( umask 077; vt ortam-istemci > "${DB_WAIT_CNF}" ) || hata "Veritabanı bağlantısı hazırlanamadı."
 bilgi "Veritabanı bekleniyor (${DB_HOST}:${DB_PORT})..."
-mariadb_bekle "${VT_BEKLE_CNF}" || { rm -f "${VT_BEKLE_CNF}"; hata "Veritabanına (${DB_HOST}:${DB_PORT}) bağlanılamadı."; }
-rm -f "${VT_BEKLE_CNF}"
+mariadb_bekle "${DB_WAIT_CNF}" || { rm -f "${DB_WAIT_CNF}"; hata "Veritabanına (${DB_HOST}:${DB_PORT}) bağlanılamadı."; }
+rm -f "${DB_WAIT_CNF}"
 
 # -----------------------------------------------------------------------------
 #  7. Göçler ve önbellek
@@ -380,10 +380,10 @@ rm -f "${VT_BEKLE_CNF}"
 #  Önceki açılışın yapılandırma önbelleği SİLİNİR: konteyner yeniden
 #  başladığında bootstrap/cache yerinde kalıyor ve Laravel ortamı değil onu
 #  okuyor. Veritabanı taşımasından sonra göçler eski bağlantıya koşardı.
-rm -f "${UYGULAMA}/bootstrap/cache/config.php"
+rm -f "${APP_ROOT}/bootstrap/cache/config.php"
 
 bilgi "Göçler çalıştırılıyor..."
-if [[ "${VT_ASAMA}" == "deneniyor" ]]; then
+if [[ "${DB_STAGE}" == "deneniyor" ]]; then
     # Uzak veritabanıyla ilk açılış: göçler koşmazsa taşıma geri alınır.
     # Panel bu veritabanına henüz hiç yazmadı; ortamın veritabanına dönmek
     # veri kaybettirmez. Çıkış kodu yeniden başlatmayı tetikler, bir sonraki
@@ -413,7 +413,7 @@ if [[ "$(gosu kimlik "${PHP}" artisan tinker --execute='echo App\Models\User::qu
         ADMIN_EMAIL="admin@kimlik.local"
         export ADMIN_EMAIL
         uyari "ADMIN_EMAIL verilmedi; admin@kimlik.local kullanılıyor."
-        uyari "Değiştirmek: panelde Hesap → Profil, ya da kimlik:yonetici-ekle"
+        uyari "Değiştirmek: panelde Hesap → Profil, ya da admin:add"
     fi
 
     URETILDI=0
@@ -430,10 +430,10 @@ if [[ "$(gosu kimlik "${PHP}" artisan tinker --execute='echo App\Models\User::qu
     gosu kimlik "${PHP}" artisan db:seed --force --class=Database\\Seeders\\FirstAdminSeeder
 
     if [[ "${URETILDI}" == "1" ]]; then
-        ILK_PAROLA="${UYGULAMA}/storage/app/initial-password.txt"
-        printf '%s\n%s\n' "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" > "${ILK_PAROLA}"
-        chmod 0600 "${ILK_PAROLA}"
-        chown kimlik:kimlik "${ILK_PAROLA}"
+        INITIAL_PASSWORD_FILE="${APP_ROOT}/storage/app/initial-password.txt"
+        printf '%s\n%s\n' "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}" > "${INITIAL_PASSWORD_FILE}"
+        chmod 0600 "${INITIAL_PASSWORD_FILE}"
+        chown kimlik:kimlik "${INITIAL_PASSWORD_FILE}"
 
         uyari "════════════════════════════════════════════════════════════════"
         uyari " İlk yönetici parolası ÜRETİLDİ:"

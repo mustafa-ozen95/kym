@@ -28,7 +28,7 @@ test('cizilen kart sayisi veriyle ayni', async ({ page }) => {
     await page.goto('/');
 
     const veri = await page.evaluate(() =>
-        JSON.parse(document.getElementById('sistem-verisi').textContent).length);
+        JSON.parse(document.getElementById('system-data').textContent).length);
 
     await expect(page.locator('#halls .name')).toHaveCount(veri);
 });
@@ -75,34 +75,34 @@ test('tema degistirilebilir ve secim korunur', async ({ page }) => {
 test('giris penceresi acilir ve adres cubugu guncellenir', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('#pencere-giris')).toBeHidden();
+    await expect(page.locator('#window-login')).toBeHidden();
 
-    await page.click('[data-pencere-ac="giris"]');
+    await page.click('[data-window-open="login"]');
 
-    await expect(page.locator('#pencere-giris')).toBeVisible();
-    expect(page.url()).toContain('pencere=giris');
+    await expect(page.locator('#window-login')).toBeVisible();
+    expect(page.url()).toContain('window=login');
 });
 
 test('pencere kapaninca adres temizlenir', async ({ page }) => {
-    await page.goto('/?pencere=giris');
+    await page.goto('/?window=login');
 
-    await expect(page.locator('#pencere-giris')).toBeVisible();
+    await expect(page.locator('#window-login')).toBeVisible();
 
     await page.keyboard.press('Escape');
 
-    await expect(page.locator('#pencere-giris')).toBeHidden();
-    expect(page.url()).not.toContain('pencere=');
+    await expect(page.locator('#window-login')).toBeHidden();
+    expect(page.url()).not.toContain('window=');
 });
 
 test('pencereler arasinda gecilir', async ({ page }) => {
-    await page.goto('/?pencere=giris');
+    await page.goto('/?window=login');
 
     /* Açık pencerenin İÇİNDEKİ bağlantı; başlıktaki aynı adlı bağlantı zeminin
        arkasında kalıyor — ki doğrusu da bu. */
-    await page.click('#pencere-giris [data-pencere-ac="kayit"]');
+    await page.click('#window-login [data-window-open="register"]');
 
-    await expect(page.locator('#pencere-kayit')).toBeVisible();
-    await expect(page.locator('#pencere-giris')).toBeHidden();
+    await expect(page.locator('#window-register')).toBeVisible();
+    await expect(page.locator('#window-login')).toBeHidden();
 });
 
 /** Betik yüklenmese de pencere çalışmalı: sunucu onu açık gönderiyor. */
@@ -110,10 +110,10 @@ test('betiksiz de pencere acik gelir', async ({ browser }) => {
     const baglam = await browser.newContext({ javaScriptEnabled: false });
     const sayfa = await baglam.newPage();
 
-    await sayfa.goto('/?pencere=giris');
+    await sayfa.goto('/?window=login');
 
-    await expect(sayfa.locator('#pencere-giris')).toBeVisible();
-    await expect(sayfa.locator('#pencere-giris input[name="email"]')).toBeVisible();
+    await expect(sayfa.locator('#window-login')).toBeVisible();
+    await expect(sayfa.locator('#window-login input[name="email"]')).toBeVisible();
 
     await baglam.close();
 });
@@ -150,14 +150,14 @@ test('tema secimi panel ile hizli erisim arasinda korunur', async ({ page }) => 
  * gösterilmez — ekranda yalnızca yapılacak iş durur.
  */
 test('parolada eksik olan yazarken soylenir', async ({ page }) => {
-    await page.goto('/?pencere=kayit');
+    await page.goto('/?window=register');
 
-    const uyari = page.locator('[data-parola-olcut]');
+    const uyari = page.locator('[data-password-meter]');
 
     /* Boşken uyarı yok: kullanıcı daha yazmadı. */
     await expect(uyari).toBeHidden();
 
-    await page.fill('#kayit-parola', 'abc');
+    await page.fill('#register-password', 'abc');
     await expect(uyari).toBeVisible();
     await expect(uyari).toContainText('En az 8 karakter');
     await expect(uyari).toContainText('En az bir rakam');
@@ -165,22 +165,22 @@ test('parolada eksik olan yazarken soylenir', async ({ page }) => {
     /* Karşılanan ölçüt anılmaz. */
     await expect(uyari).not.toContainText('En az bir harf');
 
-    await page.fill('#kayit-parola', 'abcdefg1');
+    await page.fill('#register-password', 'abcdefg1');
     await expect(uyari).toBeHidden();
 
     /* Tekrar alanına dokunulmadan "eşleşmiyor" denmez. */
-    await page.fill('#kayit-parola-tekrar', 'abcdefg2');
+    await page.fill('#register-password-repeat', 'abcdefg2');
     await expect(uyari).toContainText('İki parola aynı olmalı');
 
-    await page.fill('#kayit-parola-tekrar', 'abcdefg1');
+    await page.fill('#register-password-repeat', 'abcdefg1');
     await expect(uyari).toBeHidden();
 });
 
 /** Kurallar "?" iminde durur: ekranı doldurmadan ulaşılabilir. */
 test('parola kurallari ipucunda durur', async ({ page }) => {
-    await page.goto('/?pencere=kayit');
+    await page.goto('/?window=register');
 
-    const im = page.locator('.pencere__govde .ipucu-imi').first();
+    const im = page.locator('.window__body .hint-mark').first();
 
     await expect(im).toBeVisible();
     await expect(im).toHaveAttribute('title', /En az 8 karakter/);
@@ -197,13 +197,13 @@ test('parola kurallari ipucunda durur', async ({ page }) => {
 test('kayit sonrasi bildirim ekranda belirir', async ({ page }) => {
     const benzersiz = `gecici-${Date.now()}@ornek.test`;
 
-    await page.goto('/?pencere=kayit');
+    await page.goto('/?window=register');
 
-    await page.fill('#kayit-ad', 'Geçici Kişi');
-    await page.fill('#kayit-email', benzersiz);
-    await page.fill('#kayit-parola', 'gecici-parola-16');
-    await page.fill('#kayit-parola-tekrar', 'gecici-parola-16');
-    await page.click('.pencere[data-pencere="kayit"] button[type="submit"]');
+    await page.fill('#register-name', 'Geçici Kişi');
+    await page.fill('#register-email', benzersiz);
+    await page.fill('#register-password', 'gecici-parola-16');
+    await page.fill('#register-password-repeat', 'gecici-parola-16');
+    await page.click('.window[data-window="register"] button[type="submit"]');
 
     const bildirim = page.locator('.toast-host .toast');
 

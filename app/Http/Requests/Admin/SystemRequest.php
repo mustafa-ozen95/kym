@@ -32,7 +32,7 @@ class SystemRequest extends FormRequest
              * ekleme ekranında görünen bir salon sayfada hiç çizilmeyebilirdi.
              */
             'grup' => ['required', Rule::exists('gruplar', 'anahtar')],
-            'serit' => ['nullable', Rule::in(array_keys(config('system.seritler')))],
+            'serit' => ['nullable', Rule::in(array_keys(config('system.lanes')))],
 
             'yan_etiket' => ['nullable', 'string', 'max:40', 'required_with:yan_adres'],
             'yan_adres' => ['nullable', 'string', 'max:190', 'required_with:yan_etiket'],
@@ -55,7 +55,7 @@ class SystemRequest extends FormRequest
              * alanı taşımayan bir gönderim "yetkili" bir kutucuğu sessizce
              * herkese açardı. İkisi de yanlış — yokluk "dokunma" demek.
              */
-            'gorunurluk' => ['sometimes', Rule::in(System::GORUNURLUKLER)],
+            'gorunurluk' => ['sometimes', Rule::in(System::VISIBILITIES)],
 
             /*
              * Anahtar, yetki adının okunur yarısıdır: "sistem-erisim.<anahtar>".
@@ -64,7 +64,7 @@ class SystemRequest extends FormRequest
              */
             'anahtar' => [
                 'nullable', 'string', 'max:60', 'regex:/^[a-z0-9-]+$/',
-                Rule::unique('sistemler', 'anahtar')->ignore($this->route('sistem')?->id),
+                Rule::unique('sistemler', 'anahtar')->ignore($this->route('system')?->id),
             ],
         ];
     }

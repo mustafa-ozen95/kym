@@ -30,13 +30,13 @@ class GroupRequest extends FormRequest
              */
             'anahtar' => [
                 'nullable', 'string', 'max:30', 'regex:/^[a-z0-9-]+$/',
-                Rule::unique('gruplar', 'anahtar')->ignore($this->route('grup')?->id),
+                Rule::unique('gruplar', 'anahtar')->ignore($this->route('group')?->id),
             ],
 
             'ayri_sayfa' => ['nullable', 'boolean'],
 
             /* `sometimes`: alan gelmezse mevcut değer korunur (bkz. SystemRequest). */
-            'gorunurluk' => ['sometimes', Rule::in(System::GORUNURLUKLER)],
+            'gorunurluk' => ['sometimes', Rule::in(System::VISIBILITIES)],
         ];
     }
 

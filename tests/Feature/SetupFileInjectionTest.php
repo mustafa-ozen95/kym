@@ -14,7 +14,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * Üretilen KimlikMerkezi.php PHP KODUDUR ve panelin içinde çalışır; uygulama
+ * Üretilen IdentityCenter.php PHP KODUDUR ve panelin içinde çalışır; uygulama
  * adı ve dönüş adresi yöneticinin yazdığı metindir. Metin hiçbir yolla koda
  * dönüşmemeli: ne yorumdan çıkabilmeli ne dize sabitinden.
  */
@@ -111,7 +111,7 @@ final class SetupFileInjectionTest extends TestCase
     public function test_istemci_adinda_tehlikeli_karakter_reddedilir(string $ad): void
     {
         $this->actingAs($this->admin())
-            ->post(route('yonetim.istemciler.ekle'), ['name' => $ad, 'adresler' => 'https://yeni.test/geri'])
+            ->post(route('admin.clients.store'), ['name' => $ad, 'addresses' => 'https://yeni.test/geri'])
             ->assertSessionHasErrors('name');
 
         $this->assertDatabaseCount('oauth_clients', 0);
@@ -122,8 +122,8 @@ final class SetupFileInjectionTest extends TestCase
         $istemci = $this->istemci('Temiz', 'https://a.test/geri');
 
         $this->actingAs($this->admin())
-            ->put(route('yonetim.istemciler.guncelle', $istemci), [
-                'name' => self::ZEHIRLI_AD, 'adresler' => 'https://a.test/geri',
+            ->put(route('admin.clients.update', $istemci), [
+                'name' => self::ZEHIRLI_AD, 'addresses' => 'https://a.test/geri',
             ])
             ->assertSessionHasErrors('name');
 
@@ -133,8 +133,8 @@ final class SetupFileInjectionTest extends TestCase
     public function test_adreste_tirnak_reddedilir(): void
     {
         $this->actingAs($this->admin())
-            ->post(route('yonetim.istemciler.ekle'), ['name' => 'Panel', 'adresler' => self::ZEHIRLI_ADRES])
-            ->assertSessionHasErrors('adresler');
+            ->post(route('admin.clients.store'), ['name' => 'Panel', 'addresses' => self::ZEHIRLI_ADRES])
+            ->assertSessionHasErrors('addresses');
 
         $this->assertDatabaseCount('oauth_clients', 0);
     }
@@ -142,8 +142,8 @@ final class SetupFileInjectionTest extends TestCase
     public function test_olagan_ad_ve_adres_kabul_edilir(): void
     {
         $this->actingAs($this->admin())
-            ->post(route('yonetim.istemciler.ekle'), [
-                'name' => 'Ağ Paneli (EYS) - 2', 'adresler' => 'https://eys.ornek.test/giris/merkez/geri?a=1&b=2',
+            ->post(route('admin.clients.store'), [
+                'name' => 'Ağ Paneli (EYS) - 2', 'addresses' => 'https://eys.ornek.test/login/center/callback?a=1&b=2',
             ])
             ->assertSessionHasNoErrors();
 

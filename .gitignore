@@ -44,5 +44,5 @@ Thumbs.db
 !/docker/*.conf.example
 docker-compose.override.yml
 # İmajda derlemede yazılır (docker/Dockerfile); depoya girmez.
-/SURUM
+/VERSION
 /test-results

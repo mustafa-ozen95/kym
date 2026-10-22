@@ -41,7 +41,7 @@ final class IdentityNotificationTest extends TestCase
             'secret' => bcrypt('sir'),
             'bildirim_sirri' => 'bildirim-sirri',
             'provider' => 'users',
-            'redirect_uris' => [$kok.'/giris/merkez/geri'],
+            'redirect_uris' => [$kok.'/login/center/callback'],
             'grant_types' => ['authorization_code'],
             'revoked' => false,
         ])->save();
@@ -97,9 +97,9 @@ final class IdentityNotificationTest extends TestCase
         (new NotifyIdentityChangeJob($subject))->handle();
 
         Http::assertSent(function ($istek) use ($subject): bool {
-            return $istek->url() === 'https://proje.ornek.test/api/kimlik/tazele'
+            return $istek->url() === 'https://proje.ornek.test/api/identity/refresh'
                 && $istek['subject'] === $subject
-                && $istek->header('X-Kimlik-Imza')[0] === hash_hmac('sha256', $subject, 'bildirim-sirri');
+                && $istek->header('X-Identity-Signature')[0] === hash_hmac('sha256', $subject, 'bildirim-sirri');
         });
     }
 

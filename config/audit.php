@@ -13,5 +13,5 @@ declare(strict_types=1);
  * eski APP_KEY'in değeri buraya yazılır ve zincir kesintisiz doğrulanır.
  */
 return [
-    'zincir_anahtari' => env('DENETIM_ZINCIR_ANAHTARI') ?: env('APP_KEY'),
+    'chain_key' => env('AUDIT_KEY') ?: env('APP_KEY'),
 ];

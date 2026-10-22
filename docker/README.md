@@ -27,7 +27,7 @@ adresi konak adına bakıyor; bkz. aşağıda "Panelleri merkeze bağlamak").
 | Servis | Ne | Not |
 |---|---|---|
 | `panel` | nginx + php-fpm + kuyruk işçisi + zamanlayıcı, supervisord altında | yalnız 80 |
-| `db` | MariaDB 11.4 | `VT_KOPYA=0` ile kalkmaz (dışarıdaki veritabanı) |
+| `db` | MariaDB 11.4 | `DB_REPLICAS=0` ile kalkmaz (dışarıdaki veritabanı) |
 | `redis` | önbellek, oturum, kuyruk | kalıcılık kapalı: yeniden başlatmada oturumlar düşer, veri düşmez |
 
 Merkez, diğer panellerin **giriş kapısıdır**: EYS, NYS, SYD ve satış jetonu buradan
@@ -38,13 +38,13 @@ Kuyruk işçisi süs değildir: e-posta doğrulama bildirimi `ShouldQueue`'dur. 
 olmadan kayıt olan kişiye doğrulama postası **hiç ulaşmaz** — iş sıraya girer ve
 orada kalır.
 
-`AG_YALITIMI=true` konteynerleri bağlı panellerden, posta sunucusundan ve dışarıdan
+`NETWORK_ISOLATED=true` konteynerleri bağlı panellerden, posta sunucusundan ve dışarıdan
 yalıtır (taşıma ya da deneme kurulumu canlıya dokunmasın diye).
 
 
 ## Hacimler
 
-Adlar `ONEK` ile başlar (varsayılan `kym`); aynı sunucuda ikinci kurulum onu değiştirir.
+Adlar `STACK_PREFIX` ile başlar (varsayılan `kym`); aynı sunucuda ikinci kurulum onu değiştirir.
 
 | Hacim | İçerik |
 |---|---|
@@ -83,7 +83,7 @@ açılışta kullanıcı ve veritabanı bununla kurulur. Açılışta merkez ver
 üç dakika bekler, gelmezse açılmaz (konteyner yeniden dener).
 
 Dışarıdaki ya da platformun yönettiği bir MariaDB/MySQL: `DB_*`'ı ona çevirin ve
-`VT_KOPYA=0` deyin. Göçler konteyner açılışında koşar; verilen kullanıcının şema
+`DB_REPLICAS=0` deyin. Göçler konteyner açılışında koşar; verilen kullanıcının şema
 değiştirme yetkisi olmalıdır.
 
 Oturumun saat dilimi konteynerin saatidir (`DB_TIMEZONE`, varsayılan `+03:00`): UTC'de
@@ -125,16 +125,16 @@ Sabit bir varsayılan parola konulmaz: imajı kuran herkeste aynı giriş bulunu
 Giriş yapıp parolayı değiştirdikten sonra o dosyayı silin. Sonradan yönetici açmak
 (parola sorulur, komut satırına yazılmaz):
 
-    docker compose exec panel php artisan kimlik:yonetici-ekle
+    docker compose exec panel php artisan admin:add
 
 `SystemSeeder` bilerek çağrılmaz — örnek kutucuklarını yeni bir kuruluma yazmak yanlış
-olurdu (`ORNEK_VERI` varsayılan kapalı).
+olurdu (`SAMPLE_DATA` varsayılan kapalı).
 
 
 ## Panelleri merkeze bağlamak
 
 Her panel için merkezde bir **istemci** kaydı açılır (yönetim → İstemciler).
-Dönüş adresi panelin `KIMLIK_DONUS` değeriyle **birebir** aynı olmalıdır;
+Dönüş adresi panelin `IDENTITY_REDIRECT_URI` değeriyle **birebir** aynı olmalıdır;
 port dâhil. Aradaki en küçük fark takası `redirect_uri mismatch` ile
 reddettirir ve giriş hiç tamamlanmaz.
 
@@ -145,7 +145,7 @@ merkez, kayıtlı adresle eşleşmeyen bir dönüş üretirdi.
 
 Merkezin sertifikası genel bir otoriteden değilse (iç ağda `tls internal`, kendi
 CA'nız) bağlı paneller onun kök sertifikasını ister: jeton takasını sunucu tarafında
-yaparlar ve doğrulamayı kapatma seçeneği yoktur (panellerde `KIMLIK_KOK`).
+yaparlar ve doğrulamayı kapatma seçeneği yoktur (panellerde `IDENTITY_CA_CERT`).
 
 
 ## Güncelleme
@@ -164,14 +164,14 @@ derlemek yerine onu kullanabilir.
 Ayarlar → Güncelleme (`ayar.guncelleme` yetkisi) çalışan sürümü GitHub'da main dalının **son başarılı
 imaj derlemesiyle** karşılaştırır: kaç commit geride, hangi commit'ler yeni. Yön de ölçülür;
 çalışan sürüm son derlemeden yeniyse "güncelleme" denmez. Kontrol her sabah 06:50'de kendiliğinden
-yapılır (`guncelleme:denetle`). Yeni sürüm varsa bu yetkisi olanlar ekranın üstünde uyarı görür.
+yapılır (`update:check`). Yeni sürüm varsa bu yetkisi olanlar ekranın üstünde uyarı görür.
 Ekran **yalnızca bakar**; güncelleme sunucudan, yedekle ve onayla yapılır.
 
-- Çalışan sürüm imaja derlemede yazılır (`ARG SURUM` → `UYGULAMA_SURUMU`; iş akışı commit'i verir).
+- Çalışan sürüm imaja derlemede yazılır (`ARG VERSION` → `APP_VERSION`; iş akışı commit'i verir).
 - Depo açık: jeton gerekmez, GitHub'a jetonsuz sorulur (sınır IP başına saatte 60 istek). Depo
-  özelse `GUNCELLEME_JETONU` salt okunur bir jeton olmalı (fine-grained, yalnız panel depoları,
+  özelse `UPDATE_TOKEN` salt okunur bir jeton olmalı (fine-grained, yalnız panel depoları,
   Contents ve Actions: read). Erişilemezse kontrol "hata" der, panelin başka yeri etkilenmez.
-- Çalışan sürüm derlemede imaja yazılır (`ARG SURUM`, iş akışı commit'i verir). Derlemeye commit
+- Çalışan sürüm derlemede imaja yazılır (`ARG VERSION`, iş akışı commit'i verir). Derlemeye commit
   vermeyen platformlarda (NineDeploy gibi) bağlamdaki `.git`'ten okunur (`docker/version-read.sh`;
   `.dockerignore` yalnız `HEAD` ve ref'leri alır).
 - Merkez GitHub'a çıkamıyorsa (kapalı ağ) kontrol "erişilemedi" der.

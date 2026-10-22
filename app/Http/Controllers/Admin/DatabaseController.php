@@ -37,17 +37,17 @@ use Throwable;
 class DatabaseController extends Controller implements HasMiddleware
 {
     /** Sınanan bağlantı bu kadar süre taşınabilir; sonra yeniden sınanır. */
-    private const SINAMA_OMRU = 900;
+    private const TEST_LIFETIME = 900;
 
-    private const OTURUM_ANAHTARI = 'veritabani.sinanan';
+    private const SESSION_KEY = 'veritabani.sinanan';
 
-    private const KAYNAKLAR = [
+    private const SOURCES = [
         'ortam' => ['etiket' => 'Kurulum ayarı', 'aciklama' => 'Bağlantı kurulumun ortam değişkenlerinden (DB_*) geliyor; varsayılanı compose\'taki db servisi.'],
         'panel' => ['etiket' => 'Uzak (panel ayarı)', 'aciklama' => 'Bu sekmeden taşındı; bağlantı panelin depolama hacminde şifreli duruyor ve kurulum ayarını eziyor.'],
     ];
 
     /** @var array<string, array{etiket: string, renk: string}> */
-    private const ASAMALAR = [
+    private const STAGES = [
         'tasinacak' => ['etiket' => 'istendi, yeniden başlatma bekleniyor', 'renk' => 'blue'],
         'tasiniyor' => ['etiket' => 'kopyalanıyor', 'renk' => 'blue'],
         'deneniyor' => ['etiket' => 'uzak veritabanıyla açılıyor', 'renk' => 'blue'],
@@ -78,14 +78,14 @@ class DatabaseController extends Controller implements HasMiddleware
             'serit' => $this->bolumler->serit(),
             'bilgi' => $bilgi,
             'boyut' => $bilgi['boyut'] === null ? '—' : Number::fileSize($bilgi['boyut'], 1),
-            'kaynak' => self::KAYNAKLAR[$bilgi['kaynak']],
+            'kaynak' => self::SOURCES[$bilgi['kaynak']],
             'adres' => $bilgi['username'].'@'.$bilgi['host'].':'.$bilgi['port'].'/'.$bilgi['database'],
             'durum' => $durum === null ? null : [
                 ...$durum,
                 'istenme' => self::zaman($durum['istenme'] ?? null),
                 'zaman' => self::zaman($durum['zaman'] ?? null),
             ],
-            'asama' => $durum === null ? null : self::ASAMALAR[$durum['durum']],
+            'asama' => $durum === null ? null : self::STAGES[$durum['durum']],
             // Süren ya da biten bir taşıma varken yeni taşıma formu gösterilmez.
             'tasinabilir' => $bilgi['kaynak'] === 'ortam'
                 && ! in_array($durum['durum'] ?? null, ['tasinacak', 'tasiniyor', 'deneniyor', 'etkin'], true),
@@ -97,7 +97,7 @@ class DatabaseController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function sina(Request $istek): RedirectResponse
+    public function test(Request $istek): RedirectResponse
     {
         $hedef = ConnectionFile::temizle($istek->validate([
             'host' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9.\-]+$/'],
@@ -119,9 +119,9 @@ class DatabaseController extends Controller implements HasMiddleware
         $tamam = RemoteDatabase::hepsiTamam($sonuclar);
 
         if ($tamam) {
-            $istek->session()->put(self::OTURUM_ANAHTARI, Crypt::encrypt([...$hedef, 'zaman' => time()]));
+            $istek->session()->put(self::SESSION_KEY, Crypt::encrypt([...$hedef, 'zaman' => time()]));
         } else {
-            $istek->session()->forget(self::OTURUM_ANAHTARI);
+            $istek->session()->forget(self::SESSION_KEY);
         }
 
         return back()
@@ -132,7 +132,7 @@ class DatabaseController extends Controller implements HasMiddleware
                 : 'Hedef taşımaya uygun değil; ayrıntılar aşağıda.');
     }
 
-    public function tasi(Request $istek): RedirectResponse
+    public function migrate(Request $istek): RedirectResponse
     {
         $hedef = $this->sinanan($istek);
 
@@ -147,7 +147,7 @@ class DatabaseController extends Controller implements HasMiddleware
         $sonuclar = $this->veritabani->sina($hedef);
 
         if (! RemoteDatabase::hepsiTamam($sonuclar)) {
-            $istek->session()->forget(self::OTURUM_ANAHTARI);
+            $istek->session()->forget(self::SESSION_KEY);
 
             return back()
                 ->with('veritabani.sonuclar', $sonuclar)
@@ -172,7 +172,7 @@ class DatabaseController extends Controller implements HasMiddleware
 
         $gerekce = trim((string) $istek->input('reason', ''));
         $this->kayit->record('veritabani-tasima', 'Veritabanı taşıması istendi: '.$adres.($gerekce !== '' ? ' — '.$gerekce : ''), $istek->user());
-        $istek->session()->forget(self::OTURUM_ANAHTARI);
+        $istek->session()->forget(self::SESSION_KEY);
 
         if (! $this->dosya->yenidenBaslatIste()) {
             return back()->withErrors(['veritabani' => 'Taşıma istendi ama panel yeniden başlatılamadı. Konteyneri elle yeniden başlatın; taşıma açılışta yapılır.']);
@@ -194,7 +194,7 @@ class DatabaseController extends Controller implements HasMiddleware
     /** @return array{host: string, port: int, database: string, username: string, password: string}|null */
     private function sinanan(Request $istek): ?array
     {
-        $sifreli = $istek->session()->get(self::OTURUM_ANAHTARI);
+        $sifreli = $istek->session()->get(self::SESSION_KEY);
 
         if (! is_string($sifreli)) {
             return null;
@@ -206,6 +206,6 @@ class DatabaseController extends Controller implements HasMiddleware
             return null;
         }
 
-        return time() - (int) ($veri['zaman'] ?? 0) <= self::SINAMA_OMRU ? ConnectionFile::temizle($veri) : null;
+        return time() - (int) ($veri['zaman'] ?? 0) <= self::TEST_LIFETIME ? ConnectionFile::temizle($veri) : null;
     }
 }

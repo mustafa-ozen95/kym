@@ -29,7 +29,7 @@ const OMUR = 60 * 60 * 24 * 365;
 const isik = () => window.matchMedia('(prefers-color-scheme: light)');
 
 function alanAdi() {
-    return document.querySelector('meta[name="tema-alan"]')?.content?.trim() ?? '';
+    return document.querySelector('meta[name="theme-domain"]')?.content?.trim() ?? '';
 }
 
 function oku() {

@@ -8,9 +8,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @auth
         {{-- Ekran kilidi (bkz. session-lock.js): hareketsiz sekme bu süre sonunda oturumu kapatır. --}}
-        <meta name="oturum-suresi" content="{{ (int) config('session.lifetime') }}">
-        <meta name="oturum-cikis" content="{{ route('cikis') }}">
-        <meta name="oturum-giris" content="{{ route('hizli-erisim') }}">
+        <meta name="session-timeout" content="{{ (int) config('session.lifetime') }}">
+        <meta name="session-logout" content="{{ route('logout') }}">
+        <meta name="session-login" content="{{ route('quick-access') }}">
     @endauth
     <meta name="robots" content="noindex, nofollow">
 
@@ -34,7 +34,7 @@
         değerle basılır; modül betikleri ertelense de sayfa bir kare bile
         yanlış temada çizilmez.
     --}}
-    <meta name="tema-alan" content="{{ config('theme.cerez_alani') }}">
+    <meta name="theme-domain" content="{{ config('theme.cookie_domain') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

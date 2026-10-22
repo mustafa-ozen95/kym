@@ -35,46 +35,46 @@ class IntegrationGuide
     public function envBlogu(OauthClient $istemci, ?string $sir = null, ?string $bildirimSirri = null): string
     {
         $adresler = (array) $istemci->redirect_uris;
-        $adres = $adresler[0] ?? 'https://ornek.ornek.test/giris/merkez/geri';
+        $adres = $adresler[0] ?? 'https://ornek.ornek.test/login/center/callback';
 
         return implode("\n", [
             '# '.config('app.name').' ile giriş.',
             '# İstemci bilgileri yoksa özellik kapalıdır; ayardaki tik onu açamaz.',
-            'KIMLIK_ACIK=true',
-            'KIMLIK_ADRES='.rtrim((string) config('app.url'), '/'),
-            'KIMLIK_ISTEMCI='.$istemci->getKey(),
-            'KIMLIK_ISTEMCI_SIR='.($sir ?? '<sır kayıt anında bir kez gösterildi; yenileyebilirsiniz>'),
-            'KIMLIK_DONUS='.$adres,
+            'IDENTITY_ENABLED=true',
+            'IDENTITY_URL='.rtrim((string) config('app.url'), '/'),
+            'IDENTITY_CLIENT_ID='.$istemci->getKey(),
+            'IDENTITY_CLIENT_SECRET='.($sir ?? '<sır kayıt anında bir kez gösterildi; yenileyebilirsiniz>'),
+            'IDENTITY_REDIRECT_URI='.$adres,
             '',
             '# Merkez, rol ya da durum değişince projeye ANINDA haber verir ve',
             '# bildirimi bu sırla imzalar. Boş bırakılırsa bildirim kabul edilmez;',
             '# proje değişikliği beş dakikalık eşitleme turunda öğrenir.',
-            'KIMLIK_BILDIRIM_SIR='.($bildirimSirri ?? (string) ($istemci->getAttributes()['bildirim_sirri'] ?? '')),
-            'KIMLIK_AD="'.config('app.name').'"',
+            'IDENTITY_NOTIFY_SECRET='.($bildirimSirri ?? (string) ($istemci->getAttributes()['bildirim_sirri'] ?? '')),
+            'IDENTITY_NAME="'.config('app.name').'"',
             '',
             '# Giriş sonrası gidilecek rota adı (projeye göre).',
-            'KIMLIK_ANASAYFA=dashboard',
+            'IDENTITY_HOME=dashboard',
             '',
             '# Yerelde hesabı olmayan biri geldiğinde ne olsun?',
             '# Varsayılan: giriş reddedilir, hesabı yönetici açar.',
-            '# KIMLIK_OTOMATIK_HESAP=true',
+            '# IDENTITY_AUTO_ACCOUNT=true',
             '',
             '# 1) Merkezin onayı yeter (önerilen). Hesap ETKİN doğar ve merkezdeki',
             '#    rolün buradaki karşılığını alır. Onay zaten merkezde verildi:',
             '#    kişi orada onaylandı ve kendisine bir rol atandı. Eşleme yazılınca',
             '#    ROL ŞART OLUR — rolsüz ya da eşlemede karşılığı olmayan kimlikle',
             '#    hesap açılmaz.',
-            '# KIMLIK_ROL_ALANI=role_id',
-            '# KIMLIK_ROL_ESLEME={"network":3,"teknik":4}',
+            '# IDENTITY_ROLE_FIELD=role_id',
+            '# IDENTITY_ROLE_MAP={"network":3,"teknik":4}',
             '',
             '# 2) Proje AYRICA onay istiyorsa: hesabın "beklemede" alanlarını yazın;',
             '#    hesap etkin doğmaz, yöneticiniz onaylayana kadar kimse giremez.',
             '#    Bu alanlar tahmin edilmez, siz yazarsınız.',
-            '# KIMLIK_YENI_HESAP={"status":"passive"}',
+            '# IDENTITY_NEW_ACCOUNT={"status":"passive"}',
             '',
             '# Merkezin sertifikası genel bir otoriteden değilse doğrulama KAPATILMAZ,',
             '# yalnızca güvenilen kök daraltılır. Sertifikanın kopyasını projeye koyun.',
-            'KIMLIK_KOK=',
+            'IDENTITY_CA_CERT=',
         ]);
     }
 
@@ -89,27 +89,27 @@ class IntegrationGuide
             [
                 'baslik' => 'Dosyayı indirin',
                 'aciklama' => 'Aşağıdaki düğme, o uygulamaya özel hazırlanmış tek bir dosya verir: '
-                    .'app/KimlikMerkezi.php. İçinde rotalar, düğme, akış ve eşleştirme birlikte '
+                    .'app/IdentityCenter.php. İçinde rotalar, düğme, akış ve eşleştirme birlikte '
                     .'gelir; başka dosya, göç ya da paket gerekmez.',
             ],
             [
                 'baslik' => 'Sağlayıcıyı kaydedin',
-                'aciklama' => 'bootstrap/providers.php içine tek satır: App\KimlikMerkezi::class,',
+                'aciklama' => 'bootstrap/providers.php içine tek satır: App\IdentityCenter::class,',
             ],
             [
                 'baslik' => 'Kimin girebileceğine karar verin',
                 'aciklama' => 'Varsayılan: merkezde hesabı olan biri, bu projede de hesabı VARSA girer; '
-                    .'yoksa giriş reddedilir ve hesabı yönetici açar. KIMLIK_OTOMATIK_HESAP=true ile '
+                    .'yoksa giriş reddedilir ve hesabı yönetici açar. IDENTITY_AUTO_ACCOUNT=true ile '
                     .'hesap kendiliğinden açılır. Önerilen kip, rol eşlemesini yazmaktır '
-                    .'(KIMLIK_ROL_ALANI + KIMLIK_ROL_ESLEME): hesap ETKİN doğar ve merkezdeki rolün '
+                    .'(IDENTITY_ROLE_FIELD + IDENTITY_ROLE_MAP): hesap ETKİN doğar ve merkezdeki rolün '
                     .'buradaki karşılığını alır — onay zaten merkezde verilmiştir, kişi orada '
                     .'onaylanmış ve kendisine bir rol atanmıştır; rolsüz kimlik yine içeri alınmaz. '
-                    .'Projeniz İKİNCİ bir onay istiyorsa KIMLIK_YENI_HESAP ile hesabı "beklemede" '
+                    .'Projeniz İKİNCİ bir onay istiyorsa IDENTITY_NEW_ACCOUNT ile hesabı "beklemede" '
                     .'doğurursunuz.',
             ],
             [
                 'baslik' => 'Düğmeyi koyun',
-                'aciklama' => 'Giriş ekranınızda tek satır: @kimlikGiris — düğme kendi biçemini '
+                'aciklama' => 'Giriş ekranınızda tek satır: @identityLogin — düğme kendi biçemini '
                     .'taşır, projenin CSS düzenine dokunmaz. Parolayla giriş formunuz yerinde '
                     .'kalır; merkez erişilemez olduğu gün panele girmenin tek yolu odur.',
             ],
@@ -128,7 +128,7 @@ class IntegrationGuide
         return [
             [
                 'alan' => 'Keşif belgesi',
-                'deger' => route('kimlik.kesif'),
+                'deger' => route('identity.discovery'),
                 'not' => 'Çoğu kütüphane yalnızca bunu ister; uçları buradan okur.',
             ],
             [
@@ -148,7 +148,7 @@ class IntegrationGuide
             ],
             [
                 'alan' => 'userinfo_endpoint',
-                'deger' => route('kimlik.kullanici'),
+                'deger' => route('identity.userinfo'),
                 'not' => 'Bearer jetonla çağrılır; sub, name, email, email_verified döner.',
             ],
             [
@@ -181,16 +181,16 @@ class IntegrationGuide
              */
             [
                 'alan' => 'Durum ucu (arka kanal)',
-                'deger' => url('/api/kimlik-durumu'),
-                'not' => 'POST client_id + client_secret + kimlikler[] (sub listesi). '
-                    .'Her kimlik için durum, girebilir ve rol döner. Projeniz bunu düzenli '
+                'deger' => url('/api/identity-status'),
+                'not' => 'POST client_id + client_secret + identities[] (sub listesi). '
+                    .'Her kimlik için status, can_enter ve role döner. Projeniz bunu düzenli '
                     .'aralıklarla sormalı; biz beş dakikada bir soruyoruz.',
             ],
             [
                 'alan' => 'Değişiklik bildirimi',
-                'deger' => 'POST {proje kökü}/api/kimlik/tazele',
+                'deger' => 'POST {proje kökü}/api/identity/refresh',
                 'not' => 'Rol ya da durum değişince merkez bu adrese {"subject": "..."} gönderir. '
-                    .'Başlık: X-Kimlik-Imza = HMAC-SHA256(subject, bildirim sırrı). '
+                    .'Başlık: X-Identity-Signature = HMAC-SHA256(subject, bildirim sırrı). '
                     .'GÖVDEYE GÜVENMEYİN: yeni değeri taşımaz, yalnızca "bu kimliği yeniden sor" der.',
             ],
         ];
@@ -206,18 +206,18 @@ class IntegrationGuide
     public function nodeOrnegi(OauthClient $istemci): string
     {
         $adresler = (array) $istemci->redirect_uris;
-        $donus = $adresler[0] ?? 'https://ornek.ornek.test/giris/merkez/geri';
-        $kesif = route('kimlik.kesif');
+        $donus = $adresler[0] ?? 'https://ornek.ornek.test/login/center/callback';
+        $kesif = route('identity.discovery');
 
         return <<<JS
         // npm i openid-client express express-session
         import * as client from 'openid-client';
 
         const kesif = new URL('{$kesif}');
-        const yapilandirma = await client.discovery(kesif, '{$istemci->getKey()}', process.env.KIMLIK_ISTEMCI_SIR);
+        const yapilandirma = await client.discovery(kesif, '{$istemci->getKey()}', process.env.IDENTITY_CLIENT_SECRET);
 
         // 1) Giriş: PKCE doğrulayıcısı ve state OTURUMDA kalır.
-        app.get('/giris/merkez', async (req, res) => {
+        app.get('/login/center', async (req, res) => {
           const dogrulayici = client.randomPKCECodeVerifier();
           req.session.dogrulayici = dogrulayici;
           req.session.durum = client.randomState();
@@ -232,7 +232,7 @@ class IntegrationGuide
         });
 
         // 2) Dönüş: state EŞLEŞMELİ, yoksa akışı biz başlatmamışız demektir.
-        app.get('/giris/merkez/geri', async (req, res) => {
+        app.get('/login/center/callback', async (req, res) => {
           const jeton = await client.authorizationCodeGrant(yapilandirma, new URL(req.url, '{$donus}'), {
             pkceCodeVerifier: req.session.dogrulayici,
             expectedState: req.session.durum,
@@ -242,10 +242,10 @@ class IntegrationGuide
 
           // 3) EŞLEŞTİRME: hesap AÇILMAZ, mevcut hesapla eşleşir.
           //    Adres doğrulanmamışsa ya da yerelde tek karşılığı yoksa reddedilir.
-          if (!kimlik.email_verified) return res.redirect('/giris');
+          if (!kimlik.email_verified) return res.redirect('/login');
 
           const kullanici = await kullaniciBul(kimlik.email); // projenin kendi sorgusu
-          if (!kullanici) return res.redirect('/giris');
+          if (!kullanici) return res.redirect('/login');
 
           req.session.kullaniciId = kullanici.id;
           res.redirect('/');
@@ -256,6 +256,6 @@ class IntegrationGuide
     /** Keşif belgesi: istemcinin ayarları buradan da okunabilir. */
     public function kesifAdresi(): string
     {
-        return route('kimlik.kesif');
+        return route('identity.discovery');
     }
 }

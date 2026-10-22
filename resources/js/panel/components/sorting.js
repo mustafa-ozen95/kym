@@ -18,11 +18,11 @@ import { on } from '../lib/dom.js';
  * alt grup satırının önüne sokulur ve tablo bozulurdu.
  */
 function satirlar(liste) {
-    return [...liste.children].filter((satir) => satir.matches('[data-sira-kimlik]'));
+    return [...liste.children].filter((satir) => satir.matches('[data-order-id]'));
 }
 
 function sirali(liste) {
-    return satirlar(liste).map((satir) => satir.dataset.siraKimlik);
+    return satirlar(liste).map((satir) => satir.dataset.orderId);
 }
 
 /**
@@ -61,7 +61,7 @@ function geriAl() {
 function gonder(liste, eskiSira) {
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = liste.dataset.sira;
+    form.action = liste.dataset.order;
     form.hidden = true;
     form.setAttribute('data-confirm', 'Yeni dizilim kaydedilecek; sayfa bu sırayla çizilir.');
     form.setAttribute('data-confirm-title', 'Sırayı kaydet');
@@ -73,7 +73,7 @@ function gonder(liste, eskiSira) {
         ['_token', document.querySelector('meta[name="csrf-token"]')?.content ?? ''],
         ['_method', 'PUT'],
         /* Alan adı listeden gelir: aynı bileşen salonları da kutucukları da sıralıyor. */
-        ...sirali(liste).map((kimlik) => [`${liste.dataset.siraAlan ?? 'sira'}[]`, kimlik]),
+        ...sirali(liste).map((kimlik) => [`${liste.dataset.orderField ?? 'order'}[]`, kimlik]),
     ];
 
     alanlar.forEach(([ad, deger]) => {
@@ -101,18 +101,18 @@ export function init() {
 
     let eskiSira = [];
 
-    on('dragstart', '[data-sira-kimlik]', (event, satir) => {
+    on('dragstart', '[data-order-id]', (event, satir) => {
         suruklenen = satir;
         eskiSira = satirlar(satir.parentElement);
         satir.classList.add('is-dragging');
         event.dataTransfer.effectAllowed = 'move';
     });
 
-    on('dragend', '[data-sira-kimlik]', (event, satir) => {
+    on('dragend', '[data-order-id]', (event, satir) => {
         satir.classList.remove('is-dragging');
     });
 
-    on('dragover', '[data-sira]', (event, liste) => {
+    on('dragover', '[data-order]', (event, liste) => {
         if (!suruklenen || !liste.contains(suruklenen)) {
             return;
         }
@@ -129,7 +129,7 @@ export function init() {
         }
     });
 
-    on('drop', '[data-sira]', (event, liste) => {
+    on('drop', '[data-order]', (event, liste) => {
         if (!suruklenen || !liste.contains(suruklenen)) {
             return;
         }

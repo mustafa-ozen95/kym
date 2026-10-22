@@ -22,10 +22,10 @@ class AdminAddTest extends TestCase
     #[Test]
     public function yonetici_etkin_olarak_acilir(): void
     {
-        $this->artisan('kimlik:yonetici-ekle', [
-            '--ad' => 'Sistem Yöneticisi',
-            '--eposta' => 'yonetici@ornek.test',
-            '--parola' => 'cok-gizli-1234',
+        $this->artisan('admin:add', [
+            '--name' => 'Sistem Yöneticisi',
+            '--email' => 'yonetici@ornek.test',
+            '--password' => 'cok-gizli-1234',
         ])->assertSuccessful();
 
         $kullanici = User::where('email', 'yonetici@ornek.test')->firstOrFail();
@@ -39,10 +39,10 @@ class AdminAddTest extends TestCase
     #[Test]
     public function zayif_parola_kabul_edilmez(): void
     {
-        $this->artisan('kimlik:yonetici-ekle', [
-            '--ad' => 'Kısa Parola',
-            '--eposta' => 'kisa@ornek.test',
-            '--parola' => '1234',
+        $this->artisan('admin:add', [
+            '--name' => 'Kısa Parola',
+            '--email' => 'kisa@ornek.test',
+            '--password' => '1234',
         ])->assertFailed();
 
         $this->assertDatabaseMissing('users', ['email' => 'kisa@ornek.test']);
@@ -55,7 +55,7 @@ class AdminAddTest extends TestCase
         $kullanici = User::factory()->beklemede()->create(['email' => 'mevcut@ornek.test']);
         $parola = $kullanici->password;
 
-        $this->artisan('kimlik:yonetici-ekle', ['--ad' => 'Mevcut', '--eposta' => 'mevcut@ornek.test'])
+        $this->artisan('admin:add', ['--name' => 'Mevcut', '--email' => 'mevcut@ornek.test'])
             ->assertSuccessful();
 
         $kullanici->refresh();

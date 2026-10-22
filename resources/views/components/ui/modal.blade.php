@@ -8,10 +8,10 @@
     kullanıcı formunu geri açmak için tıklamak zorunda kalmaz.
 --}}
 <div class="modal" id="{{ $id }}" data-modal hidden role="dialog" aria-modal="true"
-     aria-labelledby="{{ $id }}-baslik" @if ($open) data-modal-acik @endif>
+     aria-labelledby="{{ $id }}-title" @if ($open) data-modal-opened @endif>
     <div @class(['modal__box', 'modal__box--wide' => $wide])>
         <header class="modal__header">
-            <h2 class="modal__title" id="{{ $id }}-baslik">{{ $title }}</h2>
+            <h2 class="modal__title" id="{{ $id }}-title">{{ $title }}</h2>
             <button type="button" class="modal__close" data-modal-close aria-label="Kapat">&times;</button>
         </header>
 

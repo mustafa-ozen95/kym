@@ -30,15 +30,15 @@ class ActiveAccountRequired
 
         if ($kullanici !== null && ! $kullanici->girebilir()) {
             /*
-             * JETONLA GELEN İSTEK (oauth/kullanici): bakan guard oturum
+             * JETONLA GELEN İSTEK (oauth/userinfo): bakan guard oturum
              * tutmuyor, çıkış yapılacak bir oturum yok; logout() burada 500
              * üretirdi. Açık ve sebebi kodlu bir ret döner. (Jeton hesap askıya alınınca zaten iptal edilir;
              * bu, iptalden kaçan bir jetona karşı ikinci savunma.)
              */
             if (! Auth::guard() instanceof StatefulGuard) {
                 return response()->json([
-                    'kod' => 'hesap_etkin_degil',
-                    'hata' => 'Bu hesapla erişim şu an kapalı.',
+                    'code' => 'account_inactive',
+                    'error' => 'Bu hesapla erişim şu an kapalı.',
                 ], 403);
             }
 
@@ -47,7 +47,7 @@ class ActiveAccountRequired
             $request->session()->regenerateToken();
 
             return redirect()
-                ->route('hizli-erisim', ['pencere' => 'giris'])
+                ->route('quick-access', ['window' => 'login'])
                 ->withErrors(['email' => $kullanici->durum->label().'. Yöneticinizle görüşün.']);
         }
 

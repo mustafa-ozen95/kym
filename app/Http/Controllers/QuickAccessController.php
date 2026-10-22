@@ -26,7 +26,7 @@ use Illuminate\View\View;
 class QuickAccessController extends Controller
 {
     /** Adresten açılabilen pencereler; başka bir değer yok sayılır. */
-    private const PENCERELER = ['giris', 'kayit', 'dogrulama'];
+    private const WINDOWS = ['login', 'register', 'verify'];
 
     public function __invoke(Request $request, AdminSections $bolumler): View
     {
@@ -44,16 +44,16 @@ class QuickAccessController extends Controller
      * ŞİFRE YOK: salonun görünürlüğü kutucuklarınkiyle aynı üç düzeyde ve
      * yetkisi olmayan sayfayı hiç açamaz.
      */
-    public function salon(Request $request, Group $grup, AdminSections $bolumler): View
+    public function group(Request $request, Group $group, AdminSections $bolumler): View
     {
-        abort_unless($grup->gorebilirMi($request->user()), 404);
+        abort_unless($group->gorebilirMi($request->user()), 404);
 
-        return $this->sayfa($request, $bolumler, $grup);
+        return $this->sayfa($request, $bolumler, $group);
     }
 
-    private function sayfa(Request $request, AdminSections $bolumler, ?Group $grup): View
+    private function sayfa(Request $request, AdminSections $bolumler, ?Group $group): View
     {
-        $salonlar = Group::sirali()->when($grup === null, fn ($q) => $q->sayfada())->get();
+        $salonlar = Group::sirali()->when($group === null, fn ($q) => $q->sayfada())->get();
 
         $sistemler = System::icinGorunenler($request->user());
 
@@ -64,16 +64,16 @@ class QuickAccessController extends Controller
          * salonun bölümü çizilmediği için sahipsiz kalır ve ilk salonun altına
          * düşerlerdi.
          */
-        $sistemler = $grup !== null
-            ? $sistemler->where('grup', $grup->anahtar)->values()
+        $sistemler = $group !== null
+            ? $sistemler->where('grup', $group->anahtar)->values()
             : $sistemler->whereIn('grup', $salonlar->pluck('anahtar'))->values();
 
         return view('quick-access', [
             /* Kayıt kapalıysa pencere ve bağlantı hiç çizilmez. */
             'kayitAcik' => app(RegistrationOpen::class)->acikMi(),
 
-            'baslik' => $grup?->ad,
-            'altBaslik' => $grup?->not,
+            'baslik' => $group?->ad,
+            'altBaslik' => $group?->not,
 
             /*
              * Salon KENDİ SAYFASINDA açıldığında ana sayfaya dönüş bağlantısı.
@@ -82,7 +82,7 @@ class QuickAccessController extends Controller
              * olmadan kullanıcı tarayıcının geri düğmesine mahkûm kalır ve
              * kutucuğa yeni sekmede gelmişse o da işe yaramaz.
              */
-            'anaSayfa' => $grup !== null ? route('hizli-erisim') : null,
+            'anaSayfa' => $group !== null ? route('quick-access') : null,
             /*
              * "Yönetim" bağlantısı, kullanıcının AÇABİLECEĞİ ilk bölüme gider.
              * Sabit adres, o bölüme yetkisi olmayan herkesi 403'e götürürdü.
@@ -115,16 +115,16 @@ class QuickAccessController extends Controller
                      * başlığı zaten o salonun adı; aynı satır iki kez
                      * görünmesin.
                      */
-                    'label' => $grup === null ? $salon->ad : '',
-                    'note' => $grup === null ? $salon->not : '',
+                    'label' => $group === null ? $salon->ad : '',
+                    'note' => $group === null ? $salon->not : '',
                 ])
                 ->values(),
 
             /*
-             * Pencerenin ADRESİ vardır: ?pencere=giris ile doğrudan gelinebilir.
+             * Pencerenin ADRESİ vardır: ?window=login ile doğrudan gelinebilir.
              * Betik yüklenmese de çalışır.
              */
-            'pencere' => in_array($request->query('pencere'), self::PENCERELER, true) ? $request->query('pencere') : null,
+            'window' => in_array($request->query('window'), self::WINDOWS, true) ? $request->query('window') : null,
         ]);
     }
 
@@ -132,7 +132,7 @@ class QuickAccessController extends Controller
      * Hangi pencere açık gelecek?
      *
      * ADRES yetmez. Pencereyi bağlantıdan açan kullanıcının adresinde
-     * ?pencere= yazmaz (betik açar); giriş başarısız olunca Laravel "geri"
+     * ?window= yazmaz (betik açar); giriş başarısız olunca Laravel "geri"
      * döndürür ve o adreste pencere kapalı gelir. Böylece ör. "Hesabınız
      * beklemede" iletisi kullanıcıya hiç görünmezdi.
      *
@@ -145,21 +145,21 @@ class QuickAccessController extends Controller
         $hatalar = session('errors');
 
         if ($hatalar !== null) {
-            if ($hatalar->has('kod')) {
-                return 'dogrulama';
+            if ($hatalar->has('code')) {
+                return 'verify';
             }
 
             if ($hatalar->has('name') || $hatalar->has('password_confirmation')) {
-                return 'kayit';
+                return 'register';
             }
 
             if ($hatalar->has('email') || $hatalar->has('password')) {
-                return 'giris';
+                return 'login';
             }
         }
 
-        return in_array($request->query('pencere'), self::PENCERELER, true)
-            ? $request->query('pencere')
+        return in_array($request->query('window'), self::WINDOWS, true)
+            ? $request->query('window')
             : null;
     }
 }

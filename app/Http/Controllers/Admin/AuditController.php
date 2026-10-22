@@ -32,7 +32,7 @@ use Illuminate\View\View;
  */
 class AuditController extends Controller implements HasMiddleware
 {
-    private const SAYFA = 50;
+    private const PAGE_SIZE = 50;
 
     public function __construct(private SettingSections $bolumler) {}
 
@@ -41,14 +41,14 @@ class AuditController extends Controller implements HasMiddleware
     {
         return [
             new Middleware(['auth', 'can:kayit.gor'], only: ['index']),
-            new Middleware(['auth', 'can:kayit.dogrula'], only: ['dogrula']),
+            new Middleware(['auth', 'can:kayit.dogrula'], only: ['verify']),
         ];
     }
 
     public function index(Request $request, #[CurrentUser] $kullanici): View
     {
-        $eylem = (string) $request->query('eylem', '');
-        $arama = trim((string) $request->query('ara', ''));
+        $eylem = (string) $request->query('action', '');
+        $arama = trim((string) $request->query('search', ''));
 
         $sorgu = ActivityLog::with('user')->orderByDesc('id');
 
@@ -69,7 +69,7 @@ class AuditController extends Controller implements HasMiddleware
 
         return view('admin.logs', [
             'serit' => $this->bolumler->serit(),
-            'kayitlar' => $sorgu->paginate(self::SAYFA)->withQueryString(),
+            'kayitlar' => $sorgu->paginate(self::PAGE_SIZE)->withQueryString(),
 
             /* Süzme listesi KAYITTAN gelir: elle tutulan bir liste eskir. */
             'eylemler' => ActivityLog::query()->distinct()->orderBy('eylem')->pluck('eylem')->all(),
@@ -85,7 +85,7 @@ class AuditController extends Controller implements HasMiddleware
      * Sonuç kaydın KENDİSİNE de yazılır: doğrulamanın ne zaman ve kim
      * tarafından yapıldığı da denetlenebilir bir bilgidir.
      */
-    public function dogrula(ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function verify(ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         $sonuc = $recorder->verify();
 

@@ -16,16 +16,16 @@ use Illuminate\Console\Command;
  */
 class ChainSealCommand extends Command
 {
-    protected $signature = 'kimlik:zincir-muhurle {--onay : Mührü yaz (yoksa yalnızca durumu gösterir)}';
+    protected $signature = 'identity:chain-seal {--confirm : Mührü yaz (yoksa yalnızca durumu gösterir)}';
 
     protected $description = 'Bilinen eski denetim zinciri kırıklarını imzalı mühürle dondurur';
 
     public function handle(ActivityRecorder $recorder): int
     {
-        if (! $this->option('onay')) {
+        if (! $this->option('confirm')) {
             $sonuc = $recorder->verify();
             $this->line($sonuc['ok'] ? 'Zincir bütün; mühre gerek yok.' : 'Zincir kırık: ilk bozuk kayıt #'.($sonuc['broken_id'] ?? '-').'.');
-            $this->line('Yazmak için: kimlik:zincir-muhurle --onay');
+            $this->line('Yazmak için: identity:chain-seal --confirm');
 
             return self::SUCCESS;
         }

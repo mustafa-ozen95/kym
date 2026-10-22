@@ -28,7 +28,7 @@ final class PermissionEscalationTest extends TestCase
         $kisi = User::factory()->rol('muhasebe')->create();
 
         foreach ($yetenekler as $yetenek) {
-            UserPermission::create(['user_id' => $kisi->id, 'yetenek' => $yetenek, 'etki' => UserPermission::IZIN]);
+            UserPermission::create(['user_id' => $kisi->id, 'yetenek' => $yetenek, 'etki' => UserPermission::ALLOW]);
         }
 
         return $kisi;
@@ -41,7 +41,7 @@ final class PermissionEscalationTest extends TestCase
         $eskiParola = $yonetici->password;
 
         $this->actingAs($saldirgan)
-            ->put(route('yonetim.kullanicilar.guncelle', $yonetici), [
+            ->put(route('admin.users.update', $yonetici), [
                 'name' => $yonetici->name,
                 'email' => 'ele-gecirildi@ornek.test',
                 'password' => 'yeni-parola-9999',
@@ -61,7 +61,7 @@ final class PermissionEscalationTest extends TestCase
         $hedef = User::factory()->yonetici()->create();
 
         $this->actingAs($ben)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), ['name' => 'Yeni Ad', 'email' => $hedef->email])
+            ->put(route('admin.users.update', $hedef), ['name' => 'Yeni Ad', 'email' => $hedef->email])
             ->assertRedirect();
 
         $this->assertSame('Yeni Ad', $hedef->fresh()->name);
@@ -74,7 +74,7 @@ final class PermissionEscalationTest extends TestCase
         $yoneticiRol = Role::where('is_admin', true)->firstOrFail();
 
         $this->actingAs($saldirgan)
-            ->put(route('yonetim.kullanicilar.guncelle', $hedef), ['rol' => $yoneticiRol->uuid])
+            ->put(route('admin.users.update', $hedef), ['role' => $yoneticiRol->uuid])
             ->assertForbidden();
 
         $this->assertFalse($hedef->fresh()->yonetici());
@@ -86,10 +86,10 @@ final class PermissionEscalationTest extends TestCase
         $yoneticiRol = Role::where('is_admin', true)->firstOrFail();
 
         $this->actingAs($saldirgan)
-            ->post(route('yonetim.kullanicilar.ekle'), [
+            ->post(route('admin.users.store'), [
                 'name' => 'Sahte', 'email' => 'sahte@ornek.test',
                 'password' => 'cok-gizli-1616', 'password_confirmation' => 'cok-gizli-1616',
-                'rol' => $yoneticiRol->uuid,
+                'role' => $yoneticiRol->uuid,
             ])
             ->assertForbidden();
 
@@ -102,7 +102,7 @@ final class PermissionEscalationTest extends TestCase
         $rol = $saldirgan->rol;
 
         $this->actingAs($saldirgan)
-            ->put(route('yonetim.roller.guncelle', $rol), [
+            ->put(route('admin.roles.update', $rol), [
                 'slug' => $rol->slug, 'label' => $rol->label, 'badge' => $rol->badge->value,
                 'is_admin' => 1, 'template' => [],
             ])
@@ -118,7 +118,7 @@ final class PermissionEscalationTest extends TestCase
         $yoneticiRol = Role::where('is_admin', true)->firstOrFail();
 
         $this->actingAs($saldirgan)
-            ->put(route('yonetim.roller.guncelle', $yoneticiRol), [
+            ->put(route('admin.roles.update', $yoneticiRol), [
                 'slug' => $yoneticiRol->slug, 'label' => 'Ele geçti', 'badge' => $yoneticiRol->badge->value,
                 'is_admin' => 1, 'is_default' => 1, 'template' => [],
             ])
@@ -132,7 +132,7 @@ final class PermissionEscalationTest extends TestCase
         $saldirgan = $this->yetkili('rol.gor', 'rol.duzenle');
 
         $this->actingAs($saldirgan)
-            ->post(route('yonetim.roller.ekle'), [
+            ->post(route('admin.roles.store'), [
                 'slug' => 'sahte', 'label' => 'Sahte', 'badge' => 'green', 'is_admin' => 1, 'template' => [],
             ])
             ->assertForbidden();
@@ -147,7 +147,7 @@ final class PermissionEscalationTest extends TestCase
         $rol = Role::where('slug', 'muhasebe')->firstOrFail();
 
         $this->actingAs($ben)
-            ->put(route('yonetim.roller.guncelle', $rol), [
+            ->put(route('admin.roles.update', $rol), [
                 'slug' => $rol->slug, 'label' => $rol->label, 'badge' => $rol->badge->value,
                 'is_admin' => 1, 'template' => [],
             ])

@@ -59,15 +59,15 @@ class RoleController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function show(Role $rol, #[CurrentUser] $kullanici): View
+    public function show(Role $role, #[CurrentUser] $kullanici): View
     {
         return view('admin.role', [
             'serit' => $this->bolumler->serit(),
-            'rol' => $rol,
+            'rol' => $role,
             'kaynaklar' => $this->sozluk->ekranSatirlari(PermissionResolver::yetkiDagitilabilirMi()),
-            'sablon' => $rol->yetenekler(),
+            'sablon' => $role->yetenekler(),
             'rozetler' => $this->rozetler(),
-            'kullaniciSayisi' => $rol->kullanicilar()->count(),
+            'kullaniciSayisi' => $role->kullanicilar()->count(),
             'duzenleyebilir' => $kullanici->can('rol.duzenle'),
 
             /*
@@ -92,17 +92,17 @@ class RoleController extends Controller implements HasMiddleware
         /* Yönetici bayrağı yalnızca yöneticide: bkz. update(). */
         abort_if($request->boolean('is_admin') && ! $kullanici->yonetici(), 403);
 
-        $rol = Role::create($this->veri($request));
+        $role = Role::create($this->veri($request));
 
-        $this->varsayilaniTekleştir($rol);
+        $this->varsayilaniTekleştir($role);
 
-        $recorder->record('rol-eklendi', $rol->label.' rolü açıldı', $kullanici);
+        $recorder->record('rol-eklendi', $role->label.' rolü açıldı', $kullanici);
 
-        return redirect()->route('yonetim.roller.goster', $rol)
-            ->with('status', $rol->label.' rolü açıldı; yetkilerini şimdi seçebilirsiniz.');
+        return redirect()->route('admin.roles.show', $role)
+            ->with('status', $role->label.' rolü açıldı; yetkilerini şimdi seçebilirsiniz.');
     }
 
-    public function update(RoleRequest $request, Role $rol, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function update(RoleRequest $request, Role $role, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
         /*
          * YÖNETİCİ BAYRAĞINI VE YÖNETİCİ ROLÜNÜ YALNIZCA YÖNETİCİ DEĞİŞTİRİR.
@@ -114,7 +114,7 @@ class RoleController extends Controller implements HasMiddleware
          * yönetici ister. Yönetici olmayan rollerin şablonları serbest.
          */
         if (! $kullanici->yonetici()) {
-            abort_if($rol->is_admin || $request->boolean('is_admin'), 403);
+            abort_if($role->is_admin || $request->boolean('is_admin'), 403);
         }
 
         $veri = $this->veri($request);
@@ -123,7 +123,7 @@ class RoleController extends Controller implements HasMiddleware
          * Yerleşik rolün slug'ı DEĞİŞMEZ: kod ona adıyla bakıyor. Etiketi ve
          * şablonu değişebilir; asıl düzenlenmek istenen zaten o.
          */
-        if ($rol->is_system) {
+        if ($role->is_system) {
             unset($veri['slug']);
         }
 
@@ -133,36 +133,36 @@ class RoleController extends Controller implements HasMiddleware
          * Düşürülseydi paneli yönetebilecek kimse kalmazdı ve geri almanın
          * yolu da yönetim ekranından geçiyor olurdu.
          */
-        if ($rol->is_admin && ! ($veri['is_admin'] ?? false) && Role::where('is_admin', true)->count() === 1) {
+        if ($role->is_admin && ! ($veri['is_admin'] ?? false) && Role::where('is_admin', true)->count() === 1) {
             return back()->with('error', 'Son yönetici rolü bu yetkiden çıkarılamaz; önce başka bir yönetici rolü tanımlayın.');
         }
 
-        $rol->update($veri);
+        $role->update($veri);
 
-        $this->varsayilaniTekleştir($rol);
+        $this->varsayilaniTekleştir($role);
 
-        $recorder->record('rol-guncellendi', $rol->label.' rolü güncellendi', $kullanici);
+        $recorder->record('rol-guncellendi', $role->label.' rolü güncellendi', $kullanici);
 
-        return back()->with('status', $rol->label.' rolü güncellendi.');
+        return back()->with('status', $role->label.' rolü güncellendi.');
     }
 
-    public function destroy(Role $rol, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
+    public function destroy(Role $role, ActivityRecorder $recorder, #[CurrentUser] $kullanici): RedirectResponse
     {
-        if ($rol->is_system) {
+        if ($role->is_system) {
             return back()->with('error', 'Yerleşik roller silinemez.');
         }
 
         /* Kullanıcısı olan rol silinirse o hesaplar rolsüz kalırdı. */
-        if ($rol->kullanicilar()->exists()) {
+        if ($role->kullanicilar()->exists()) {
             return back()->with('error', 'Bu rolde kullanıcılar var; önce onlara başka bir rol verin.');
         }
 
-        $ad = $rol->label;
-        $rol->delete();
+        $ad = $role->label;
+        $role->delete();
 
         $recorder->record('rol-silindi', $ad.' rolü silindi', $kullanici);
 
-        return redirect()->route('yonetim.roller')->with('status', $ad.' rolü silindi.');
+        return redirect()->route('admin.roles')->with('status', $ad.' rolü silindi.');
     }
 
     /** @return array<string, mixed> */
@@ -197,12 +197,12 @@ class RoleController extends Controller implements HasMiddleware
     }
 
     /** Varsayılan rol TEK olur; yoksa yeni kullanıcının hangisini alacağı belirsizdir. */
-    private function varsayilaniTekleştir(Role $rol): void
+    private function varsayilaniTekleştir(Role $role): void
     {
-        if (! $rol->is_default) {
+        if (! $role->is_default) {
             return;
         }
 
-        Role::where('id', '!=', $rol->id)->where('is_default', true)->update(['is_default' => false]);
+        Role::where('id', '!=', $role->id)->where('is_default', true)->update(['is_default' => false]);
     }
 }

@@ -25,7 +25,7 @@ use App\Models\OauthClient;
  */
 class SetupFile
 {
-    public const AD = 'KimlikMerkezi.php';
+    public const FILE_NAME = 'IdentityCenter.php';
 
     public function icerik(OauthClient $istemci, ?string $sir = null): string
     {
@@ -43,13 +43,13 @@ class SetupFile
          * çıkamayacak hâle getirilir.
          */
         return strtr($this->kalip(), [
-            '{{MERKEZ_AD_SABIT}}' => var_export((string) config('app.name'), true),
-            '{{MERKEZ_AD}}' => $this->yorumaGuvenli((string) config('app.name')),
-            '{{MERKEZ_ADRES}}' => var_export(rtrim((string) config('app.url'), '/'), true),
-            '{{ISTEMCI}}' => var_export((string) $istemci->getKey(), true),
-            '{{SIR}}' => $this->yorumaGuvenli($sir ?? 'BURAYA_SIR'),
-            '{{DONUS}}' => var_export($donus, true),
-            '{{UYGULAMA}}' => var_export((string) $istemci->name, true),
+            '{{CENTER_NAME_CONST}}' => var_export((string) config('app.name'), true),
+            '{{CENTER_NAME}}' => $this->yorumaGuvenli((string) config('app.name')),
+            '{{CENTER_URL}}' => var_export(rtrim((string) config('app.url'), '/'), true),
+            '{{CLIENT_ID}}' => var_export((string) $istemci->getKey(), true),
+            '{{SECRET}}' => $this->yorumaGuvenli($sir ?? 'BURAYA_SIR'),
+            '{{REDIRECT_URI}}' => var_export($donus, true),
+            '{{APPLICATION}}' => var_export((string) $istemci->name, true),
         ]);
     }
 
@@ -82,32 +82,32 @@ use Illuminate\Support\Str;
 use Throwable;
 
 /**
- * {{MERKEZ_AD}} ile giriş.
+ * {{CENTER_NAME}} ile giriş.
  *
  * KURULUM (üç adım):
  *
- *   1. Bu dosyayı app/KimlikMerkezi.php olarak koyun.
- *   2. bootstrap/providers.php içine bir satır: App\KimlikMerkezi::class,
- *   3. Giriş ekranınıza düğmeyi koyun:  @kimlikGiris
+ *   1. Bu dosyayı app/IdentityCenter.php olarak koyun.
+ *   2. bootstrap/providers.php içine bir satır: App\IdentityCenter::class,
+ *   3. Giriş ekranınıza düğmeyi koyun:  @identityLogin
  *
  * Sır .env'den okunur; aşağıdaki varsayılanlar yalnızca yedektir:
  *
- *   KIMLIK_ACIK=true
- *   KIMLIK_ISTEMCI_SIR={{SIR}}
+ *   IDENTITY_ENABLED=true
+ *   IDENTITY_CLIENT_SECRET={{SECRET}}
  *
  * MERKEZDE HESABI OLAN HERKES BURAYA GİREMEZ. Varsayılan: yerelde eşleşen
  * hesap yoksa giriş reddedilir. İsterseniz otomatik hesap açılsın — ama ETKİN
  * DEĞİL, yöneticinizin onayını bekleyerek:
  *
- *   KIMLIK_OTOMATIK_HESAP=true
+ *   IDENTITY_AUTO_ACCOUNT=true
  *
  * ve ardından hesabın NASIL doğacağı. İki kip var:
  *
  *  1) MERKEZİN ONAYI YETER (önerilen). Rol eşlemesi yazılır; hesap etkin
  *     doğar ve merkezdeki rolün projedeki karşılığını alır:
  *
- *       KIMLIK_ROL_ALANI=role_id
- *       KIMLIK_ROL_ESLEME={"network":3,"teknik":4}
+ *       IDENTITY_ROLE_FIELD=role_id
+ *       IDENTITY_ROLE_MAP={"network":3,"teknik":4}
  *
  *     Eşleme verildiğinde kişinin merkezdeki rolü ŞART olur: rolsüz ya da
  *     eşlemede karşılığı bulunmayan kimlikle hesap AÇILMAZ. Rol atamak, o
@@ -116,7 +116,7 @@ use Throwable;
  *  2) PROJE AYRICA ONAY İSTİYOR. Hesabın "beklemede" alanları yazılır ve
  *     hesap etkin doğmaz; yöneticiniz onaylayana kadar kimse giremez:
  *
- *       KIMLIK_YENI_HESAP={"status":"passive"}
+ *       IDENTITY_NEW_ACCOUNT={"status":"passive"}
  *
  * İkisi birlikte de yazılabilir: rol atanır, hesap yine onay bekler. En az
  * biri gerekir — ikisi de boşken hesap açılmaz, çünkü hangi alanlarla
@@ -131,24 +131,24 @@ use Throwable;
  * düğme TAM SAYFA yönlendirir; bir pencere içinde sorulsaydı kullanıcı
  * parolasını yazarken adres çubuğunda merkezi göremezdi.
  */
-class KimlikMerkezi extends ServiceProvider
+class IdentityCenter extends ServiceProvider
 {
     /** Merkezde kayıtlı bilgiler. .env varsa o kazanır. */
-    private const ADRES = {{MERKEZ_ADRES}};
+    private const URL = {{CENTER_URL}};
 
-    private const ISTEMCI = {{ISTEMCI}};
+    private const CLIENT_ID = {{CLIENT_ID}};
 
-    private const DONUS = {{DONUS}};
+    private const REDIRECT_URI = {{REDIRECT_URI}};
 
-    private const AD = {{MERKEZ_AD_SABIT}};
+    private const NAME = {{CENTER_NAME_CONST}};
 
     /** Bu istemcinin merkezdeki adı; yalnızca bilgi, kod buna dayanmaz. */
-    private const UYGULAMA = {{UYGULAMA}};
+    private const APPLICATION = {{APPLICATION}};
 
     /** Oturumda tutulan akış bilgileri. */
-    private const DURUM = 'kimlik_durum';
+    private const STATE = 'identity_state';
 
-    private const DOGRULAYICI = 'kimlik_dogrulayici';
+    private const VERIFIER = 'identity_verifier';
 
     public function boot(): void
     {
@@ -158,39 +158,39 @@ class KimlikMerkezi extends ServiceProvider
          * yapılandırılmamış bir kurulum yarım çalışmaz.
          */
         Route::middleware(['web', 'guest'])->group(function (): void {
-            Route::get('giris/merkez', fn () => $this->baslat())->name('kimlik.giris');
-            Route::get('giris/merkez/geri', fn () => $this->geri())->name('kimlik.donus');
+            Route::get('login/center', fn () => $this->start())->name('identity.login');
+            Route::get('login/center/callback', fn () => $this->callback())->name('identity.callback');
         });
 
-        /* Giriş ekranında tek satır: @kimlikGiris */
-        Blade::directive('kimlikGiris', fn (): string => '<?php echo \App\KimlikMerkezi::dugme(); ?>');
+        /* Giriş ekranında tek satır: @identityLogin */
+        Blade::directive('identityLogin', fn (): string => '<?php echo \App\IdentityCenter::button(); ?>');
     }
 
     /* ── Yapılandırma ── */
 
-    public static function acikMi(): bool
+    public static function isEnabled(): bool
     {
-        return (bool) env('KIMLIK_ACIK', false) && filled(self::sir()) && filled(self::istemci());
+        return (bool) env('IDENTITY_ENABLED', false) && filled(self::secret()) && filled(self::clientId());
     }
 
-    private static function adres(): string
+    private static function baseUrl(): string
     {
-        return rtrim((string) env('KIMLIK_ADRES', self::ADRES), '/');
+        return rtrim((string) env('IDENTITY_URL', self::URL), '/');
     }
 
-    private static function istemci(): string
+    private static function clientId(): string
     {
-        return (string) env('KIMLIK_ISTEMCI', self::ISTEMCI);
+        return (string) env('IDENTITY_CLIENT_ID', self::CLIENT_ID);
     }
 
-    private static function sir(): string
+    private static function secret(): string
     {
-        return (string) env('KIMLIK_ISTEMCI_SIR', '');
+        return (string) env('IDENTITY_CLIENT_SECRET', '');
     }
 
-    private static function donus(): string
+    private static function redirectUri(): string
     {
-        return (string) env('KIMLIK_DONUS', self::DONUS);
+        return (string) env('IDENTITY_REDIRECT_URI', self::REDIRECT_URI);
     }
 
     /* ── Düğme ── */
@@ -203,50 +203,50 @@ class KimlikMerkezi extends ServiceProvider
      * (currentColor ve saydam zemin), böylece açık ve koyu temada da yerini
      * bulur.
      */
-    public static function dugme(): string
+    public static function button(): string
     {
-        if (! self::acikMi()) {
+        if (! self::isEnabled()) {
             return '';
         }
 
-        $adres = route('kimlik.giris');
-        $ad = e((string) env('KIMLIK_AD', self::AD));
+        $adres = route('identity.login');
+        $ad = e((string) env('IDENTITY_NAME', self::NAME));
 
         return <<<HTML
         <style>
-        .kimlik-dugme{display:flex;align-items:center;justify-content:center;gap:.5rem;
+        .kimlik-button{display:flex;align-items:center;justify-content:center;gap:.5rem;
         width:100%;min-height:2.25rem;padding:0 .75rem;border:1px solid currentColor;
         border-radius:4px;color:inherit;font:inherit;font-weight:600;text-decoration:none;
         opacity:.92;transition:opacity 90ms ease}
-        .kimlik-dugme:hover{opacity:1}
-        .kimlik-ayrac{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+        .kimlik-button:hover{opacity:1}
+        .identity-divider{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
         gap:.5rem;margin:1rem 0;font-size:.75rem;opacity:.6}
-        .kimlik-ayrac::before,.kimlik-ayrac::after{content:'';height:1px;background:currentColor;opacity:.35}
+        .identity-divider::before,.identity-divider::after{content:'';height:1px;background:currentColor;opacity:.35}
         </style>
-        <a href="{$adres}" class="kimlik-dugme">{$ad} ile giriş</a>
-        <div class="kimlik-ayrac"><span>veya</span></div>
+        <a href="{$adres}" class="kimlik-button">{$ad} ile giriş</a>
+        <div class="identity-divider"><span>veya</span></div>
         HTML;
     }
 
     /* ── Akış ── */
 
-    private function baslat()
+    private function start()
     {
-        abort_unless(self::acikMi(), 404);
+        abort_unless(self::isEnabled(), 404);
 
         /* RFC 7636: 43-128 karakter, URL-güvenli. */
         $dogrulayici = rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
         $durum = Str::random(40);
 
         /* İkisi de OTURUMDA kalır: geri dönen isteğin bizim akışımız olduğunu böyle biliriz. */
-        session()->put(self::DOGRULAYICI, $dogrulayici);
-        session()->put(self::DURUM, $durum);
+        session()->put(self::VERIFIER, $dogrulayici);
+        session()->put(self::STATE, $durum);
 
         $meydanOkuma = rtrim(strtr(base64_encode(hash('sha256', $dogrulayici, true)), '+/', '-_'), '=');
 
-        return redirect()->away(self::adres().'/oauth/authorize?'.http_build_query([
-            'client_id' => self::istemci(),
-            'redirect_uri' => self::donus(),
+        return redirect()->away(self::baseUrl().'/oauth/authorize?'.http_build_query([
+            'client_id' => self::clientId(),
+            'redirect_uri' => self::redirectUri(),
             'response_type' => 'code',
             'scope' => '',
             'state' => $durum,
@@ -255,12 +255,12 @@ class KimlikMerkezi extends ServiceProvider
         ]));
     }
 
-    private function geri()
+    private function callback()
     {
-        abort_unless(self::acikMi(), 404);
+        abort_unless(self::isEnabled(), 404);
 
-        $beklenen = session()->pull(self::DURUM);
-        $dogrulayici = session()->pull(self::DOGRULAYICI);
+        $beklenen = session()->pull(self::STATE);
+        $dogrulayici = session()->pull(self::VERIFIER);
 
         /*
          * DURUM EŞLEŞMELİ (CSRF).
@@ -270,36 +270,36 @@ class KimlikMerkezi extends ServiceProvider
          * bağlayabilirdi.
          */
         if (blank($beklenen) || ! hash_equals((string) $beklenen, (string) request()->query('state'))) {
-            return $this->hata('Giriş akışı doğrulanamadı; lütfen yeniden deneyin.');
+            return $this->fail('Giriş akışı doğrulanamadı; lütfen yeniden deneyin.');
         }
 
         if (blank(request()->query('code')) || blank($dogrulayici)) {
-            return $this->hata('Merkezden kod gelmedi.');
+            return $this->fail('Merkezden kod gelmedi.');
         }
 
         try {
-            $jeton = $this->istek()->asForm()->post(self::adres().'/oauth/token', [
+            $jeton = $this->http()->asForm()->post(self::baseUrl().'/oauth/token', [
                 'grant_type' => 'authorization_code',
-                'client_id' => self::istemci(),
-                'client_secret' => self::sir(),
-                'redirect_uri' => self::donus(),
+                'client_id' => self::clientId(),
+                'client_secret' => self::secret(),
+                'redirect_uri' => self::redirectUri(),
                 'code_verifier' => (string) $dogrulayici,
                 'code' => (string) request()->query('code'),
             ])->throw()->json();
 
-            $kimlik = $this->istek()
+            $kimlik = $this->http()
                 ->withToken((string) ($jeton['access_token'] ?? ''))
                 ->acceptJson()
-                ->get(self::adres().'/oauth/kullanici')
+                ->get(self::baseUrl().'/oauth/userinfo')
                 ->throw()
                 ->json();
         } catch (Throwable $e) {
             report($e);
 
-            return $this->hata('Merkezle bağlantı kurulamadı; lütfen parolanızla girin.');
+            return $this->fail('Merkezle bağlantı kurulamadı; lütfen parolanızla girin.');
         }
 
-        $kullanici = $this->esles($kimlik);
+        $kullanici = $this->match($kimlik);
 
         /*
          * Eşleşme yoksa VARSAYILAN OLARAK hesap açılmaz.
@@ -307,23 +307,23 @@ class KimlikMerkezi extends ServiceProvider
          * Merkezde hesabı olmak, bu projede işi olmak demek değildir. Hesabı
          * projenin yöneticisi açar.
          *
-         * KIMLIK_OTOMATIK_HESAP=true ise hesap açılır ama ETKİN DEĞİL: proje
-         * kendi "beklemede" alanlarını KIMLIK_YENI_HESAP ile söyler ve
+         * IDENTITY_AUTO_ACCOUNT=true ise hesap açılır ama ETKİN DEĞİL: proje
+         * kendi "beklemede" alanlarını IDENTITY_NEW_ACCOUNT ile söyler ve
          * yöneticisi onaylayana kadar kimse içeri giremez. Böylece yönetici
          * ad/e-posta yazmak yerine yalnızca onaylıyor.
          */
         if (! $kullanici) {
-            $kullanici = $this->hesapAc($kimlik);
+            $kullanici = $this->createAccount($kimlik);
         }
 
         if (! $kullanici) {
-            return $this->hata('Bu kimlikle eşleşen bir hesap yok. Hesap açma isteği için sistem yöneticinize başvurun.');
+            return $this->fail('Bu kimlikle eşleşen bir hesap yok. Hesap açma isteği için sistem yöneticinize başvurun.');
         }
 
         Auth::login($kullanici, true);
         session()->regenerate();
 
-        return redirect()->intended($this->anasayfa());
+        return redirect()->intended($this->home());
     }
 
     /**
@@ -336,7 +336,7 @@ class KimlikMerkezi extends ServiceProvider
      *
      * @param  array<string, mixed>  $kimlik
      */
-    private function esles(array $kimlik)
+    private function match(array $kimlik)
     {
         if (blank($kimlik['email'] ?? null) || ! ($kimlik['email_verified'] ?? false)) {
             return null;
@@ -353,7 +353,7 @@ class KimlikMerkezi extends ServiceProvider
 
         $kullanici = $adaylar->first();
 
-        return $this->etkinMi($kullanici) ? $kullanici : null;
+        return $this->isActive($kullanici) ? $kullanici : null;
     }
 
     /**
@@ -363,24 +363,24 @@ class KimlikMerkezi extends ServiceProvider
      *
      * Açıkken hesabın NASIL doğacağını proje söyler; tahmin edilmez:
      *
-     *  - KIMLIK_ROL_ESLEME verilmişse hesap ETKİN doğar ve merkezdeki rolün
+     *  - IDENTITY_ROLE_MAP verilmişse hesap ETKİN doğar ve merkezdeki rolün
      *    karşılığını alır. Onay zaten merkezde verilmiştir: kişi orada
      *    onaylanmış ve kendisine bir rol atanmıştır.
-     *  - KIMLIK_YENI_HESAP verilmişse o alanlar yazılır; proje ikinci bir onay
+     *  - IDENTITY_NEW_ACCOUNT verilmişse o alanlar yazılır; proje ikinci bir onay
      *    istiyorsa hesabı burada "beklemede" doğurur ({"status":"passive"}).
      *
      * @param  array<string, mixed>  $kimlik
      */
-    private function hesapAc(array $kimlik)
+    private function createAccount(array $kimlik)
     {
-        if (! (bool) env('KIMLIK_OTOMATIK_HESAP', false)) {
+        if (! (bool) env('IDENTITY_AUTO_ACCOUNT', false)) {
             return null;
         }
 
-        $alanlar = json_decode((string) env('KIMLIK_YENI_HESAP', ''), true);
+        $alanlar = json_decode((string) env('IDENTITY_NEW_ACCOUNT', ''), true);
         $alanlar = is_array($alanlar) ? $alanlar : [];
 
-        $rol = $this->rolAlani($kimlik);
+        $rol = $this->roleField($kimlik);
 
         /* Rol eşlemesi verilmiş ama bu kimlik karşılamıyorsa hesap açılmaz. */
         if ($rol === false) {
@@ -396,7 +396,7 @@ class KimlikMerkezi extends ServiceProvider
          */
         if ($alanlar === [] && $rol === []) {
             report(new \RuntimeException(
-                'KIMLIK_OTOMATIK_HESAP açık ama ne KIMLIK_ROL_ESLEME ne KIMLIK_YENI_HESAP yazılmış; hesap açılmadı.'
+                'IDENTITY_AUTO_ACCOUNT açık ama ne IDENTITY_ROLE_MAP ne IDENTITY_NEW_ACCOUNT yazılmış; hesap açılmadı.'
             ));
 
             return null;
@@ -416,14 +416,14 @@ class KimlikMerkezi extends ServiceProvider
         ]);
 
         /* Bekleyen hesapla oturum açılmaz; kullanıcı ne olduğunu bilmeli. */
-        return $this->etkinMi($kullanici) ? $kullanici : null;
+        return $this->isActive($kullanici) ? $kullanici : null;
     }
 
     /**
      * Merkezdeki rolün projedeki karşılığı.
      *
-     * İSTEĞE BAĞLIDIR: KIMLIK_ROL_ALANI ve KIMLIK_ROL_ESLEME verilmemişse boş
-     * dizi döner ve hesap yalnızca KIMLIK_YENI_HESAP alanlarıyla açılır.
+     * İSTEĞE BAĞLIDIR: IDENTITY_ROLE_FIELD ve IDENTITY_ROLE_MAP verilmemişse boş
+     * dizi döner ve hesap yalnızca IDENTITY_NEW_ACCOUNT alanlarıyla açılır.
      *
      * Verilmişse ROL ŞART OLUR: merkezde rolü olmayan ya da eşlemede karşılığı
      * bulunmayan kimlik için `false` döner ve hesap açılmaz. Karşılığı
@@ -433,20 +433,20 @@ class KimlikMerkezi extends ServiceProvider
      * @param  array<string, mixed>  $kimlik
      * @return array<string, mixed>|false
      */
-    private function rolAlani(array $kimlik): array|false
+    private function roleField(array $kimlik): array|false
     {
-        $alan = (string) env('KIMLIK_ROL_ALANI', '');
-        $esleme = json_decode((string) env('KIMLIK_ROL_ESLEME', ''), true);
+        $alan = (string) env('IDENTITY_ROLE_FIELD', '');
+        $esleme = json_decode((string) env('IDENTITY_ROLE_MAP', ''), true);
 
         if ($alan === '' || ! is_array($esleme) || $esleme === []) {
             return [];
         }
 
-        $slug = (string) ($kimlik['rol'] ?? '');
+        $slug = (string) ($kimlik['role'] ?? '');
 
         if ($slug === '' || ! array_key_exists($slug, $esleme)) {
             report(new \RuntimeException(
-                "Merkezdeki rol '{$slug}' KIMLIK_ROL_ESLEME içinde yok; hesap açılmadı."
+                "Merkezdeki rol '{$slug}' IDENTITY_ROLE_MAP içinde yok; hesap açılmadı."
             ));
 
             return false;
@@ -462,7 +462,7 @@ class KimlikMerkezi extends ServiceProvider
      * engellenmez — burada bilinmeyen bir alanı tahmin etmek, çalışan bir
      * hesabı sessizce kilitlemek olurdu.
      */
-    private function etkinMi($kullanici): bool
+    private function isActive($kullanici): bool
     {
         foreach (['isActive', 'girebilir'] as $yontem) {
             if (method_exists($kullanici, $yontem) && ! $kullanici->{$yontem}()) {
@@ -480,23 +480,23 @@ class KimlikMerkezi extends ServiceProvider
      * doğrulama kapatılmaz: jeton takasında araya giren biri istemci sırrını
      * okur.
      */
-    private function istek()
+    private function http()
     {
         $istek = Http::timeout(15);
-        $kok = env('KIMLIK_KOK');
+        $kok = env('IDENTITY_CA_CERT');
 
         return filled($kok) ? $istek->withOptions(['verify' => $kok]) : $istek;
     }
 
     /** Giriş sonrası gidilecek yer; proje kendi rotasını verebilir. */
-    private function anasayfa(): string
+    private function home(): string
     {
-        $rota = (string) env('KIMLIK_ANASAYFA', '');
+        $rota = (string) env('IDENTITY_HOME', '');
 
         return $rota !== '' && Route::has($rota) ? route($rota) : '/';
     }
 
-    private function hata(string $mesaj)
+    private function fail(string $mesaj)
     {
         $giris = Route::has('login') ? route('login') : '/';
 

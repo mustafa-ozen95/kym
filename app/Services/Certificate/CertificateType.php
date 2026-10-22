@@ -25,14 +25,14 @@ use Throwable;
 class CertificateType
 {
     /** Kurulumun konteynere bağladığı yollar (standart kurulumda bağlı değil; bkz. docker/README.md → Sertifika sekmesi). */
-    private const DURUM = '/etc/dc/sertifika-durum.json';
+    private const STATUS_FILE = '/etc/dc/sertifika-durum.json';
 
-    private const PANEL = '/etc/dc/sertifika-panel';
+    private const PANEL_DIR = '/etc/dc/sertifika-panel';
 
     /** @return array<string, mixed>|null */
     public function durum(): ?array
     {
-        return $this->oku(self::DURUM);
+        return $this->oku(self::STATUS_FILE);
     }
 
     /**
@@ -46,7 +46,7 @@ class CertificateType
      */
     public function kayitlar(): ?array
     {
-        $veri = $this->oku(self::PANEL.'/kayitlar.json');
+        $veri = $this->oku(self::PANEL_DIR.'/kayitlar.json');
 
         return $veri === null ? null : array_values((array) ($veri['kayitlar'] ?? []));
     }
@@ -54,13 +54,13 @@ class CertificateType
     /** @return array<string, mixed>|null */
     public function sonIslem(): ?array
     {
-        return $this->oku(self::PANEL.'/islem.json');
+        return $this->oku(self::PANEL_DIR.'/islem.json');
     }
 
     /** Sunucu henüz isteği almadıysa ekran "işleniyor" der. */
     public function istekBekliyorMu(): bool
     {
-        return is_file(self::PANEL.'/istek.json');
+        return is_file(self::PANEL_DIR.'/istek.json');
     }
 
     /**
@@ -94,7 +94,7 @@ class CertificateType
      */
     public function istekBirak(string $eylem): bool
     {
-        if (! is_dir(self::PANEL) || ! is_writable(self::PANEL)) {
+        if (! is_dir(self::PANEL_DIR) || ! is_writable(self::PANEL_DIR)) {
             return false;
         }
 
@@ -104,7 +104,7 @@ class CertificateType
             'zaman' => now()->toIso8601String(),
         ], JSON_UNESCAPED_UNICODE);
 
-        return file_put_contents(self::PANEL.'/istek.json', $veri.PHP_EOL) !== false;
+        return file_put_contents(self::PANEL_DIR.'/istek.json', $veri.PHP_EOL) !== false;
     }
 
     /**

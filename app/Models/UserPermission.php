@@ -17,9 +17,9 @@ class UserPermission extends Model
 {
     protected $table = 'kullanici_yetkileri';
 
-    public const IZIN = 'izin';
+    public const ALLOW = 'izin';
 
-    public const RED = 'red';
+    public const DENY = 'red';
 
     protected $fillable = ['user_id', 'yetenek', 'etki'];
 

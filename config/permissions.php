@@ -40,7 +40,7 @@ return [
      * Ortam değişkeniyle de kapatılabilir ama bu bilinçli bir karardır:
      * .env'e erişen kişi zaten sunucuya erişiyor demektir.
      */
-    'yonetim_yalnizca_yonetici' => (bool) env('YONETIM_YALNIZCA_YONETICI', true),
+    'admin_only_management' => (bool) env('ADMIN_ONLY_MANAGEMENT', true),
 
     /*
      * Kaynaklar ve üzerlerinde yapılabilecekler.
@@ -190,7 +190,7 @@ return [
      *
      * Bu liste tek başına o kararı TAŞIYAMAZ — bir kutucuk işaretlenince
      * geri açılırdı. Karar kodda duruyor:
-     * PermissionResolver::YONETIM_YALNIZCA_YONETICI. Buradaki şablonlar onunla
+     * config permissions.admin_only_management. Buradaki şablonlar onunla
      * aynı şeyi söylesin diye boş; ayrışsalardı ekranda "var" görünen bir
      * yetki hiçbir işe yaramazdı.
      *

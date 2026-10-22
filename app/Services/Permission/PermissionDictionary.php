@@ -157,7 +157,7 @@ class PermissionDictionary
         $salonlar = $this->salonAksiyonlari();
 
         if ($salonlar !== []) {
-            $kaynaklar[Group::KAYNAK] = [
+            $kaynaklar[Group::RESOURCE] = [
                 'label' => 'Hızlı Erişim salonları (erişim)',
                 'description' => 'Görünürlüğü “yetkili” olan salonlar. İşaretlenmeyen salon '
                     .'o rol için sayfada HİÇ görünmez; kendi sayfası varsa açılmaz.',
@@ -166,7 +166,7 @@ class PermissionDictionary
         }
 
         if ($kutucuklar !== []) {
-            $kaynaklar[System::KAYNAK] = [
+            $kaynaklar[System::RESOURCE] = [
                 'label' => 'Hızlı Erişim kutucukları (erişim)',
                 'description' => 'Görünürlüğü “yetkili” olan kutucuklar. İşaretlenmeyen kutucuk '
                     .'o rol için sayfada HİÇ görünmez.',
@@ -187,11 +187,11 @@ class PermissionDictionary
         $liste = $this->yetenekler();
 
         foreach (array_keys($this->kutucukAksiyonlari()) as $anahtar) {
-            $liste[] = System::KAYNAK.'.'.$anahtar;
+            $liste[] = System::RESOURCE.'.'.$anahtar;
         }
 
         foreach (array_keys($this->salonAksiyonlari()) as $anahtar) {
-            $liste[] = Group::KAYNAK.'.'.$anahtar;
+            $liste[] = Group::RESOURCE.'.'.$anahtar;
         }
 
         return $liste;
@@ -209,7 +209,7 @@ class PermissionDictionary
      */
     private function salonAksiyonlari(): array
     {
-        return Group::where('gorunurluk', System::YETKILI)
+        return Group::where('gorunurluk', System::AUTHORIZED)
             ->orderBy('sira')
             ->pluck('ad', 'anahtar')
             ->all();
@@ -217,7 +217,7 @@ class PermissionDictionary
 
     private function kutucukAksiyonlari(): array
     {
-        return System::where('gorunurluk', System::YETKILI)
+        return System::where('gorunurluk', System::AUTHORIZED)
             ->orderBy('sira')
             ->pluck('ad', 'anahtar')
             ->all();

@@ -6,7 +6,7 @@
             <x-ui.flash />
 
             <x-ui.panel title="Bilgiler">
-                <form method="POST" action="{{ route('hesap.profil.kaydet') }}" class="form-dar">
+                <form method="POST" action="{{ route('account.profile.update') }}" class="form-narrow">
                     @csrf
                     @method('PUT')
 
@@ -24,17 +24,17 @@
             </x-ui.panel>
 
             <x-ui.panel title="Parola" subtitle="Değiştirdiğinizde diğer cihazlardaki oturumlarınız kapanır.">
-                <form method="POST" action="{{ route('hesap.parola') }}" class="form-dar">
+                <form method="POST" action="{{ route('account.password') }}" class="form-narrow">
                     @csrf
                     @method('PUT')
 
                     {{-- Mevcut parola şart: oturumu ele geçiren biri hesabı devralamasın. --}}
-                    <x-form.field name="mevcut" label="Mevcut parola">
-                        <x-form.input name="mevcut" type="password" autocomplete="current-password" required />
+                    <x-form.field name="current_password" label="Mevcut parola">
+                        <x-form.input name="current_password" type="password" autocomplete="current-password" required />
                     </x-form.field>
 
                     <x-form.field name="password" label="Yeni parola"
-                                  hint="En az {{ config('limits.parola_uzunluk') }} karakter, harf ve rakam içermeli.">
+                                  hint="En az {{ config('limits.password_length') }} karakter, harf ve rakam içermeli.">
                         <x-form.input name="password" type="password" autocomplete="new-password" required />
                     </x-form.field>
 
@@ -50,7 +50,7 @@
                         :subtitle="$kullanici->ikiAdimliMi()
                             ? 'Açık: girişte parolanın ardından kod soruluyor.'
                             : 'Kapalı: girişte yalnızca parola soruluyor.'">
-                <a href="{{ route('hesap.iki-adim') }}" class="btn btn--sm">
+                <a href="{{ route('account.two-step') }}" class="btn btn--sm">
                     {{ $kullanici->ikiAdimliMi() ? 'Ayarları aç' : 'İkinci adımı kur' }}
                 </a>
             </x-ui.panel>

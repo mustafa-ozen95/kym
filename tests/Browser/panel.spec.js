@@ -14,11 +14,11 @@ const EPOSTA = process.env.E2E_EMAIL;
 const PAROLA = process.env.E2E_PASSWORD;
 
 async function girisYap(page) {
-    await page.goto('/?pencere=giris');
-    await page.fill('#pencere-giris input[name="email"]', EPOSTA);
-    await page.fill('#pencere-giris input[name="password"]', PAROLA);
-    await page.click('#pencere-giris button[type="submit"]');
-    await expect(page.locator('[data-menu-ac]')).toBeVisible();
+    await page.goto('/?window=login');
+    await page.fill('#window-login input[name="email"]', EPOSTA);
+    await page.fill('#window-login input[name="password"]', PAROLA);
+    await page.click('#window-login button[type="submit"]');
+    await expect(page.locator('[data-menu-open]')).toBeVisible();
 }
 
 const isaretBirak = (page) => page.evaluate(() => { window.__iz = 'duruyor'; });
@@ -26,22 +26,22 @@ const isaret = (page) => page.evaluate(() => window.__iz ?? null);
 
 test('panel icinde gecis sayfayi yenilemez', async ({ page }) => {
     await girisYap(page);
-    await page.goto('/yonetim/sistemler');
+    await page.goto('/admin/systems');
     await isaretBirak(page);
 
     await page.getByRole('link', { name: 'Kullanıcılar' }).click();
 
-    await expect(page).toHaveURL(/yonetim\/kullanicilar/);
+    await expect(page).toHaveURL(/admin\/users/);
     await expect(page.locator('h1')).toHaveText('Kullanıcılar');
     expect(await isaret(page)).toBe('duruyor');
 });
 
 test('geri tusu panel icinde calisir', async ({ page }) => {
     await girisYap(page);
-    await page.goto('/yonetim/sistemler');
+    await page.goto('/admin/systems');
 
     await page.getByRole('link', { name: 'Ayarlar' }).click();
-    await expect(page).toHaveURL(/ayarlar/);
+    await expect(page).toHaveURL(/settings/);
 
     await isaretBirak(page);
     await page.goBack();
@@ -58,7 +58,7 @@ test('geri tusu panel icinde calisir', async ({ page }) => {
  */
 test('hizli erisime gecis tam yenileme yapar', async ({ page }) => {
     await girisYap(page);
-    await page.goto('/yonetim/sistemler');
+    await page.goto('/admin/systems');
     await isaretBirak(page);
 
     await page.getByRole('link', { name: 'Hızlı Erişim' }).click();
@@ -72,15 +72,15 @@ test('hizli erisime gecis tam yenileme yapar', async ({ page }) => {
 /** Geçişten sonra pencere ve menü hâlâ çalışmalı. */
 test('gecisten sonra pencere ve hesap menusu calisir', async ({ page }) => {
     await girisYap(page);
-    await page.goto('/yonetim/kullanicilar');
+    await page.goto('/admin/users');
 
     await page.getByRole('link', { name: 'Sistemler' }).click();
     await expect(page).toHaveURL(/sistemler/);
 
     await page.getByRole('link', { name: 'Yeni kutucuk' }).click();
-    await expect(page.locator('#sistem-ekle')).toBeVisible();
+    await expect(page.locator('#system-add')).toBeVisible();
 
     await page.keyboard.press('Escape');
-    await page.click('[data-menu-ac]');
-    await expect(page.locator('[data-menu-liste]')).toBeVisible();
+    await page.click('[data-menu-open]');
+    await expect(page.locator('[data-menu-list]')).toBeVisible();
 });

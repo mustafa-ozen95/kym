@@ -26,7 +26,7 @@ final class PasswordRuleTest extends TestCase
     /** Rakamsız parola: hiçbir kapıdan geçmemeli. */
     public function test_kayit_rakamsiz_parolayi_reddeder(): void
     {
-        $this->post(route('kayit'), [
+        $this->post(route('register'), [
             'name' => 'Yeni Kişi',
             'email' => 'yeni@ornek.test',
             'password' => 'parolaparola',
@@ -40,7 +40,7 @@ final class PasswordRuleTest extends TestCase
     public function test_yonetici_ekrani_harfsiz_parolayi_reddeder(): void
     {
         $this->actingAs(User::factory()->rol('admin')->create(['durum' => Status::Etkin]))
-            ->post(route('yonetim.kullanicilar.ekle'), [
+            ->post(route('admin.users.store'), [
                 'name' => 'Yeni Kisi',
                 'email' => 'yeni@ornek.test',
                 'password' => '12345678',
@@ -60,7 +60,7 @@ final class PasswordRuleTest extends TestCase
         ]);
 
         $this->actingAs($kullanici)
-            ->put(route('hesap.parola'), [
+            ->put(route('account.password'), [
                 'current_password' => 'eski-parola-1616',
                 'password' => 'kisa1',
                 'password_confirmation' => 'kisa1',
@@ -71,7 +71,7 @@ final class PasswordRuleTest extends TestCase
     /** Kurallara uyan parola kabul edilir: kapı kapanmış olmasın. */
     public function test_uygun_parola_kabul_edilir(): void
     {
-        $this->post(route('kayit'), [
+        $this->post(route('register'), [
             'name' => 'Yeni Kişi',
             'email' => 'yeni@ornek.test',
             'password' => 'cok-gizli-1616',
@@ -89,7 +89,7 @@ final class PasswordRuleTest extends TestCase
      */
     public function test_olcut_metni_ayardaki_uzunlugu_soyler(): void
     {
-        config(['limits.parola_uzunluk' => 11]);
+        config(['limits.password_length' => 11]);
 
         $uzunluk = collect(PasswordRule::olcutler())->firstWhere('anahtar', 'uzunluk');
 
@@ -105,7 +105,7 @@ final class PasswordRuleTest extends TestCase
      */
     public function test_dogrulama_mesajlari_turkcedir(): void
     {
-        $this->post(route('kayit'), [
+        $this->post(route('register'), [
             'name' => 'Yeni Kişi',
             'email' => 'yeni@ornek.test',
             'password' => 'ab1',
@@ -123,10 +123,10 @@ final class PasswordRuleTest extends TestCase
      */
     public function test_kayit_ekrani_kurallari_tasir(): void
     {
-        $this->get(route('hizli-erisim', ['pencere' => 'kayit']))
+        $this->get(route('quick-access', ['window' => 'register']))
             ->assertOk()
-            ->assertSee('data-parola-olcut', escape: false)
-            ->assertSee('ipucu-imi', escape: false)
+            ->assertSee('data-password-meter', escape: false)
+            ->assertSee('hint-mark', escape: false)
             ->assertSee('En az '.PasswordRule::uzunluk().' karakter');
     }
 }

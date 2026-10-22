@@ -26,7 +26,7 @@ return [
     ],
 
     /* Şerit = kartın altındaki animasyon. Hangi işi anlattığına göre seçilir. */
-    'seritler' => [
+    'lanes' => [
         's1' => 'Eşitleyici çubukları',
         's2' => 'Akan dalga',
         's3' => 'Yazılan satırlar',

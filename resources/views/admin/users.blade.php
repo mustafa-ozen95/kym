@@ -5,8 +5,8 @@
                             subtitle="Kendi kendine açılan hesap onay bekler ve onaya kadar hiçbir sisteme erişemez; buradan açılan hesap etkin doğar.">
                 @if ($ekleyebilir)
                     <x-slot:actions>
-                        <a href="{{ route('yonetim.kullanicilar', ['pencere' => 'ekle']) }}"
-                           class="btn btn--primary btn--sm" data-modal-open="kullanici-ekle">Yeni hesap</a>
+                        <a href="{{ route('admin.users', ['window' => 'add']) }}"
+                           class="btn btn--primary btn--sm" data-modal-open="user-add">Yeni hesap</a>
                     </x-slot:actions>
                 @endif
             </x-ui.page-head>
@@ -69,7 +69,7 @@
                                             değiştirmenin yolu hiç yoktu.
                                         --}}
                                         @if ($duzenleyebilir || $onaylayabilir || $rolVerebilir)
-                                            <a href="{{ route('yonetim.kullanicilar', ['pencere' => 'duzenle', 'kayit' => $kullanici->uuid]) }}"
+                                            <a href="{{ route('admin.users', ['window' => 'edit', 'record' => $kullanici->uuid]) }}"
                                                class="btn btn--sm">Düzenle</a>
                                         @endif
 
@@ -80,13 +80,13 @@
                                             kime ait olduğu kayboluyordu.
                                         --}}
                                         @if ($rolVerebilir)
-                                            <a href="{{ route('yonetim.kullanicilar.yetkiler', $kullanici) }}"
+                                            <a href="{{ route('admin.users.permissions', $kullanici) }}"
                                                class="btn btn--sm">Yetkiler</a>
                                         @endif
 
                                         {{-- Silme yalnızca yöneticide; kendi hesabında düğme yok. --}}
                                         @if (auth()->user()->yonetici() && ! $kullanici->is(auth()->user()))
-                                            <x-ui.delete-form :action="route('yonetim.kullanicilar.sil', $kullanici)"
+                                            <x-ui.delete-form :action="route('admin.users.destroy', $kullanici)"
                                                               confirm="{{ $kullanici->name }} ({{ $kullanici->email }}) hesabı silinecek."
                                                               title="Kullanıcıyı sil"
                                                               verify="{{ $kullanici->email }}" />
@@ -108,12 +108,12 @@
             İki ayrı pencere yazılsaydı biri değişince diğeri sessizce eski
             kalırdı.
         --}}
-        <x-ui.modal id="kullanici-ekle" :title="$duzenlenen?->name ?? 'Yeni hesap'"
-                    :open="$pencere === 'ekle' || $duzenlenen !== null || $errors->any()">
+        <x-ui.modal id="user-add" :title="$duzenlenen?->name ?? 'Yeni hesap'"
+                    :open="$window === 'add' || $duzenlenen !== null || $errors->any()">
             <form method="POST"
                   action="{{ $duzenlenen
-                      ? route('yonetim.kullanicilar.guncelle', $duzenlenen)
-                      : route('yonetim.kullanicilar.ekle') }}">
+                      ? route('admin.users.update', $duzenlenen)
+                      : route('admin.users.store') }}">
                 @csrf
                 @if ($duzenlenen) @method('PUT') @endif
 
@@ -136,7 +136,7 @@
                     --}}
                     <div class="field-row">
                         <x-form.field name="password" label="Parola"
-                                      :hint="$duzenlenen ? 'Değiştirmek istemiyorsanız boş bırakın.' : 'En az '.config('limits.parola_uzunluk').' karakter.'">
+                                      :hint="$duzenlenen ? 'Değiştirmek istemiyorsanız boş bırakın.' : 'En az '.config('limits.password_length').' karakter.'">
                             <x-form.input name="password" type="password" autocomplete="new-password"
                                           :required="! $duzenlenen" />
                         </x-form.field>
@@ -156,16 +156,16 @@
                     @unless ($duzenlenen?->is(auth()->user()))
                         <div class="field-row">
                             @if ($onaylayabilir)
-                                <x-form.field name="durum" label="Durum">
-                                    <x-form.select name="durum" :options="$durumSecenekleri"
+                                <x-form.field name="status" label="Durum">
+                                    <x-form.select name="status" :options="$durumSecenekleri"
                                                    :selected="$duzenlenen?->durum->value ?? 'etkin'" />
                                 </x-form.field>
                             @endif
 
                             {{-- Rol kutusu YALNIZCA ayrı yetkiyle çizilir. --}}
                             @if ($rolVerebilir)
-                                <x-form.field name="rol" label="Rol">
-                                    <x-form.select name="rol" :options="$rolSecenekleri"
+                                <x-form.field name="role" label="Rol">
+                                    <x-form.select name="role" :options="$rolSecenekleri"
                                                    :selected="$duzenlenen?->rol?->uuid" />
                                 </x-form.field>
                             @endif
@@ -176,7 +176,7 @@
                 <x-ui.modal-actions :submit="$duzenlenen ? 'Kaydet' : 'Hesabı aç'">
                     {{-- Yetkiler ayrı sayfada; pencereden de oraya geçilebilsin. --}}
                     @if ($duzenlenen && $rolVerebilir)
-                        <a href="{{ route('yonetim.kullanicilar.yetkiler', $duzenlenen) }}" class="btn">Yetkiler</a>
+                        <a href="{{ route('admin.users.permissions', $duzenlenen) }}" class="btn">Yetkiler</a>
                     @endif
                 </x-ui.modal-actions>
             </form>

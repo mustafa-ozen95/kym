@@ -5,8 +5,8 @@
                             subtitle="Hızlı Erişim'deki bölümler. Bir salon kendi sayfası da olabilir; o zaman ana sayfaya karışmaz.">
                 @if ($ekleyebilir)
                     <x-slot:actions>
-                        <a href="{{ route('yonetim.gruplar', ['pencere' => 'ekle']) }}"
-                           class="btn btn--primary btn--sm" data-modal-open="salon-ekle">Yeni salon</a>
+                        <a href="{{ route('admin.groups', ['window' => 'add']) }}"
+                           class="btn btn--primary btn--sm" data-modal-open="group-add">Yeni salon</a>
                     </x-slot:actions>
                 @endif
             </x-ui.page-head>
@@ -26,11 +26,11 @@
                         </tr>
                     </thead>
                     {{-- Salonlar da sürüklenerek sıralanır (bkz. panel/components/sorting.js). --}}
-                    <tbody data-sira="{{ route('yonetim.gruplar.sirala') }}" data-sira-alan="sira">
+                    <tbody data-order="{{ route('admin.groups.reorder') }}" data-order-field="order">
                         @forelse ($gruplar as $grup)
-                            <tr draggable="true" data-sira-kimlik="{{ $grup->uuid }}">
+                            <tr draggable="true" data-order-id="{{ $grup->uuid }}">
                                 <td>
-                                    <span class="tutamak" aria-hidden="true">⣿</span>{{ $grup->ad }}
+                                    <span class="handle" aria-hidden="true">⣿</span>{{ $grup->ad }}
                                     @if ($grup->not)
                                         <span class="text-sm text-muted">{{ $grup->not }}</span>
                                     @endif
@@ -42,7 +42,7 @@
                                 <td>
                                     @if ($grup->ayri_sayfa)
                                         {{-- Kendi sayfası olan salon ana sayfada bölüm olarak çizilmez. --}}
-                                        <a href="{{ route('salon', $grup) }}" class="mono text-sm">/salon/{{ $grup->anahtar }}</a>
+                                        <a href="{{ route('group', $grup) }}" class="mono text-sm">/group/{{ $grup->anahtar }}</a>
                                     @else
                                         <span class="text-sm text-muted">Ana sayfada</span>
                                     @endif
@@ -62,12 +62,12 @@
                                 <td>
                                     <div class="row-actions row--end">
                                         @if ($duzenleyebilir)
-                                            <a href="{{ route('yonetim.gruplar', ['pencere' => 'duzenle', 'kayit' => $grup->uuid]) }}"
-                                               class="btn btn--sm" data-modal-open="salon-ekle">Düzenle</a>
+                                            <a href="{{ route('admin.groups', ['window' => 'edit', 'record' => $grup->uuid]) }}"
+                                               class="btn btn--sm" data-modal-open="group-add">Düzenle</a>
                                         @endif
 
                                         @if ($silebilir)
-                                            <x-ui.delete-form :action="route('yonetim.gruplar.sil', $grup)"
+                                            <x-ui.delete-form :action="route('admin.groups.destroy', $grup)"
                                                               :confirm="$grup->ad . ' salonu silinecek. İçinde kutucuk varsa silinmez.'"
                                                               :verify="$grup->ad"
                                                               title="Salonu sil" />
@@ -89,10 +89,10 @@
     </div>
 
     @if ($ekleyebilir || $duzenleyebilir)
-        <x-ui.modal id="salon-ekle" :title="$duzenlenen?->ad ?? 'Yeni salon'"
-                    :open="$pencere === 'ekle' || $duzenlenen !== null || $errors->any()">
+        <x-ui.modal id="group-add" :title="$duzenlenen?->ad ?? 'Yeni salon'"
+                    :open="$window === 'add' || $duzenlenen !== null || $errors->any()">
             <form method="POST"
-                  action="{{ $duzenlenen ? route('yonetim.gruplar.guncelle', $duzenlenen) : route('yonetim.gruplar.ekle') }}">
+                  action="{{ $duzenlenen ? route('admin.groups.update', $duzenlenen) : route('admin.groups.store') }}">
                 @csrf
                 @if ($duzenlenen) @method('PUT') @endif
 

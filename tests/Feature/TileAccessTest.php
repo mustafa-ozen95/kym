@@ -64,8 +64,8 @@ final class TileAccessTest extends TestCase
      */
     public function test_anahtar_addan_turetilir_ve_benzersizdir(): void
     {
-        $ilk = $this->kutucuk('Kabin Yönetimi', System::HERKES);
-        $ikinci = $this->kutucuk('Kabin Yönetimi', System::HERKES);
+        $ilk = $this->kutucuk('Kabin Yönetimi', System::EVERYONE);
+        $ikinci = $this->kutucuk('Kabin Yönetimi', System::EVERYONE);
 
         $this->assertSame('kabin-yonetimi', $ilk->anahtar);
         $this->assertSame('kabin-yonetimi-2', $ikinci->anahtar);
@@ -76,19 +76,19 @@ final class TileAccessTest extends TestCase
 
     public function test_herkese_acik_kutucuk_oturumsuz_gorunur(): void
     {
-        $this->kutucuk('Acik Sistem', System::HERKES);
+        $this->kutucuk('Acik Sistem', System::EVERYONE);
 
-        $this->get(route('hizli-erisim'))->assertOk()->assertSee('Acik Sistem');
+        $this->get(route('quick-access'))->assertOk()->assertSee('Acik Sistem');
     }
 
     public function test_girisli_kutucuk_oturumsuz_gorunmez(): void
     {
-        $this->kutucuk('Kapali Sistem', System::GIRISLI);
+        $this->kutucuk('Kapali Sistem', System::LOGGED_IN);
 
-        $this->get(route('hizli-erisim'))->assertOk()->assertDontSee('Kapali Sistem');
+        $this->get(route('quick-access'))->assertOk()->assertDontSee('Kapali Sistem');
 
         $this->actingAs($this->kullanici())
-            ->get(route('hizli-erisim'))
+            ->get(route('quick-access'))
             ->assertOk()
             ->assertSee('Kapali Sistem');
     }
@@ -101,9 +101,9 @@ final class TileAccessTest extends TestCase
      */
     public function test_yetkili_kutucuk_yetkisi_olmayana_hic_gorunmez(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
 
-        $yanit = $this->actingAs($this->kullanici())->get(route('hizli-erisim'))->assertOk();
+        $yanit = $this->actingAs($this->kullanici())->get(route('quick-access'))->assertOk();
 
         $yanit->assertDontSee('Gizli Panel');
         $yanit->assertDontSee($sistem->adres);
@@ -111,25 +111,25 @@ final class TileAccessTest extends TestCase
 
     public function test_yetkisi_olan_kutucugu_gorur(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
         $kullanici = $this->kullanici();
 
         UserPermission::create([
             'user_id' => $kullanici->id,
             'yetenek' => $sistem->yetenek(),
-            'etki' => UserPermission::IZIN,
+            'etki' => UserPermission::ALLOW,
         ]);
 
-        $this->actingAs($kullanici)->get(route('hizli-erisim'))->assertOk()->assertSee('Gizli Panel');
+        $this->actingAs($kullanici)->get(route('quick-access'))->assertOk()->assertSee('Gizli Panel');
     }
 
     /** Yönetici her şeyi geçer; kutucuk yetkileri de buna dahil. */
     public function test_yonetici_butun_kutucuklari_gorur(): void
     {
-        $this->kutucuk('Gizli Panel', System::YETKILI);
+        $this->kutucuk('Gizli Panel', System::AUTHORIZED);
 
         $this->actingAs($this->kullanici('admin'))
-            ->get(route('hizli-erisim'))
+            ->get(route('quick-access'))
             ->assertOk()
             ->assertSee('Gizli Panel');
     }
@@ -137,12 +137,12 @@ final class TileAccessTest extends TestCase
     /** Rol şablonu da kutucuk yetkisi taşıyabilir. */
     public function test_rol_sablonu_kutucuk_yetkisi_tasiyabilir(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
 
         Role::firstWhere('slug', 'network')->update(['template' => [$sistem->yetenek()]]);
 
         $this->actingAs($this->kullanici('network'))
-            ->get(route('hizli-erisim'))
+            ->get(route('quick-access'))
             ->assertOk()
             ->assertSee('Gizli Panel');
     }
@@ -150,11 +150,11 @@ final class TileAccessTest extends TestCase
     /** Etkin olmayan kutucuk yetkili birine de görünmez. */
     public function test_etkin_olmayan_kutucuk_yetkiliye_de_gorunmez(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
         $sistem->update(['etkin' => false]);
 
         $this->actingAs($this->kullanici('admin'))
-            ->get(route('hizli-erisim'))
+            ->get(route('quick-access'))
             ->assertOk()
             ->assertDontSee('Gizli Panel');
     }
@@ -169,27 +169,27 @@ final class TileAccessTest extends TestCase
      */
     public function test_kapi_oturumsuz_istege_401_doner(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
 
-        $this->get(route('kapi', $sistem->anahtar))->assertUnauthorized();
+        $this->get(route('gate', $sistem->anahtar))->assertUnauthorized();
     }
 
     public function test_kapi_yetkisize_403_doner(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
 
         $this->actingAs($this->kullanici())
-            ->get(route('kapi', $sistem->anahtar))
+            ->get(route('gate', $sistem->anahtar))
             ->assertForbidden();
     }
 
     public function test_kapi_yetkiliye_200_ve_kimlik_basliklari_doner(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
         $kullanici = $this->kullanici('admin');
 
         $this->actingAs($kullanici)
-            ->get(route('kapi', $sistem->anahtar))
+            ->get(route('gate', $sistem->anahtar))
             ->assertOk()
             ->assertHeader('X-Kimlik-Eposta', $kullanici->email)
             ->assertHeader('X-Kimlik-Kullanici', $kullanici->uuid);
@@ -204,25 +204,25 @@ final class TileAccessTest extends TestCase
     public function test_kapi_bilinmeyen_anahtarda_403_doner(): void
     {
         $this->actingAs($this->kullanici('admin'))
-            ->get(route('kapi', 'boyle-bir-sey-yok'))
+            ->get(route('gate', 'boyle-bir-sey-yok'))
             ->assertForbidden();
     }
 
     /** Kapı ile liste AYNI kuralı kullanır; ayrışsalardı biri diğerini yalanlardı. */
     public function test_kapi_ile_liste_ayni_yaniti_verir(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
         $kullanici = $this->kullanici();
 
-        $this->actingAs($kullanici)->get(route('hizli-erisim'))->assertDontSee('Gizli Panel');
-        $this->actingAs($kullanici)->get(route('kapi', $sistem->anahtar))->assertForbidden();
+        $this->actingAs($kullanici)->get(route('quick-access'))->assertDontSee('Gizli Panel');
+        $this->actingAs($kullanici)->get(route('gate', $sistem->anahtar))->assertForbidden();
 
         UserPermission::create([
-            'user_id' => $kullanici->id, 'yetenek' => $sistem->yetenek(), 'etki' => UserPermission::IZIN,
+            'user_id' => $kullanici->id, 'yetenek' => $sistem->yetenek(), 'etki' => UserPermission::ALLOW,
         ]);
 
-        $this->actingAs($kullanici)->get(route('hizli-erisim'))->assertSee('Gizli Panel');
-        $this->actingAs($kullanici)->get(route('kapi', $sistem->anahtar))->assertOk();
+        $this->actingAs($kullanici)->get(route('quick-access'))->assertSee('Gizli Panel');
+        $this->actingAs($kullanici)->get(route('gate', $sistem->anahtar))->assertOk();
     }
 
     /* ── Yönetim ── */
@@ -230,10 +230,10 @@ final class TileAccessTest extends TestCase
     /** Yetki, kutucuk eklenince rol ekranında KENDİLİĞİNDEN belirir. */
     public function test_kutucuk_yetkisi_rol_ekraninda_belirir(): void
     {
-        $this->kutucuk('Gizli Panel', System::YETKILI);
+        $this->kutucuk('Gizli Panel', System::AUTHORIZED);
 
         $this->actingAs($this->kullanici('admin'))
-            ->get(route('yonetim.roller.goster', Role::firstWhere('slug', 'network')))
+            ->get(route('admin.roles.show', Role::firstWhere('slug', 'network')))
             ->assertOk()
             ->assertSee('Gizli Panel')
             ->assertSee('sistem-erisim.gizli-panel');
@@ -242,10 +242,10 @@ final class TileAccessTest extends TestCase
     /** Herkese açık kutucuğun yetkisi listelenmez: seçilecek bir şey yok. */
     public function test_acik_kutucugun_yetkisi_listelenmez(): void
     {
-        $this->kutucuk('Acik Sistem', System::HERKES);
+        $this->kutucuk('Acik Sistem', System::EVERYONE);
 
         $this->actingAs($this->kullanici('admin'))
-            ->get(route('yonetim.roller.goster', Role::firstWhere('slug', 'network')))
+            ->get(route('admin.roles.show', Role::firstWhere('slug', 'network')))
             ->assertOk()
             ->assertDontSee('sistem-erisim.acik-sistem');
     }
@@ -258,10 +258,10 @@ final class TileAccessTest extends TestCase
      */
     public function test_gorunurluk_gonderilmezse_degismez(): void
     {
-        $sistem = $this->kutucuk('Gizli Panel', System::YETKILI);
+        $sistem = $this->kutucuk('Gizli Panel', System::AUTHORIZED);
 
         $this->actingAs($this->kullanici('admin'))
-            ->put(route('yonetim.sistemler.guncelle', $sistem), [
+            ->put(route('admin.systems.update', $sistem), [
                 'ad' => 'Gizli Panel',
                 'renk' => '#79c8a4',
                 'grup' => 'ic',
@@ -269,6 +269,6 @@ final class TileAccessTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertSame(System::YETKILI, $sistem->fresh()->gorunurluk);
+        $this->assertSame(System::AUTHORIZED, $sistem->fresh()->gorunurluk);
     }
 }

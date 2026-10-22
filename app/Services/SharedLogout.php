@@ -21,15 +21,15 @@ use Illuminate\Http\Request;
  *   2. Bu andan ÖNCE açılmış her oturum bir sonraki istekte kapanır:
  *      merkezde CloseAfterSharedLogout, panellerde kendi ara katmanları.
  *   3. Paneller imzalı bildirimle hemen haberdar edilir
- *      (NotifySharedLogoutJob); bildirim kaybolursa kimlik-durumu sorgusu
- *      `son_cikis` alanıyla aynı bilgiyi verir.
+ *      (NotifySharedLogoutJob); bildirim kaybolursa identity-status sorgusu
+ *      `last_logout` alanıyla aynı bilgiyi verir.
  *
  * Çıkış kişinin BÜTÜN oturumlarını kapatır (başka cihazdakiler dahil).
  */
 final class SharedLogout
 {
     /** Oturumun açıldığı an (ms); Login olayında yazılır (bkz. AppServiceProvider). */
-    public const OTURUM_ANAHTARI = 'oturum_acilis_ms';
+    public const SESSION_KEY = 'oturum_acilis_ms';
 
     public static function simdiMs(): int
     {
@@ -64,6 +64,6 @@ final class SharedLogout
     {
         $cikis = (int) ($kullanici->son_cikis_ms ?? 0);
 
-        return $cikis > 0 && (int) $oturum->get(self::OTURUM_ANAHTARI, 0) < $cikis;
+        return $cikis > 0 && (int) $oturum->get(self::SESSION_KEY, 0) < $cikis;
     }
 }

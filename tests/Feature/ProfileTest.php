@@ -36,7 +36,7 @@ class ProfileTest extends TestCase
     #[Test]
     public function profil_oturumsuz_acilmaz(): void
     {
-        $this->get(route('hesap.profil'))->assertRedirect(route('hizli-erisim', ['pencere' => 'giris']));
+        $this->get(route('account.profile'))->assertRedirect(route('quick-access', ['window' => 'login']));
     }
 
     #[Test]
@@ -45,7 +45,7 @@ class ProfileTest extends TestCase
         $kullanici = $this->kullanici();
 
         $this->actingAs($kullanici)
-            ->put(route('hesap.profil.kaydet'), ['name' => 'Yeni Ad', 'email' => 'yeni@ornek.test'])
+            ->put(route('account.profile.update'), ['name' => 'Yeni Ad', 'email' => 'yeni@ornek.test'])
             ->assertSessionHas('status');
 
         $kullanici->refresh();
@@ -64,7 +64,7 @@ class ProfileTest extends TestCase
         $kullanici = $this->kullanici(['email' => 'benim@ornek.test']);
 
         $this->actingAs($kullanici)
-            ->put(route('hesap.profil.kaydet'), ['name' => 'Ad', 'email' => 'dolu@ornek.test'])
+            ->put(route('account.profile.update'), ['name' => 'Ad', 'email' => 'dolu@ornek.test'])
             ->assertSessionHasErrors('email');
     }
 
@@ -79,11 +79,11 @@ class ProfileTest extends TestCase
     {
         $kullanici = $this->kullanici(['durum' => Status::Etkin]);
 
-        $this->actingAs($kullanici)->put(route('hesap.profil.kaydet'), [
+        $this->actingAs($kullanici)->put(route('account.profile.update'), [
             'name' => 'Ad',
             'email' => 'kisi@ornek.test',
-            'rol' => Role::firstWhere('is_admin', true)->uuid,
-            'durum' => Status::Askida->value,
+            'role' => Role::firstWhere('is_admin', true)->uuid,
+            'status' => Status::Askida->value,
         ]);
 
         $kullanici->refresh();
@@ -98,11 +98,11 @@ class ProfileTest extends TestCase
     {
         $kullanici = $this->kullanici();
 
-        $this->actingAs($kullanici)->put(route('hesap.parola'), [
-            'mevcut' => 'yanlis-parola',
+        $this->actingAs($kullanici)->put(route('account.password'), [
+            'current_password' => 'yanlis-parola',
             'password' => 'yeni-parola-9',
             'password_confirmation' => 'yeni-parola-9',
-        ])->assertSessionHasErrors('mevcut');
+        ])->assertSessionHasErrors('current_password');
 
         $this->assertTrue(Hash::check('parola-1234', $kullanici->fresh()->password));
     }
@@ -112,8 +112,8 @@ class ProfileTest extends TestCase
     {
         $kullanici = $this->kullanici();
 
-        $this->actingAs($kullanici)->put(route('hesap.parola'), [
-            'mevcut' => 'parola-1234',
+        $this->actingAs($kullanici)->put(route('account.password'), [
+            'current_password' => 'parola-1234',
             'password' => 'yeni-parola-9',
             'password_confirmation' => 'yeni-parola-9',
         ])->assertSessionHas('status');
@@ -127,15 +127,15 @@ class ProfileTest extends TestCase
     {
         $kullanici = $this->kullanici();
 
-        $this->actingAs($kullanici)->put(route('hesap.parola'), [
-            'mevcut' => 'parola-1234',
+        $this->actingAs($kullanici)->put(route('account.password'), [
+            'current_password' => 'parola-1234',
             'password' => 'yeni-parola-9',
             'password_confirmation' => 'baska-parola',
         ])->assertSessionHasErrors('password');
 
         /* Kısa parola da reddedilir; sınır ayardan gelir. */
-        $this->actingAs($kullanici)->put(route('hesap.parola'), [
-            'mevcut' => 'parola-1234',
+        $this->actingAs($kullanici)->put(route('account.password'), [
+            'current_password' => 'parola-1234',
             'password' => 'kisa1',
             'password_confirmation' => 'kisa1',
         ])->assertSessionHasErrors('password');
@@ -148,8 +148,8 @@ class ProfileTest extends TestCase
     public function profil_ikinci_adima_baglanti_verir(): void
     {
         $this->actingAs($this->kullanici())
-            ->get(route('hesap.profil'))
+            ->get(route('account.profile'))
             ->assertOk()
-            ->assertSee(route('hesap.iki-adim'), escape: false);
+            ->assertSee(route('account.two-step'), escape: false);
     }
 }
