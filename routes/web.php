@@ -44,35 +44,6 @@ Route::get('/', QuickAccessController::class)->name('quick-access');
 Route::get('group/{group:anahtar}', [QuickAccessController::class, 'group'])->name('group');
 
 /*
- * ESKİ (TÜRKÇE) ADRESLER.
- *
- * Adlar İngilizceye geçince URL'ler de değişti; yer imine eklenmiş, paylaşılmış
- * ya da bir kutucuğa yazılmış eski bağlantılar 404 veriyordu (ör. /salon/dc-yonetim).
- * Kalıcı (301) yönlendirilirler. Yalnız adres değişir: giriş ve yetki
- * hedefte sorulur. E-posta doğrulama bağlantısı burada yok: imzası eski
- * adrese bağlı ve zaten kısa ömürlü.
- */
-foreach ([
-    'salon/{anahtar}' => '/group/{anahtar}',
-    'hesap/profil' => '/account/profile',
-    'hesap/iki-adim' => '/account/two-step',
-    'yonetim/sistemler' => '/admin/systems',
-    'yonetim/salonlar' => '/admin/groups',
-    'yonetim/ayarlar' => '/admin/settings',
-    'yonetim/ayarlar/sertifika' => '/admin/settings/certificate',
-    'yonetim/ayarlar/veritabani' => '/admin/settings/database',
-    'yonetim/ayarlar/guncelleme' => '/admin/settings/update',
-    'yonetim/ayarlar/kayitlar' => '/admin/settings/logs',
-    'yonetim/ayarlar/roller' => '/admin/settings/roles',
-    'yonetim/ayarlar/roller/{rol}' => '/admin/settings/roles/{rol}',
-    'yonetim/kullanicilar' => '/admin/users',
-    'yonetim/kullanicilar/{kullanici}/yetkiler' => '/admin/users/{kullanici}/permissions',
-    'yonetim/uygulamalar' => '/admin/clients',
-] as $eski => $yeni) {
-    Route::permanentRedirect($eski, $yeni);
-}
-
-/*
  * Giriş ve kayıt PENCEREDEN yapılır ama uçları normal POST'tur: betik
  * yüklenmese de çalışır. Sınırlar ayardan gelir (bkz. config/limits.php).
  *
