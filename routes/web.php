@@ -194,11 +194,13 @@ Route::middleware(['auth', 'can:yonet'])->prefix('admin')->name('admin.')->group
     Route::post('settings/database/migrate', [DatabaseController::class, 'migrate'])->name('database.migrate');
 
     /*
-     * GÜNCELLEME. Yalnızca bakar: çalışan sürüm GitHub'daki son başarılı
-     * derlemeyle karşılaştırılır (bkz. UpdateCheck).
+     * GÜNCELLEME. Çalışan sürüm GitHub'daki son başarılı derlemeyle
+     * karşılaştırılır (bkz. UpdateCheck); yeni sürüm varsa apply platformun
+     * deploy hook'unu tetikler (bkz. UpdateApply).
      */
     Route::get('settings/update', [UpdateController::class, 'index'])->name('update');
     Route::post('settings/update', [UpdateController::class, 'check'])->name('update.check');
+    Route::post('settings/update/apply', [UpdateController::class, 'apply'])->name('update.apply');
 
     Route::get('settings/logs', [AuditController::class, 'index'])->name('logs');
     Route::post('settings/logs/verify', [AuditController::class, 'verify'])->name('logs.verify');

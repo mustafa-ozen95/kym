@@ -60,6 +60,7 @@ services:
       - AUDIT_KEY
       - THEME_COOKIE_DOMAIN
       - UPDATE_TOKEN
+      - UPDATE_HOOK_URL
       - SAMPLE_DATA
       - ADMIN_NAME
       - ADMIN_EMAIL
